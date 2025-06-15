@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>ZIP Utility Tool</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="container">
+    <div class="toggle-mode">
+      <label class="switch">
+        <input type="checkbox" id="modeToggle">
+        <span class="slider round"></span>
+      </label>
+      <span>🌗 Dark/Light Mode</span>
+    </div>
+
+    <h1>📦 ZIP Utility Tool</h1>
+
+    <div class="section" id="compressSection">
+      <h2>🗜️ Compress File</h2>
+      <div class="drop-zone" id="dropCompress">Drag & Drop or Click to Upload</div>
+      <input type="file" id="fileInput" hidden />
+      <button onclick="compressFile()">Compress & Download ZIP</button>
+      <div class="file-name" id="compressFileName"></div>
+    </div>
+
+    <div class="section" id="decompressSection">
+      <h2>📂 Decompress ZIP</h2>
+      <div class="drop-zone" id="dropDecompress">Drag & Drop or Click to Upload ZIP</div>
+      <input type="file" id="zipInput" accept=".zip" hidden />
+      <button onclick="decompressFile()">Extract & Download Files</button>
+      <ul id="extractedFilesList"></ul>
+    </div>
+
+    <p id="status"></p>
+  </div>
+
+  <script src="jszip.min.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
