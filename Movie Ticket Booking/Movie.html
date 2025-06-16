@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" type="image/png" href="ico.png" />
+  <title>🎬 Movie Ticket Booking</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #121212;
+      color: #fff;
+      margin: 0;
+      padding: 0;
+    }
+    .container {
+      max-width: 600px;
+      margin: auto;
+      padding: 30px;
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 20px;
+      color: #00e676;
+    }
+    label {
+      display: block;
+      margin: 15px 0 5px;
+    }
+    input, select, button {
+      width: 100%;
+      padding: 10px;
+      font-size: 1rem;
+      margin-bottom: 10px;
+      border: none;
+      border-radius: 5px;
+    }
+    button {
+      background-color: #00e676;
+      color: #000;
+      cursor: pointer;
+    }
+    .seats {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+    }
+    .seat {
+      background: #333;
+      padding: 10px;
+      text-align: center;
+      cursor: pointer;
+      border-radius: 5px;
+    }
+    .seat.booked {
+      background: #666;
+      cursor: not-allowed;
+    }
+    .seat.selected {
+      background: #00e676;
+      color: #000;
+    }
+    .movie-info {
+      display: flex;
+      gap: 15px;
+      margin: 20px 0;
+      background: #2c2c2c;
+      padding: 15px;
+      border-radius: 10px;
+      align-items: center;
+    }
+    .movie-info img {
+      width: 120px;
+      border-radius: 8px;
+    }
+    .movie-info h2 {
+      margin: 0 0 5px;
+      font-size: 1.2rem;
+    }
+    .movie-info p {
+      margin: 0;
+      font-size: 0.95rem;
+      color: #ccc;
+    }
+    #availableCount {
+      font-size: 1rem;
+      margin: 10px 0;
+      color: #00e676;
+    }
+    .hidden {
+      display: none;
+    }
+    @media (max-width: 600px) {
+      .movie-info {
+        flex-direction: column;
+        text-align: center;
+      }
+      .movie-info img {
+        width: 100%;
+        max-width: 200px;
+      }
+      .seats {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🎬 Movie Ticket Booking</h1>
+
+    <form id="bookingForm">
+      <label for="name">Your Name:</label>
+      <input type="text" id="name" required />
+
+      <label for="movieSearch">Search Movie:</label>
+      <input type="text" id="movieSearch" placeholder="Type to search..." />
+
+      <select id="movie" required></select>
+
+      <div id="movieInfo" class="movie-info">
+        <img id="moviePoster" src="" alt="Movie Poster" />
+        <div>
+          <h2 id="movieTitle">Select a movie</h2>
+          <p id="movieDescription">Movie details will appear here.</p>
+        </div>
+      </div>
+
+      <label for="date">Select Date:</label>
+      <input type="date" id="date" required />
+
+      <label for="time">Select Showtime:</label>
+      <select id="time" required>
+        <option value="10:00 AM">10:00 AM</option>
+        <option value="1:00 PM">1:00 PM</option>
+        <option value="6:00 PM">6:00 PM</option>
+      </select>
+
+      <div id="availableCount">Available Seats: <span id="seatCount">0</span></div>
+
+      <label>Select Seat:</label>
+      <div class="seats" id="seats"></div>
+
+      <button type="submit">Book Ticket</button>
+    </form>
+
+    <div id="confirmation" class="hidden"></div>
+
+    <div id="printTicket" class="hidden">
+      <h2>🎫 Your Ticket</h2>
+      <div id="ticketDetails"></div>
+      <button onclick="window.print()">🖨 Print Ticket</button>
+    </div>
+
+    <button onclick="exportCSV()">📦 Export All Bookings (CSV)</button>
+  </div>
+
+  <script>
+    const seats = ["A1", "A2", "A3", "A4", "B1", "B2", "B3", "B4"];
+    let selectedSeat = null;
+
+    const movieInfoData = {
+      Inception: {
+        title: "Inception (2010)",
+        desc: "A mind-bending thriller. Genre: Sci-Fi | Duration: 2h 28m",
+        poster: "1.png"
+      },
+      Interstellar: {
+        title: "Interstellar (2014)",
+        desc: "Explorers travel through a wormhole. Genre: Sci-Fi | Duration: 2h 49m",
+        poster: "https://upload.wikimedia.org/wikipedia/en/b/bc/Interstellar_film_poster.jpg"
+      },
+      Joker: {
+        title: "Joker (2019)",
+        desc: "A man’s descent into madness. Genre: Drama | Duration: 2h 2m",
+        poster: "https://upload.wikimedia.org/wikipedia/en/e/e1/Joker_%282019_film%29_poster.jpg"
+      }
+    };
+
+    const movieSelect = document.getElementById("movie");
+    const movieSearch = document.getElementById("movieSearch");
+    const timeSelect = document.getElementById("time");
+    const dateInput = document.getElementById("date");
+    const form = document.getElementById("bookingForm");
+    const seatContainer = document.getElementById("seats");
+
+    function getBookingKey(movie, time, date) {
+      return `${movie}_${time}_${date}`;
+    }
+
+    function getBookedSeats(movie, time, date) {
+      const bookings = JSON.parse(localStorage.getItem("bookings")) || {};
+      return bookings[getBookingKey(movie, time, date)] || [];
+    }
+
+    function generateSeats(movie, time, date) {
+      const bookedSeats = getBookedSeats(movie, time, date);
+      seatContainer.innerHTML = "";
+
+      seats.forEach((seat) => {
+        const seatEl = document.createElement("div");
+        seatEl.classList.add("seat");
+        seatEl.textContent = seat;
+
+        if (bookedSeats.some(b => b.seat === seat)) {
+          seatEl.classList.add("booked");
+        }
+
+        seatEl.addEventListener("click", () => {
+          if (seatEl.classList.contains("booked")) return;
+          document.querySelectorAll(".seat").forEach(s => s.classList.remove("selected"));
+          seatEl.classList.add("selected");
+          selectedSeat = seat;
+        });
+
+        seatContainer.appendChild(seatEl);
+      });
+
+      updateAvailableCounter(movie, time, date);
+    }
+
+    function updateAvailableCounter(movie, time, date) {
+      const total = seats.length;
+      const booked = getBookedSeats(movie, time, date).length;
+      const available = total - booked;
+      document.getElementById("seatCount").textContent = available;
+    }
+
+    function updateMovieInfo(movie) {
+      const info = movieInfoData[movie];
+      if (info) {
+        document.getElementById("movieTitle").textContent = info.title;
+        document.getElementById("movieDescription").textContent = info.desc;
+        document.getElementById("moviePoster").src = info.poster;
+        document.getElementById("moviePoster").alt = info.title;
+      }
+    }
+
+    function renderMovieOptions(filter = "") {
+      movieSelect.innerHTML = "";
+      const movieList = Object.entries(movieInfoData);
+      const filtered = movieList.filter(([key]) => key.toLowerCase().includes(filter.toLowerCase()));
+
+      filtered.forEach(([key, data]) => {
+        const opt = document.createElement("option");
+        opt.value = key;
+        opt.textContent = data.title;
+        movieSelect.appendChild(opt);
+      });
+
+      if (filtered.length > 0) {
+        updateMovieInfo(filtered[0][0]);
+        generateSeats(filtered[0][0], timeSelect.value, dateInput.value);
+      }
+    }
+
+    movieSearch.addEventListener("input", () => {
+      renderMovieOptions(movieSearch.value);
+    });
+
+    movieSelect.addEventListener("change", () => {
+      updateMovieInfo(movieSelect.value);
+      generateSeats(movieSelect.value, timeSelect.value, dateInput.value);
+    });
+
+    timeSelect.addEventListener("change", () => {
+      generateSeats(movieSelect.value, timeSelect.value, dateInput.value);
+    });
+
+    dateInput.addEventListener("change", () => {
+      generateSeats(movieSelect.value, timeSelect.value, dateInput.value);
+    });
+
+    form.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const name = document.getElementById("name").value.trim();
+      const movie = movieSelect.value;
+      const time = timeSelect.value;
+      const date = dateInput.value;
+
+      if (!selectedSeat) return alert("Please select a seat!");
+
+      const booking = { name, seat: selectedSeat };
+      const key = getBookingKey(movie, time, date);
+      const allBookings = JSON.parse(localStorage.getItem("bookings")) || {};
+      if (!allBookings[key]) allBookings[key] = [];
+      allBookings[key].push(booking);
+      localStorage.setItem("bookings", JSON.stringify(allBookings));
+
+      showConfirmation({ name, movie, time, seat: selectedSeat, date });
+      generateSeats(movie, time, date);
+      form.reset();
+      selectedSeat = null;
+    });
+
+    function showConfirmation({ name, movie, time, seat, date }) {
+      const conf = document.getElementById("confirmation");
+      conf.innerHTML = `
+        <h2>✅ Booking Confirmed</h2>
+        <p><strong>${name}</strong>, your ticket for <strong>${movie}</strong> at <strong>${time}</strong> on <strong>${date}</strong> has been booked for seat <strong>${seat}</strong>.</p>
+      `;
+      conf.classList.remove("hidden");
+
+      const ticket = document.getElementById("ticketDetails");
+      ticket.innerHTML = `
+        <p><strong>Name:</strong> ${name}</p>
+        <p><strong>Movie:</strong> ${movie}</p>
+        <p><strong>Date:</strong> ${date}</p>
+        <p><strong>Time:</strong> ${time}</p>
+        <p><strong>Seat:</strong> ${seat}</p>
+      `;
+      document.getElementById("printTicket").classList.remove("hidden");
+    }
+
+    function exportCSV() {
+      const allBookings = JSON.parse(localStorage.getItem("bookings")) || {};
+      let csv = "Movie,Date,Time,Name,Seat\n";
+      for (let key in allBookings) {
+        const [movie, time, date] = key.split("_");
+        allBookings[key].forEach(({ name, seat }) => {
+          csv += `${movie},${date},${time},${name},${seat}\n`;
+        });
+      }
+      const blob = new Blob([csv], { type: "text/csv" });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = "bookings.csv";
+      link.click();
+    }
+
+    // Initial render
+    renderMovieOptions();
+    dateInput.valueAsDate = new Date();
+  </script>
+</body>
+</html>
