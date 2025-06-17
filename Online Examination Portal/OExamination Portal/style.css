@@ -1,0 +1,19 @@
+body {
+  font-family: Arial, sans-serif;
+  text-align: center;
+  padding: 20px;
+  background: #f4f4f4;
+}
+
+input, button {
+  margin: 5px;
+  padding: 10px;
+}
+
+.login-box, form {
+  background: #fff;
+  padding: 20px;
+  display: inline-block;
+  border-radius: 8px;
+  box-shadow: 0 0 10px #ccc;
+}
