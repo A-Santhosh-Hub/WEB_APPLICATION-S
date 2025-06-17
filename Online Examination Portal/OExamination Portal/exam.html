@@ -1,0 +1,55 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Java Exam</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #111;
+      color: #fff;
+      padding: 20px;
+    }
+    .exam-box {
+      background: #1e1e1e;
+      border-radius: 10px;
+      padding: 20px;
+      max-width: 600px;
+      margin: auto;
+      box-shadow: 0 0 10px #000;
+    }
+    .question {
+      margin-bottom: 15px;
+    }
+    .options label {
+      display: block;
+      margin-bottom: 8px;
+      cursor: pointer;
+    }
+    button {
+      background: #007bff;
+      color: white;
+      border: none;
+      padding: 10px 16px;
+      margin-top: 15px;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #0056b3;
+    }
+  </style>
+</head>
+<body>
+  <div class="exam-box">
+    <div id="question-box"></div>
+    <button id="nextBtn">Next</button>
+    <button id="submitBtn" style="display:none;">Submit</button>
+    <div id="result-box" style="margin-top: 20px;"></div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
