@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Inventory Management</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <div class="container">
+    <h1>Inventory Management System</h1>
+
+    <!-- 🌙 Dark Mode Toggle -->
+    <label class="toggle">
+      <input type="checkbox" id="themeToggle">
+      <span>🌙 Dark Mode</span>
+    </label>
+
+    <form id="itemForm">
+      <input type="text" id="itemId" placeholder="Item ID" required />
+      <input type="text" id="itemName" placeholder="Item Name" required />
+      <input type="number" id="itemQty" placeholder="Quantity" required />
+      <input type="number" id="itemPrice" placeholder="Price" required />
+      <input type="file" id="itemImage" accept="image/*" />
+      <button type="submit">Add / Update Item</button>
+    </form>
+
+    <input type="text" id="searchBox" placeholder="Search by ID or Name" />
+
+    <!-- 📤 Export Button -->
+    <button id="exportBtn">📤 Export CSV</button>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Image</th><th>ID</th><th>Name</th><th>Qty</th><th>Price</th><th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="inventoryTable"></tbody>
+    </table>
+
+    <!-- 📊 Chart Container -->
+    <h3>Stock Quantity Chart</h3>
+    <canvas id="quantityChart" height="100"></canvas>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
