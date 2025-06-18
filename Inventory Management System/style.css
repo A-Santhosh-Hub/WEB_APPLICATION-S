@@ -1,0 +1,146 @@
+:root {
+  --bg: #fff;
+  --text: #000;
+  --card: #f4f4f4;
+}
+
+body.dark {
+  --bg: #1e1e1e;
+  --text: #e0e0e0;
+  --card: #2b2b2b;
+}
+
+body {
+  font-family: Arial, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  padding: 20px;
+  transition: background 0.3s, color 0.3s;
+}
+
+.container {
+  max-width: 900px;
+  margin: auto;
+  background: var(--card);
+  padding: 20px;
+  border-radius: 10px;
+}
+
+h1, h3 {
+  text-align: center;
+}
+
+form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+form input, form button {
+  flex: 1 1 200px;
+  padding: 10px;
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid #ccc;
+}
+
+#searchBox {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 10px;
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid #ccc;
+}
+
+#exportBtn {
+  margin-bottom: 15px;
+  padding: 10px 20px;
+  cursor: pointer;
+  background: #007bff;
+  color: white;
+  border: none;
+  border-radius: 5px;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th, td {
+  padding: 12px;
+  border-bottom: 1px solid #ccc;
+  text-align: center;
+}
+
+td img {
+  width: 60px;
+  height: 60px;
+  object-fit: cover;
+  border-radius: 5px;
+}
+
+button.edit, button.delete {
+  padding: 5px 10px;
+  margin: 0 5px;
+  cursor: pointer;
+}
+
+button.edit {
+  background: #ffc107;
+  border: none;
+}
+
+button.delete {
+  background: #dc3545;
+  color: white;
+  border: none;
+}
+
+.toggle {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  margin-bottom: 10px;
+}
+
+.toggle input[type="checkbox"] {
+  margin-right: 10px;
+}
+
+/* ✅ Responsive */
+@media screen and (max-width: 600px) {
+  form input, form button {
+    flex: 1 1 100%;
+  }
+
+  table, thead, tbody, th, td, tr {
+    display: block;
+  }
+
+  tr {
+    margin-bottom: 15px;
+    border-bottom: 2px solid #ccc;
+  }
+
+  td {
+    text-align: right;
+    padding-left: 50%;
+    position: relative;
+  }
+
+  td::before {
+    content: attr(data-label);
+    position: absolute;
+    left: 10px;
+    top: 12px;
+    font-weight: bold;
+  }
+
+  td img {
+    display: block;
+    margin: auto;
+  }
+}
