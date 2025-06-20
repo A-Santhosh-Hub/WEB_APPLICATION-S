@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Currency Converter</title>
+   <link rel="icon" type="image/png" href="ico.png" />
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>Currency Converter</h1>
+      <label class="switch">
+        <input type="checkbox" id="darkModeToggle">
+        <span class="slider round"></span>
+      </label>
+    </div>
+
+    <div class="converter-box">
+      <input type="number" id="amount" placeholder="Amount" />
+      
+      <div class="selectors">
+        <select id="fromCurrency"></select>
+        <span>➜</span>
+        <select id="toCurrency"></select>
+      </div>
+      
+      <button onclick="convertCurrency()">Convert</button>
+      <p id="resultText">Converted result will appear here</p>
+    </div>
+
+    <canvas id="historyChart" height="200"></canvas>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
