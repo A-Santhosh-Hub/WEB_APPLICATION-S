@@ -1,0 +1,70 @@
+:root {
+  --bg: #141e30;
+  --text: #ffffff;
+  --box: #1c1c1c;
+  --accent: #00b894;
+  --secondary: #0984e3;
+}
+
+body.light-mode {
+  --bg: #f0f0f0;
+  --text: #111;
+  --box: #ffffff;
+}
+
+body {
+  font-family: 'Segoe UI', sans-serif;
+  background-color: var(--bg);
+  color: var(--text);
+  text-align: center;
+  padding: 40px;
+  margin: 0;
+  transition: background 0.3s, color 0.3s;
+}
+
+.container {
+  background-color: var(--box);
+  padding: 30px;
+  border-radius: 15px;
+  max-width: 450px;
+  margin: auto;
+  box-shadow: 0 0 20px rgba(0, 255, 255, 0.15);
+  transition: background 0.3s;
+}
+
+input[type="number"] {
+  padding: 10px;
+  font-size: 16px;
+  width: 80%;
+  margin-bottom: 15px;
+  border: none;
+  border-radius: 5px;
+  outline: none;
+}
+
+button {
+  padding: 10px 20px;
+  font-size: 16px;
+  margin: 10px 5px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+#guessButton {
+  background-color: var(--accent);
+  color: white;
+}
+
+#playAgainButton {
+  background-color: var(--secondary);
+  color: white;
+}
+
+.top-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 14px;
+  margin-bottom: 10px;
+}
