@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Number Guessing Game</title>
+  <link rel="icon" type="image/png" href="ico.png" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="container">
+    <div class="top-controls">
+      <label for="modeToggle">
+        <input type="checkbox" id="modeToggle" />
+        🌓 Dark/Light Mode
+      </label>
+      <select id="difficultySelect">
+        <option value="easy">🧠 Easy (1–50)</option>
+        <option value="hard">🔥 Hard (1–200)</option>
+      </select>
+    </div>
+
+    <h1>🎯 Number Guessing Game</h1>
+    <p id="feedback">Choose a difficulty and start guessing!</p>
+    <input type="number" id="guessInput" placeholder="Enter your guess" />
+    <button id="guessButton">Guess</button>
+    <p id="attempts">Attempts: 0</p>
+    <p id="time">⏱️ Time: 0.0 sec</p>
+    <button id="playAgainButton" disabled>🔁 Play Again</button>
+
+    <!-- Audio elements -->
+    <audio id="correctSound" src="correct.mp3"></audio>
+    <audio id="wrongSound" src="wrong.mp3"></audio>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
