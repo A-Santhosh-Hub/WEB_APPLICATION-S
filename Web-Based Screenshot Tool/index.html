@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Screenshot Capture Suite</title>
+   <link rel="icon" type="image/png" href="ico.png" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="container">
+    <h1>📸 Web Screenshot Suite</h1>
+
+    <input type="number" id="intervalInput" placeholder="Interval in seconds (e.g. 5)" />
+    <button id="captureBtn">Capture Once</button>
+    <button id="startAutoBtn">Start Auto-Capture</button>
+    <button id="stopAutoBtn" disabled>Stop Auto-Capture</button>
+    <button id="downloadZipBtn">📂 Download All as ZIP</button>
+
+    <canvas id="screenshotCanvas"></canvas>
+    <div id="previewContainer"></div>
+  </div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+
+  <script src="jszip.min.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
