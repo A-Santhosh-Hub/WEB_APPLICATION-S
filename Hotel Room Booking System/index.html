@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Hotel Booking System</title>
+  <link rel="stylesheet" href="AS/style.css">
+</head>
+<body>
+  <header>
+    <h1>🏨 Hotel Booking System</h1>
+  </header>
+
+  <section id="roomList"></section>
+
+  <section id="bookingForm" class="hidden">
+    <h2>Book Room <span id="selectedRoom"></span></h2>
+    <label>Check-In: <input type="date" id="checkIn"></label>
+    <label>Check-Out: <input type="date" id="checkOut"></label>
+    <button onclick="confirmBooking()">Confirm Booking</button>
+  </section>
+
+  <section id="myBookings">
+    <h2>My Bookings</h2>
+    <ul id="bookingList"></ul>
+    <button onclick="downloadReceipt()">🧾 Download Receipt (PDF)</button>
+  </section>
+
+  <section id="adminPanel">
+    <h2>Admin Panel: Manage Rooms</h2>
+    <label>Room #: <input id="newRoomNo" type="number"></label>
+    <label>Type: <input id="newRoomType" type="text"></label>
+    <label>Price: <input id="newRoomPrice" type="number"></label>
+    <button onclick="addRoom()">Add Room</button>
+    <h3>Existing Rooms</h3>
+    <ul id="adminRoomList"></ul>
+  </section>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.9.3/html2pdf.bundle.min.js"></script>
+  <script src="AS/script.js"></script>
+</body>
+</html>
