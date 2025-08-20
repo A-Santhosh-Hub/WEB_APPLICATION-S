@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Browser OS - Desktop Environment</title>
+    <link rel="icon" href="ico.png" type="image/png">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Desktop Environment -->
+    <div class="desktop" id="desktop">
+        <!-- Windows Container -->
+        <div class="windows-container" id="windowsContainer"></div>
+        
+        <!-- Start Menu -->
+        <div class="start-menu hidden" id="startMenu">
+            <div class="start-menu-header">
+                <div class="user-profile">
+                    <div class="avatar">👤</div>
+                    <span>Welcome, User</span>
+                </div>
+            </div>
+            <div class="start-menu-search">
+                <input type="text" placeholder="Search apps..." class="form-control" id="appSearch">
+            </div>
+            <div class="apps-grid" id="appsGrid">
+                <div class="app-item" data-app="notes">
+                    <div class="app-icon">📝</div>
+                    <span>Notes</span>
+                </div>
+                <div class="app-item" data-app="calculator">
+                    <div class="app-icon">🧮</div>
+                    <span>Calculator</span>
+                </div>
+                <div class="app-item" data-app="search">
+                    <div class="app-icon">🔍</div>
+                    <span>Google Search</span>
+                </div>
+                <div class="app-item" data-app="youtube">
+                    <div class="app-icon">📺</div>
+                    <span>YouTube</span>
+                </div>
+                <div class="app-item" data-app="media">
+                    <div class="app-icon">🎬</div>
+                    <span>Media Player</span>
+                </div>
+                <div class="app-item" data-app="portfolio">
+                    <div class="app-icon">💼</div>
+                    <span>My Portfolio</span>
+                </div>
+                <div class="app-item" data-app="files">
+                    <div class="app-icon">📁</div>
+                    <span>File Explorer</span>
+                </div>
+                <div class="app-item" data-app="music">
+                    <div class="app-icon">🎵</div>
+                    <span>Music Player</span>
+                </div>
+                <div class="app-item" data-app="browser">
+                    <div class="app-icon">🌐</div>
+                    <span>Browser</span>
+                </div>
+                <div class="app-item" data-app="settings">
+                    <div class="app-icon">⚙️</div>
+                    <span>Settings</span>
+                </div>
+            </div>
+            <div class="start-menu-footer">
+                <button class="btn btn--outline" onclick="restartOS()">🔄 Restart</button>
+            </div>
+        </div>
+        
+        <!-- Taskbar -->
+        <div class="taskbar">
+            <button class="start-button" id="startButton">
+                <span class="start-icon">⊞</span>
+                <span>Start</span>
+            </button>
+            <div class="taskbar-apps" id="taskbarApps"></div>
+            <div class="system-tray">
+                <div class="clock" id="clock">
+                    <div class="time">12:00 PM</div>
+                    <div class="date">Wed, Aug 20</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Developer Credit -->
+        <div class="developer-credit">
+            👉 Developed by SANTHOSH_A
+        </div>
+    </div>
+
+    <!-- Window Templates -->
+    <template id="windowTemplate">
+        <div class="window" data-app="">
+            <div class="window-header">
+                <div class="window-title"></div>
+                <div class="window-controls">
+                    <button class="window-control minimize">−</button>
+                    <button class="window-control maximize">□</button>
+                    <button class="window-control close">×</button>
+                </div>
+            </div>
+            <div class="window-content"></div>
+            <div class="resize-handles">
+                <div class="resize-handle n"></div>
+                <div class="resize-handle s"></div>
+                <div class="resize-handle e"></div>
+                <div class="resize-handle w"></div>
+                <div class="resize-handle ne"></div>
+                <div class="resize-handle nw"></div>
+                <div class="resize-handle se"></div>
+                <div class="resize-handle sw"></div>
+            </div>
+        </div>
+    </template>
+
+    <!-- App Templates -->
+    <template id="notesTemplate">
+        <div class="notes-app">
+            <div class="notes-toolbar">
+                <button class="btn btn--primary" onclick="createNewNote()">📄 New Note</button>
+                <button class="btn btn--secondary" onclick="saveNote()">💾 Save</button>
+                <input type="text" placeholder="Search notes..." class="form-control" style="width: 200px;">
+            </div>
+            <div class="notes-container">
+                <div class="notes-list">
+                    <div class="note-item active" data-note="0">
+                        <h4>Welcome Note</h4>
+                        <p>Click to edit this note...</p>
+                        <small>Today</small>
+                    </div>
+                </div>
+                <div class="note-editor">
+                    <input type="text" class="note-title form-control" placeholder="Note title..." value="Welcome Note">
+                    <textarea class="note-content form-control" placeholder="Start writing your note here...">Welcome to the Browser OS Notes app! This is a fully functional note-taking application with auto-save capabilities.</textarea>
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <template id="calculatorTemplate">
+        <div class="calculator-app">
+            <div class="calculator-display">
+                <div class="display-result">0</div>
+                <div class="display-expression"></div>
+            </div>
+            <div class="calculator-buttons">
+                <button class="calc-btn clear" onclick="clearCalculator()">C</button>
+                <button class="calc-btn" onclick="calculatePercent()">%</button>
+                <button class="calc-btn" onclick="deleteLast()">⌫</button>
+                <button class="calc-btn operator" onclick="inputOperator('÷')">÷</button>
+                
+                <button class="calc-btn number" onclick="inputNumber('7')">7</button>
+                <button class="calc-btn number" onclick="inputNumber('8')">8</button>
+                <button class="calc-btn number" onclick="inputNumber('9')">9</button>
+                <button class="calc-btn operator" onclick="inputOperator('×')">×</button>
+                
+                <button class="calc-btn number" onclick="inputNumber('4')">4</button>
+                <button class="calc-btn number" onclick="inputNumber('5')">5</button>
+                <button class="calc-btn number" onclick="inputNumber('6')">6</button>
+                <button class="calc-btn operator" onclick="inputOperator('-')">−</button>
+                
+                <button class="calc-btn number" onclick="inputNumber('1')">1</button>
+                <button class="calc-btn number" onclick="inputNumber('2')">2</button>
+                <button class="calc-btn number" onclick="inputNumber('3')">3</button>
+                <button class="calc-btn operator" onclick="inputOperator('+')">+</button>
+                
+                <button class="calc-btn number zero" onclick="inputNumber('0')">0</button>
+                <button class="calc-btn" onclick="inputNumber('.')">.</button>
+                <button class="calc-btn equals" onclick="calculateResult()">=</button>
+            </div>
+        </div>
+    </template>
+
+    <template id="searchTemplate">
+        <div class="search-app">
+            <div class="search-header">
+                <input type="text" class="search-input form-control" placeholder="Search Google..." id="googleSearchInput">
+                <button class="btn btn--primary" onclick="performGoogleSearch()">🔍 Search</button>
+            </div>
+            <div class="search-results">
+                <iframe id="googleFrame" src="https://www.google.com/webhp?igu=1" style="width: 100%; height: 100%; border: none;"></iframe>
+            </div>
+        </div>
+    </template>
+
+    <template id="youtubeTemplate">
+        <div class="youtube-app">
+            <div class="youtube-header">
+                <input type="text" class="youtube-search form-control" placeholder="Search YouTube videos..." id="youtubeSearchInput">
+                <button class="btn btn--primary" onclick="searchYouTube()">🎥 Search</button>
+            </div>
+            <div class="youtube-content">
+                <iframe id="youtubeFrame" src="https://www.youtube.com/embed" style="width: 100%; height: 100%; border: none;"></iframe>
+            </div>
+        </div>
+    </template>
+
+    <template id="mediaTemplate">
+        <div class="media-app">
+            <div class="media-controls">
+                <input type="file" accept="video/*,audio/*" class="form-control" onchange="loadMediaFile(this)">
+                <div class="playback-controls">
+                    <button class="btn btn--secondary" onclick="togglePlayPause()">▶️</button>
+                    <input type="range" class="media-progress" min="0" max="100" value="0">
+                    <input type="range" class="volume-control" min="0" max="100" value="50">
+                    <span class="time-display">00:00 / 00:00</span>
+                </div>
+            </div>
+            <div class="media-display">
+                <video id="mediaPlayer" controls style="width: 100%; max-height: 400px;"></video>
+            </div>
+        </div>
+    </template>
+
+    <template id="portfolioTemplate">
+        <div class="portfolio-app">
+            <div class="portfolio-header">
+                <h3>My Portfolio</h3>
+                <a href="https://a-santhosh-hub.github.io/in/" target="_blank" class="btn btn--primary">🔗 Open in New Tab</a>
+            </div>
+            <div class="portfolio-content">
+                <iframe src="https://a-santhosh-hub.github.io/in/" style="width: 100%; height: 100%; border: none;"></iframe>
+            </div>
+        </div>
+    </template>
+
+    <template id="filesTemplate">
+        <div class="files-app">
+            <div class="files-toolbar">
+                <div class="breadcrumb">
+                    <span onclick="navigateToFolder('')">Home</span>
+                    <span id="currentPath"></span>
+                </div>
+                <div class="file-actions">
+                    <button class="btn btn--secondary" onclick="createNewFolder()">📁 New Folder</button>
+                    <button class="btn btn--secondary" onclick="uploadFile()">📄 Upload</button>
+                </div>
+            </div>
+            <div class="files-container">
+                <div class="files-sidebar">
+                    <div class="folder-tree">
+                        <div class="folder-item" onclick="navigateToFolder('Documents')">📁 Documents</div>
+                        <div class="folder-item" onclick="navigateToFolder('Music')">🎵 Music</div>
+                        <div class="folder-item" onclick="navigateToFolder('Pictures')">🖼️ Pictures</div>
+                        <div class="folder-item" onclick="navigateToFolder('Videos')">🎬 Videos</div>
+                    </div>
+                </div>
+                <div class="files-main">
+                    <div class="files-grid" id="filesGrid">
+                        <!-- Files will be populated dynamically -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <template id="musicTemplate">
+        <div class="music-app">
+            <div class="music-player">
+                <div class="now-playing">
+                    <div class="album-art">🎵</div>
+                    <div class="track-info">
+                        <h4 id="currentTrack">Sample Track 1</h4>
+                        <p id="currentArtist">Demo Artist</p>
+                    </div>
+                </div>
+                <div class="player-controls">
+                    <button onclick="previousTrack()">⏮️</button>
+                    <button onclick="togglePlay()" id="playPauseBtn">▶️</button>
+                    <button onclick="nextTrack()">⏭️</button>
+                </div>
+                <div class="progress-bar">
+                    <input type="range" id="progressSlider" min="0" max="100" value="0">
+                    <span id="timeDisplay">0:00 / 3:45</span>
+                </div>
+            </div>
+            <div class="playlist">
+                <h3>Playlist</h3>
+                <div class="playlist-items">
+                    <div class="playlist-item active" onclick="selectTrack(0)">
+                        <span>Sample Track 1</span>
+                        <small>Demo Artist - 3:45</small>
+                    </div>
+                    <div class="playlist-item" onclick="selectTrack(1)">
+                        <span>Sample Track 2</span>
+                        <small>Demo Artist - 4:12</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <template id="browserTemplate">
+        <div class="browser-app">
+            <div class="browser-toolbar">
+                <button onclick="browserBack()">⬅️</button>
+                <button onclick="browserForward()">➡️</button>
+                <button onclick="browserRefresh()">🔄</button>
+                <input type="url" class="address-bar form-control" placeholder="Enter URL..." id="addressBar">
+                <button class="btn btn--primary" onclick="navigateToUrl()">Go</button>
+                <button onclick="addBookmark()">⭐</button>
+            </div>
+            <div class="browser-content">
+                <iframe id="browserFrame" src="https://www.google.com" style="width: 100%; height: 100%; border: none;"></iframe>
+            </div>
+        </div>
+    </template>
+
+    <template id="settingsTemplate">
+        <div class="settings-app">
+            <div class="settings-nav">
+                <button class="settings-tab active" onclick="showSettingsTab('appearance')">🎨 Appearance</button>
+                <button class="settings-tab" onclick="showSettingsTab('system')">⚙️ System</button>
+            </div>
+            <div class="settings-content">
+                <div class="settings-section" id="appearance-settings">
+                    <h3>Appearance</h3>
+                    <div class="setting-item">
+                        <label>Theme</label>
+                        <select class="form-control" onchange="changeTheme(this.value)">
+                            <option value="light">Light</option>
+                            <option value="dark">Dark</option>
+                        </select>
+                    </div>
+                    <div class="setting-item">
+                        <label>Wallpaper</label>
+                        <div class="wallpaper-options" id="wallpaperOptions">
+                            <!-- Wallpaper options will be populated -->
+                        </div>
+                    </div>
+                </div>
+                <div class="settings-section hidden" id="system-settings">
+                    <h3>System</h3>
+                    <div class="setting-item">
+                        <label>Startup Sound</label>
+                        <input type="checkbox" checked>
+                    </div>
+                    <div class="setting-item">
+                        <label>Auto-save</label>
+                        <input type="checkbox" checked>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <script src="app.js"></script>
+</body>
+</html>
