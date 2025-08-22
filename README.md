@@ -10,7 +10,7 @@
 
    
 # 5. Online Examination Portal  --  [ https://santhosh2025.neocities.org/Online%20Examination%20Portal/ ]
-6. Inventory Management System  --[ https://santhosh2025.neocities.org/Inventory%20Management%20System/Index ]
+# 6. Inventory Management System  --[ https://santhosh2025.neocities.org/Inventory%20Management%20System/Index ]
 7. Currency Converter -- [ http://santhosh2025.neocities.org/Currency%20Converter/ ]
 8. Number Guessing Game  -- [ https://santhosh2025.neocities.org/Number%20Guessing%20Game/ ]
 9. Online Resume Builder -- [ https://santhosh2025.neocities.org/Online%20Resume%20Builder/ ]
