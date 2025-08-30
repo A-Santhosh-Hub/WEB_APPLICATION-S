@@ -1,0 +1,1098 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <title>Slice Rush — Fruit Ninja Inspired</title>
+  <link rel="icon" type="image/png" href="ico.png" />
+  <meta name="description" content="Slice fruits, avoid bombs. Levels, high scores, smooth animations. Built with HTML, CSS, and JavaScript." />
+
+  <!-- Optional font (falls back gracefully if offline) -->
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;700;800&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+
+  <style>
+    /* -------------- CSS Reset & Variables -------------- */
+    :root{
+      --bg1:#0f2027;
+      --bg2:#203a43;
+      --bg3:#2c5364;
+      --glass: rgba(255,255,255,0.14);
+      --glass-strong: rgba(255,255,255,0.22);
+      --ink: #0d1b22;
+      --accent: #00e0c6;
+      --accent2: #ff4d6d;
+      --success:#00d26a;
+      --warning:#ffcc00;
+    }
+    *{box-sizing:border-box}
+    html,body{
+      height:100%;
+      margin:0;
+      background: radial-gradient(1200px 800px at 10% 10%, #214b58 0%, transparent 70%),
+                  radial-gradient(1000px 800px at 90% 40%, #1a3e4c 0%, transparent 70%),
+                  linear-gradient(135deg, var(--bg1), var(--bg2), var(--bg3));
+      color:#eef6f8;
+      font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+      overflow:hidden;
+    }
+    /* -------------- Layout -------------- */
+    #game-container{
+      position:relative;
+      width:100vw;
+      height:100vh;
+      overflow:hidden;
+    }
+    canvas{
+      position:absolute; inset:0;
+      width:100%; height:100%;
+      display:block;
+      touch-action:none; /* important for mobile swipes */
+      cursor: crosshair;
+    }
+    /* -------------- HUD -------------- */
+    #hud{
+      position:absolute; top:12px; left:12px; right:12px;
+      display:flex; align-items:center; justify-content:space-between;
+      gap:10px; pointer-events:none;
+    }
+    .pill{
+      backdrop-filter: blur(10px);
+      background: var(--glass);
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 999px;
+      padding:8px 14px;
+      font-weight:600;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.25);
+      pointer-events:auto;
+    }
+    .scoreboard{
+      display:flex; gap:8px; flex-wrap:wrap;
+    }
+    .scoreboard .tag{
+      display:inline-flex; align-items:center; gap:8px;
+      padding:8px 12px; border-radius:999px; font-weight:700;
+      background: rgba(0,0,0,0.25);
+      border:1px solid rgba(255,255,255,0.15);
+    }
+    .tag .dot{width:10px;height:10px;border-radius:50%;}
+    .tag .dot.score{background:var(--success)}
+    .tag .dot.level{background:var(--warning)}
+    .tag .dot.hiscore{background:var(--accent)}
+
+    /* -------------- Buttons -------------- */
+    .btn{
+      --padY: 14px; --padX: 22px; --r:14px;
+      padding: var(--padY) var(--padX);
+      border-radius: var(--r);
+      border: 1px solid rgba(255,255,255,0.25);
+      color: #081318; font-weight:800; letter-spacing:0.2px;
+      cursor:pointer; user-select:none; -webkit-tap-highlight-color: transparent;
+      background: linear-gradient(180deg, #9fffe5, var(--accent));
+      box-shadow: 0 8px 20px rgba(0,0,0,0.25);
+      transition: transform .08s ease, box-shadow .2s ease, background .2s ease;
+    }
+    .btn:hover{ transform: translateY(-1px); }
+    .btn:active{ transform: translateY(1px) scale(0.98); }
+    .btn.secondary{
+      background: linear-gradient(180deg, #ffd1dc, var(--accent2));
+      color:#250616;
+    }
+    .btn.ghost{
+      background: rgba(0,0,0,0.3);
+      color:#e5f5f8;
+    }
+    .btn.small{ --padY:10px; --padX:14px; --r:10px; font-weight:700; font-size:14px; }
+
+    /* -------------- Overlays -------------- */
+    .overlay{
+      position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+      padding:24px; text-align:center; z-index:5;
+      background: radial-gradient(1000px 800px at 50% -20%, rgba(255,255,255,0.06), transparent 60%),
+                  linear-gradient(rgba(0,0,0,0.28), rgba(0,0,0,0.35));
+      opacity:0; pointer-events:none; transform: translateY(10px);
+      transition: opacity .25s ease, transform .25s ease;
+    }
+    .overlay.show{ opacity:1; pointer-events:auto; transform: translateY(0); }
+    .card{
+      padding:22px; border-radius:20px; max-width:740px; width:100%;
+      backdrop-filter: blur(16px);
+      background: linear-gradient(180deg, rgba(255,255,255,0.12), rgba(255,255,255,0.06));
+      border: 1px solid rgba(255,255,255,0.2);
+      box-shadow: 0 30px 60px rgba(0,0,0,0.45);
+    }
+    .title{
+      font-family:'Poppins', 'Inter', sans-serif;
+      font-size: clamp(32px, 6vw, 56px);
+      font-weight:800; letter-spacing:0.5px; margin: 4px 0 8px;
+      background: linear-gradient(90deg, #fff, #bffcff, #a6ffe8, #fff);
+      -webkit-background-clip:text; background-clip:text; color:transparent;
+    }
+    .subtitle{opacity:0.9; margin-bottom:24px}
+    .stack{ display:flex; gap:12px; align-items:center; justify-content:center; flex-wrap:wrap; }
+    .hint{ opacity:0.8; font-size:14px; margin-top:12px; }
+    .divider{ height:1px; background: rgba(255,255,255,0.15); margin:16px 0; }
+    /* Instructions modal */
+    #instructionsModal{
+      position:absolute; inset:0; display:none; align-items:center; justify-content:center; z-index:6;
+      background: rgba(0,0,0,0.45);
+    }
+    #instructionsModal.show{ display:flex; }
+    .modal{
+      width:min(720px, 92vw); backdrop-filter: blur(14px);
+      background: linear-gradient(180deg, rgba(255,255,255,0.12), rgba(255,255,255,0.06));
+      border:1px solid rgba(255,255,255,0.18); border-radius:18px;
+      padding:20px;
+      box-shadow: 0 30px 60px rgba(0,0,0,0.5);
+      text-align:left;
+    }
+    .modal h3{ margin: 6px 0 12px; font-family:'Poppins', 'Inter', sans-serif; font-weight:800;}
+    .modal ul{ margin:0 0 8px 16px; line-height:1.6 }
+    .modal .closeX{
+      position:absolute; top:16px; right:16px;
+      width:36px; height:36px; display:grid; place-items:center;
+      border-radius:10px; cursor:pointer;
+      background: rgba(0,0,0,0.35); border:1px solid rgba(255,255,255,0.15);
+    }
+
+    /* -------------- Game Over -------------- */
+    .go-title{
+      font-family:'Poppins', 'Inter', sans-serif; font-size: clamp(28px, 5vw, 44px); font-weight:800;
+      color:#fff; text-shadow: 0 6px 20px rgba(255,0,37,0.5);
+    }
+    .stats{
+      display:flex; gap:12px; flex-wrap:wrap; justify-content:center; margin:16px 0;
+    }
+    .stat{
+      padding:12px 16px; border-radius:16px; background: rgba(0,0,0,0.3);
+      border:1px solid rgba(255,255,255,0.15); min-width: 140px;
+    }
+    .stat .label{opacity:0.8; font-size:13px}
+    .stat .value{font-size:20px; font-weight:800}
+
+    /* -------------- Small HUD buttons -------------- */
+    #soundToggle{
+      position:absolute; top:12px; right:12px; z-index:3;
+      display:inline-flex; align-items:center; gap:8px;
+    }
+    .icon-btn{
+      width:42px; height:42px; display:grid; place-items:center;
+      border-radius:12px; background: var(--glass); border:1px solid rgba(255,255,255,0.18);
+      cursor:pointer; user-select:none; -webkit-tap-highlight-color: transparent;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.25);
+    }
+    .icon-btn svg{ width:22px; height:22px; fill:#e7fafc }
+    .icon-btn:active{ transform: scale(0.96); }
+
+    /* -------------- Toast -------------- */
+    #toast{
+      position:absolute; top:70px; left:50%; transform:translateX(-50%) translateY(-20px);
+      background: linear-gradient(90deg, rgba(0,0,0,0.4), rgba(0,0,0,0.35));
+      border:1px solid rgba(255,255,255,0.16);
+      border-radius:999px; padding:10px 18px; font-weight:700; display:none; z-index:4;
+      backdrop-filter: blur(10px); box-shadow: 0 8px 30px rgba(0,0,0,0.4);
+    }
+    #toast.show{ display:block; animation: toastIn .7s ease; }
+    @keyframes toastIn{
+      0%{ opacity:0; transform:translateX(-50%) translateY(-20px) scale(0.96) }
+      50%{ opacity:1; transform:translateX(-50%) translateY(0) scale(1.02) }
+      100%{ opacity:1; transform:translateX(-50%) translateY(0) scale(1) }
+    }
+
+    /* -------------- Footer -------------- */
+    footer{
+      position:absolute; bottom:10px; left:0; right:0; text-align:center; font-size:13px; opacity:0.85;
+      color:#dff7fb; pointer-events:none;
+      text-shadow: 0 2px 10px rgba(0,0,0,0.4);
+    }
+
+    /* -------------- Responsive adjustments -------------- */
+    @media (max-width:520px){
+      .btn{ font-size:15px }
+      .stat{ min-width:120px }
+      .subtitle{ font-size:14px }
+    }
+  </style>
+</head>
+<body>
+  <div id="game-container" aria-label="Fruit slicing game area">
+    <canvas id="gameCanvas"></canvas>
+
+    <!-- HUD -->
+    <div id="hud" aria-hidden="true">
+      <div class="scoreboard pill">
+        <span class="tag">
+          <span class="dot score"></span>
+          Score: <span id="score">0</span>
+        </span>
+        <span class="tag">
+          <span class="dot hiscore"></span>
+          High Score: <span id="highScore">0</span>
+        </span>
+        <span class="tag">
+          <span class="dot level"></span>
+          Level: <span id="level">1</span>
+        </span>
+      </div>
+      <div></div>
+    </div>
+
+    <!-- Sound toggle -->
+    <div id="soundToggle" aria-label="Sound toggle">
+      <button class="icon-btn" id="muteBtn" title="Toggle Sound">
+        <svg id="volumeOn" viewBox="0 0 24 24"><path d="M3 10v4h4l5 5V5L7 10H3zm13 .5c0-1.77-1.02-3.29-2.5-4.03v8.05A4.494 4.494 0 0 0 16 10.5zm0-7v3.08c2.89 1.14 5 3.96 5 7.42s-2.11 6.28-5 7.42V24c4.01-1.25 7-5.06 7-9.58s-2.99-8.33-7-9.42z"/></svg>
+        <svg id="volumeOff" style="display:none" viewBox="0 0 24 24"><path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.36l2.47 2.47c.02-.26.03-.53.03-.8zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.89.69-1.9 1.21-3 1.48V21c2.89-1.14 5-3.96 5-7.5 0-1.22-.28-2.38-.77-3.41l2.49-2.49L19.73 6 4.27 3z"/></svg>
+      </button>
+    </div>
+
+    <!-- Start Screen -->
+    <div id="startScreen" class="overlay show" role="dialog" aria-modal="true">
+      <div class="card">
+        <div class="title">Slice Rush</div>
+        <div class="subtitle">Slice fruits to score. Avoid bombs 💣. Progress through levels as things get faster!</div>
+        <div class="stack">
+          <button class="btn" id="playBtn">Play</button>
+          <button class="btn secondary" id="instructionsBtn">How to Play</button>
+        </div>
+        <div class="hint">Tip: swipe through multiple fruits for rapid points. Works with mouse or touch.</div>
+        <div class="divider"></div>
+        <div style="opacity:0.85">High Score: <b id="startHighScore">0</b></div>
+      </div>
+    </div>
+
+    <!-- Game Over Screen -->
+    <div id="gameOverScreen" class="overlay" role="dialog" aria-modal="true" aria-live="polite">
+      <div class="card">
+        <div class="go-title">Game Over</div>
+        <div class="subtitle" id="finalMessage">You sliced a bomb! 💥</div>
+        <div class="stats">
+          <div class="stat">
+            <div class="label">Final Score</div>
+            <div class="value" id="finalScore">0</div>
+          </div>
+          <div class="stat">
+            <div class="label">High Score</div>
+            <div class="value" id="finalHighScore">0</div>
+          </div>
+          <div class="stat">
+            <div class="label">Level Reached</div>
+            <div class="value" id="finalLevel">1</div>
+          </div>
+        </div>
+        <div class="stack">
+          <button class="btn" id="restartBtn">Restart</button>
+          <button class="btn ghost" id="backToMenuBtn">Main Menu</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Instructions Modal -->
+    <div id="instructionsModal" aria-hidden="true">
+      <div class="modal">
+        <div class="closeX" id="closeInstructions" title="Close">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="#fff"><path d="M18.3 5.71L12 12.01l-6.3-6.3-1.41 1.41 6.3 6.3-6.3 6.3 1.41 1.41 6.3-6.3 6.3 6.3 1.41-1.41-6.3-6.3 6.3-6.3z"/></svg>
+        </div>
+        <h3>How to Play</h3>
+        <ul>
+          <li>Press Play, then swipe your finger or mouse to slice fruits 🍎🍊🍉.</li>
+          <li>Slicing fruits gives +1 point. Try slicing multiple quickly!</li>
+          <li>Do NOT slice bombs 💣 — that ends the game.</li>
+          <li>Reach score milestones to level up. Each level increases fruit speed and spawn rate.</li>
+          <li>High Score is saved to your device automatically.</li>
+          <li>Use the speaker icon to toggle sound.</li>
+        </ul>
+        <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:10px;">
+          <button class="btn ghost small" id="closeInstructionsBtn">Close</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Level Up Toast -->
+    <div id="toast">Level Up! ⚡</div>
+  </div>
+
+  <footer>Developed by Santhosh</footer>
+
+  <script>
+    /* =========================================================
+       Slice Rush - Fruit Ninja-inspired browser game
+       - HTML5 Canvas, vanilla JS
+       - Smooth animations, responsive, mobile-friendly
+       - Levels with progressive difficulty
+       - High score via localStorage
+       - Sound FX via WebAudio API
+       ========================================================= */
+
+    // ------------------ DOM references ------------------
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d', { alpha: true });
+
+    const scoreEl = document.getElementById('score');
+    const highScoreEl = document.getElementById('highScore');
+    const levelEl = document.getElementById('level');
+    const startScreen = document.getElementById('startScreen');
+    const gameOverScreen = document.getElementById('gameOverScreen');
+    const instructionsModal = document.getElementById('instructionsModal');
+    const playBtn = document.getElementById('playBtn');
+    const restartBtn = document.getElementById('restartBtn');
+    const backToMenuBtn = document.getElementById('backToMenuBtn');
+    const instructionsBtn = document.getElementById('instructionsBtn');
+    const closeInstructionsBtn = document.getElementById('closeInstructionsBtn');
+    const closeInstructions = document.getElementById('closeInstructions');
+    const startHighScoreEl = document.getElementById('startHighScore');
+    const finalScoreEl = document.getElementById('finalScore');
+    const finalHighScoreEl = document.getElementById('finalHighScore');
+    const finalLevelEl = document.getElementById('finalLevel');
+    const toast = document.getElementById('toast');
+    const muteBtn = document.getElementById('muteBtn');
+    const volumeOn = document.getElementById('volumeOn');
+    const volumeOff = document.getElementById('volumeOff');
+
+    // ------------------ Game state ------------------
+    let width = 0, height = 0, dpr = 1;
+    let lastTime = 0;
+    let isRunning = false;       // animation loop
+    let isPlaying = false;       // game state
+    let score = 0;
+    let level = 1;
+    let highScore = 0;
+    let spawnTimer = 0;
+    let gravity = 1200; // px/s^2
+    let flashAlpha = 0;  // for bomb explosion flash
+
+    // Entities
+    const fruits = [];   // intact fruits and bombs
+    const halves = [];   // sliced fruit halves
+    const particles = [];// juice particles
+    const texts = [];    // floating +1 texts
+
+    // Pointer / swipe trail
+    let pointerDown = false;
+    const trail = [];    // {x,y,t}
+    const MAX_TRAIL_POINTS = 18;
+
+    // LocalStorage Keys
+    const HS_KEY = 'slice_rush_high_score_v1';
+    const MUTE_KEY = 'slice_rush_muted_v1';
+
+    // Fruit data (HSL for easy shading)
+    const FRUITS = [
+      { name: 'Apple',      color: 'hsl(0, 80%, 55%)',   juice: 'hsl(0, 85%, 60%)'   },
+      { name: 'Orange',     color: 'hsl(28, 90%, 55%)',  juice: 'hsl(28, 92%, 60%)'  },
+      { name: 'Lemon',      color: 'hsl(52, 95%, 55%)',  juice: 'hsl(52, 95%, 60%)'  },
+      { name: 'Lime',       color: 'hsl(120, 65%, 45%)', juice: 'hsl(120, 70%, 50%)' },
+      { name: 'Watermelon', color: 'hsl(340, 82%, 58%)', juice: 'hsl(340, 90%, 65%)' }
+    ];
+
+    // ------------------ Audio (WebAudio) ------------------
+    let audioCtx = null;
+    let masterGain = null;
+    let muted = false;
+
+    function initAudio() {
+      if (audioCtx) return;
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return; // No audio support
+      audioCtx = new AC();
+      masterGain = audioCtx.createGain();
+      masterGain.gain.value = 0.5;
+      masterGain.connect(audioCtx.destination);
+
+      // Restore mute state
+      try {
+        const m = localStorage.getItem(MUTE_KEY);
+        if (m != null) muted = m === '1';
+      } catch {}
+      setMuted(muted);
+    }
+
+    function setMuted(m) {
+      muted = m;
+      if (masterGain) {
+        masterGain.gain.setValueAtTime(muted ? 0 : 0.5, audioCtx.currentTime);
+      }
+      volumeOn.style.display = muted ? 'none' : 'block';
+      volumeOff.style.display = muted ? 'block' : 'none';
+      try { localStorage.setItem(MUTE_KEY, muted ? '1' : '0'); } catch {}
+    }
+
+    function playSliceSound() {
+      if (!audioCtx || muted) return;
+      const now = audioCtx.currentTime;
+      // Noise burst (whoosh)
+      const duration = 0.25 + Math.random() * 0.15;
+      const buffer = audioCtx.createBuffer(1, audioCtx.sampleRate * duration, audioCtx.sampleRate);
+      const data = buffer.getChannelData(0);
+      for (let i = 0; i < data.length; i++) {
+        data[i] = (Math.random() * 2 - 1) * (1 - i / data.length); // decay
+      }
+      const src = audioCtx.createBufferSource();
+      src.buffer = buffer;
+
+      const bandpass = audioCtx.createBiquadFilter();
+      bandpass.type = 'bandpass';
+      bandpass.frequency.value = 900 + Math.random() * 800;
+      bandpass.Q.value = 0.8;
+
+      const gain = audioCtx.createGain();
+      gain.gain.setValueAtTime(0.0001, now);
+      gain.gain.exponentialRampToValueAtTime(1.0, now + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+
+      src.connect(bandpass).connect(gain).connect(masterGain);
+      src.start(now);
+    }
+
+    function playExplosionSound() {
+      if (!audioCtx || muted) return;
+      const now = audioCtx.currentTime;
+
+      // Low-frequency boom
+      const osc = audioCtx.createOscillator();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(120, now);
+      osc.frequency.exponentialRampToValueAtTime(40, now + 0.6);
+
+      const oGain = audioCtx.createGain();
+      oGain.gain.setValueAtTime(0.0001, now);
+      oGain.gain.exponentialRampToValueAtTime(1.0, now + 0.02);
+      oGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.7);
+
+      // Noise burst
+      const duration = 0.5;
+      const buffer = audioCtx.createBuffer(1, audioCtx.sampleRate * duration, audioCtx.sampleRate);
+      const data = buffer.getChannelData(0);
+      for (let i = 0; i < data.length; i++) {
+        data[i] = (Math.random() * 2 - 1) * (1 - i / data.length);
+      }
+      const src = audioCtx.createBufferSource();
+      src.buffer = buffer;
+
+      const lp = audioCtx.createBiquadFilter();
+      lp.type = 'lowpass';
+      lp.frequency.value = 3000;
+
+      const nGain = audioCtx.createGain();
+      nGain.gain.setValueAtTime(0.0001, now);
+      nGain.gain.exponentialRampToValueAtTime(1.0, now + 0.01);
+      nGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.5);
+
+      osc.connect(oGain).connect(masterGain);
+      src.connect(lp).connect(nGain).connect(masterGain);
+      osc.start(now); osc.stop(now + 0.8);
+      src.start(now); src.stop(now + 0.5);
+    }
+
+    // ------------------ Utility helpers ------------------
+    function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
+    function rand(a, b) { return a + Math.random() * (b - a); }
+    function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+    function adjustHsl(hsl, dL = 0, dS = 0) {
+      const m = /hslKATEX_INLINE_OPEN([\d.]+),\s*([\d.]+)%\s*,\s*([\d.]+)%\s*KATEX_INLINE_CLOSE/i.exec(hsl);
+      if (!m) return hsl;
+      let h = +m[1], s = +m[2] + dS, l = +m[3] + dL;
+      s = clamp(s, 0, 100); l = clamp(l, 0, 100);
+      return `hsl(${h}, ${s}%, ${l}%)`;
+    }
+
+    // Segment-circle intersection
+    function segCircle(x1,y1,x2,y2,cx,cy,r) {
+      const dx = x2 - x1, dy = y2 - y1;
+      const l2 = dx*dx + dy*dy;
+      if (l2 === 0) {
+        const dx0 = cx - x1, dy0 = cy - y1;
+        return (dx0*dx0 + dy0*dy0) <= r*r;
+      }
+      let t = ((cx - x1)*dx + (cy - y1)*dy) / l2;
+      t = clamp(t, 0, 1);
+      const px = x1 + t*dx, py = y1 + t*dy;
+      const ddx = cx - px, ddy = cy - py;
+      return (ddx*ddx + ddy*ddy) <= r*r;
+    }
+
+    // ------------------ Canvas & resize ------------------
+    function resizeCanvas() {
+      const rect = canvas.getBoundingClientRect();
+      dpr = Math.min(window.devicePixelRatio || 1, 2);
+      canvas.style.width = rect.width + 'px';
+      canvas.style.height = rect.height + 'px';
+      canvas.width = Math.round(rect.width * dpr);
+      canvas.height = Math.round(rect.height * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      width = rect.width;
+      height = rect.height;
+    }
+    window.addEventListener('resize', resizeCanvas);
+
+    // ------------------ Input handling ------------------
+    function pointerPos(e) {
+      const rect = canvas.getBoundingClientRect();
+      return { x: e.clientX - rect.left, y: e.clientY - rect.top, t: performance.now() };
+    }
+    function onPointerDown(e){
+      pointerDown = true;
+      trail.length = 0;
+      trail.push(pointerPos(e));
+      canvas.setPointerCapture(e.pointerId);
+    }
+    function onPointerMove(e){
+      if (!pointerDown) return;
+      trail.push(pointerPos(e));
+      if (trail.length > MAX_TRAIL_POINTS) trail.shift();
+    }
+    function onPointerUp(e){
+      pointerDown = false;
+      // keep small remainder for nice trailing fade
+    }
+    canvas.addEventListener('pointerdown', onPointerDown);
+    canvas.addEventListener('pointermove', onPointerMove);
+    canvas.addEventListener('pointerup', onPointerUp);
+    canvas.addEventListener('pointercancel', onPointerUp);
+    canvas.addEventListener('lostpointercapture', onPointerUp);
+
+    // ------------------ Difficulty scaling ------------------
+    function bombChanceForLevel(lv){
+      return clamp(0.10 + (lv-1)*0.02, 0.10, 0.35);
+    }
+    function spawnIntervalForLevel(lv){
+      return clamp(1.15 - (lv-1)*0.08, 0.5, 1.15);
+    }
+    function gravityForLevel(lv){
+      return 1100 + (lv-1)*90; // fruits fall faster per level
+    }
+    function initialVyForLevel(lv){
+      // stronger launch upwards; more negative is higher throw
+      return - (750 + (lv-1)*60);
+    }
+    function spawnCountForLevel(lv){
+      return 1 + Math.floor((lv-1)/3); // +1 fruit every 3 levels (up to cap)
+    }
+
+    // ------------------ Spawning ------------------
+    function spawn() {
+      const count = clamp(spawnCountForLevel(level), 1, 3);
+      for (let i=0; i<count; i++){
+        const isBomb = Math.random() < bombChanceForLevel(level);
+        if (isBomb) spawnBomb();
+        else spawnFruit();
+      }
+    }
+    function spawnFruit() {
+      const type = pick(FRUITS);
+      const r = rand(24, 34);
+      const x = rand(r+10, width - r - 10);
+      const y = height + r + 8;
+      const vx = rand(-220, 220);
+      const vy = initialVyForLevel(level) + rand(-120, 80);
+      fruits.push({
+        kind:'fruit', x,y, vx,vy, r,
+        rotation: rand(-Math.PI, Math.PI),
+        rotSpeed: rand(-2, 2),
+        type, sliced:false,
+      });
+    }
+    function spawnBomb() {
+      const r = rand(24, 32);
+      const x = rand(r+10, width - r - 10);
+      const y = height + r + 8;
+      const vx = rand(-200, 200);
+      const vy = initialVyForLevel(level) + rand(-100, 50);
+      fruits.push({
+        kind:'bomb', x,y, vx,vy, r,
+        rotation: rand(-Math.PI, Math.PI),
+        rotSpeed: rand(-3, 3),
+        sparkT: 0
+      });
+    }
+
+    // ------------------ Slicing & effects ------------------
+    function sliceFruit(f) {
+      if (f.sliced) return;
+      f.sliced = true;
+      playSliceSound();
+      score += 1;
+      updateScoreUI();
+
+      // Floating +1
+      texts.push({ x: f.x, y: f.y - f.r, vy: -60, life: 0.9, text:'+1', color:'#ffffff' });
+
+      // Spawn halves
+      const sideVec = sliceNormalFromTrail() || {x: 1, y: 0}; // direction to split
+      const SPLIT_SPEED = 180 + Math.random()*100;
+      const base = { vx: f.vx, vy: f.vy - 60 };
+      const r = f.r;
+
+      halves.push({
+        x: f.x, y: f.y, vx: base.vx - sideVec.x * SPLIT_SPEED, vy: base.vy - sideVec.y * SPLIT_SPEED,
+        r, rotation: f.rotation + rand(-0.4,0.4), rotSpeed: rand(-4,4),
+        color: f.type.color, side:-1, life: 1.0, maxLife: 1.0
+      });
+      halves.push({
+        x: f.x, y: f.y, vx: base.vx + sideVec.x * SPLIT_SPEED, vy: base.vy + sideVec.y * SPLIT_SPEED,
+        r, rotation: f.rotation + rand(-0.4,0.4), rotSpeed: rand(-4,4),
+        color: f.type.color, side: 1, life: 1.0, maxLife: 1.0
+      });
+
+      // Juice particles
+      const n = 12 + (Math.random()*10|0);
+      for (let i=0;i<n;i++){
+        const a = Math.random()*Math.PI*2;
+        const sp = rand(80, 260);
+        particles.push({
+          x: f.x + Math.cos(a)*r*0.2,
+          y: f.y + Math.sin(a)*r*0.2,
+          vx: Math.cos(a)*sp,
+          vy: Math.sin(a)*sp - 80,
+          size: rand(2, 5),
+          life: 0.9 + Math.random()*0.5,
+          color: f.type.juice
+        });
+      }
+    }
+
+    function sliceBomb(b) {
+      // Immediate game over sequence
+      playExplosionSound();
+      flashAlpha = 0.5;
+      endGame();
+    }
+
+    function sliceNormalFromTrail(){
+      // Compute a normalized perpendicular vector based on last trail segment
+      if (trail.length < 2) return null;
+      const p2 = trail[trail.length-1];
+      const p1 = trail[trail.length-2];
+      const dx = p2.x - p1.x, dy = p2.y - p1.y;
+      const len = Math.hypot(dx, dy);
+      if (!len) return null;
+      // Perpendicular to swipe direction; randomize flip slightly
+      let nx = -dy/len, ny = dx/len;
+      if (Math.random() < 0.5) { nx = -nx; ny = -ny; }
+      return {x:nx, y:ny};
+    }
+
+    // ------------------ Game loop ------------------
+    function update(dt) {
+      if (!isPlaying) return;
+
+      gravity = gravityForLevel(level);
+
+      // Spawn logic
+      spawnTimer -= dt;
+      if (spawnTimer <= 0) {
+        spawn();
+        spawnTimer = spawnIntervalForLevel(level);
+      }
+
+      // Update fruits and bombs
+      for (let i=fruits.length-1; i>=0; i--) {
+        const f = fruits[i];
+        f.x += f.vx * dt;
+        f.y += f.vy * dt;
+        f.vy += gravity * dt;
+        f.rotation += f.rotSpeed * dt;
+
+        // Remove off-screen
+        if (f.y - f.r > height + 80 || f.x + f.r < -60 || f.x - f.r > width + 60) {
+          fruits.splice(i,1);
+        }
+      }
+
+      // Update halves
+      for (let i=halves.length-1; i>=0; i--){
+        const h = halves[i];
+        h.x += h.vx * dt;
+        h.y += h.vy * dt;
+        h.vy += gravity * dt * 0.9;
+        h.rotation += h.rotSpeed * dt;
+        h.life -= dt;
+        if (h.life <= 0) halves.splice(i,1);
+      }
+
+      // Update particles
+      for (let i=particles.length-1; i>=0; i--){
+        const p = particles[i];
+        p.x += p.vx * dt;
+        p.y += p.vy * dt;
+        p.vy += gravity * dt * 0.3;
+        p.life -= dt;
+        if (p.life <= 0 || p.y > height + 60) particles.splice(i,1);
+      }
+
+      // Floating texts
+      for (let i=texts.length-1; i>=0; i--){
+        const t = texts[i];
+        t.y += t.vy * dt;
+        t.life -= dt;
+        if (t.life <= 0) texts.splice(i,1);
+      }
+
+      // Flash fade
+      if (flashAlpha > 0) {
+        flashAlpha = Math.max(0, flashAlpha - dt * 1.2);
+      }
+
+      // Slicing detection
+      if (pointerDown && trail.length >= 2) {
+        // Check collisions against last few segments (smooth slicing)
+        const segStart = Math.max(1, trail.length - 6);
+        for (let s = segStart; s < trail.length; s++){
+          const a = trail[s-1], b = trail[s];
+          // Quick ignore short jitter segments
+          if ((a.x-b.x)**2 + (a.y-b.y)**2 < 16) continue;
+
+          for (let i = fruits.length - 1; i >= 0; i--) {
+            const f = fruits[i];
+            if (segCircle(a.x,a.y,b.x,b.y, f.x,f.y, f.r)) {
+              if (f.kind === 'bomb') {
+                sliceBomb(f);
+                return; // endGame triggered
+              } else {
+                sliceFruit(f);
+                fruits.splice(i,1);
+              }
+            }
+          }
+        }
+      }
+
+      // Level progression: every 10 points -> next level
+      const nextLevelScore = level * 10;
+      if (score >= nextLevelScore) {
+        level += 1;
+        levelEl.textContent = level;
+        showToast(`Level ${level}! ⚡`);
+      }
+    }
+
+    function draw() {
+      // Clear canvas
+      ctx.clearRect(0, 0, width, height);
+
+      // Particles
+      for (const p of particles) {
+        const alpha = clamp(p.life / 1.2, 0, 1);
+        ctx.globalAlpha = alpha;
+        ctx.fillStyle = p.color;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size, 0, Math.PI*2);
+        ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+
+      // Fruits & Bombs
+      for (const f of fruits) {
+        ctx.save();
+        ctx.translate(f.x, f.y);
+        ctx.rotate(f.rotation);
+        if (f.kind === 'bomb') drawBomb(f);
+        else drawFruitWhole(f);
+        ctx.restore();
+      }
+
+      // Halves
+      for (const h of halves) {
+        ctx.save();
+        ctx.translate(h.x, h.y);
+        ctx.rotate(h.rotation);
+        const alpha = clamp(h.life / h.maxLife, 0, 1);
+        ctx.globalAlpha = alpha;
+        drawFruitHalf(h);
+        ctx.restore();
+      }
+      ctx.globalAlpha = 1;
+
+      // Floating texts
+      for (const t of texts) {
+        ctx.globalAlpha = clamp(t.life, 0, 1);
+        ctx.font = '700 18px Inter, system-ui, sans-serif';
+        ctx.fillStyle = t.color;
+        ctx.textAlign = 'center';
+        ctx.fillText(t.text, t.x, t.y);
+      }
+      ctx.globalAlpha = 1;
+
+      // Swipe trail
+      drawTrail();
+
+      // Explosion flash
+      if (flashAlpha > 0) {
+        ctx.fillStyle = `rgba(255, 64, 64, ${flashAlpha})`;
+        ctx.fillRect(0,0,width,height);
+      }
+    }
+
+    // ------------------ Drawing helpers ------------------
+    function drawFruitWhole(f) {
+      const r = f.r;
+      // Body gradient
+      const grad = ctx.createRadialGradient(-r*0.35, -r*0.35, r*0.2, 0, 0, r);
+      grad.addColorStop(0, adjustHsl(f.type.color, +20));
+      grad.addColorStop(0.6, f.type.color);
+      grad.addColorStop(1, adjustHsl(f.type.color, -18));
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.arc(0,0,r,0,Math.PI*2);
+      ctx.fill();
+
+      // Leaf (simple)
+      ctx.save();
+      ctx.translate(-r*0.2, -r*0.9);
+      ctx.rotate(-0.6);
+      ctx.fillStyle = 'hsl(115, 65%, 45%)';
+      ctx.beginPath();
+      ctx.ellipse(0, 0, r*0.18, r*0.1, 0, 0, Math.PI*2);
+      ctx.fill();
+      ctx.restore();
+
+      // Highlight
+      ctx.globalAlpha = 0.5;
+      ctx.fillStyle = 'rgba(255,255,255,0.9)';
+      ctx.beginPath();
+      ctx.ellipse(-r*0.35, -r*0.35, r*0.22, r*0.12, 0, 0, Math.PI*2);
+      ctx.fill();
+      ctx.globalAlpha = 1;
+
+      // Subtle outline
+      ctx.strokeStyle = 'rgba(0,0,0,0.15)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.arc(0,0,r,0,Math.PI*2);
+      ctx.stroke();
+    }
+
+    function drawFruitHalf(h) {
+      const r = h.r;
+      // Clip to half-plane
+      ctx.save();
+      ctx.beginPath();
+      if (h.side < 0) {
+        ctx.rect(-r-2, -r-2, r+2, r*2+4); // left half
+      } else {
+        ctx.rect(0, -r-2, r+2, r*2+4);    // right half
+      }
+      ctx.clip();
+
+      // Draw the full fruit body within clip
+      const grad = ctx.createRadialGradient(-r*0.35, -r*0.35, r*0.2, 0, 0, r);
+      grad.addColorStop(0, adjustHsl(h.color, +20));
+      grad.addColorStop(0.6, h.color);
+      grad.addColorStop(1, adjustHsl(h.color, -18));
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.arc(0,0,r,0,Math.PI*2);
+      ctx.fill();
+
+      // Edge (cut surface)
+      ctx.restore();
+      ctx.save();
+      ctx.strokeStyle = 'rgba(255,255,255,0.9)';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(0, -r);
+      ctx.lineTo(0, r);
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    function drawBomb(b) {
+      const r = b.r;
+      // Body gradient
+      const grad = ctx.createRadialGradient(-r*0.35, -r*0.35, r*0.2, 0, 0, r);
+      grad.addColorStop(0, '#4b4f55');
+      grad.addColorStop(0.5, '#2c3036');
+      grad.addColorStop(1, '#13161a');
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.arc(0,0,r,0,Math.PI*2);
+      ctx.fill();
+
+      // Fuse
+      ctx.strokeStyle = '#cfa968';
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.moveTo(r*0.2, -r*0.4);
+      ctx.quadraticCurveTo(r*0.6, -r*0.9, r*0.2, -r*1.2);
+      ctx.stroke();
+
+      // Spark
+      b.sparkT += 0.1;
+      const sx = r*0.2, sy = -r*1.2;
+      ctx.save();
+      ctx.translate(sx, sy);
+      ctx.rotate(Math.sin(b.sparkT)*0.8);
+      ctx.fillStyle = '#ffdd55';
+      for (let i=0;i<6;i++){
+        ctx.rotate(Math.PI/3);
+        ctx.beginPath();
+        ctx.moveTo(0,0);
+        ctx.lineTo(4,0);
+        ctx.arc(0,0,4,0,Math.PI/3);
+        ctx.fill();
+      }
+      ctx.restore();
+
+      // Highlight
+      ctx.globalAlpha = 0.35;
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.ellipse(-r*0.35, -r*0.35, r*0.2, r*0.1, 0, 0, Math.PI*2);
+      ctx.fill();
+      ctx.globalAlpha = 1;
+    }
+
+    function drawTrail() {
+      if (trail.length < 2) return;
+      ctx.lineCap = 'round';
+      for (let i = 1; i < trail.length; i++){
+        const p1 = trail[i - 1];
+        const p2 = trail[i];
+        const age = (performance.now() - p2.t) / 300; // 0..1
+        if (age > 1) continue;
+        const w = clamp(12 * (1 - age), 2, 12);
+        ctx.strokeStyle = `rgba(200, 255, 250, ${1 - age})`;
+        ctx.lineWidth = w;
+        ctx.beginPath();
+        ctx.moveTo(p1.x, p1.y);
+        ctx.lineTo(p2.x, p2.y);
+        ctx.stroke();
+      }
+    }
+
+    // ------------------ UI / UX ------------------
+    function updateScoreUI() {
+      scoreEl.textContent = score;
+      if (score > highScore) {
+        highScore = score;
+        highScoreEl.textContent = highScore;
+        startHighScoreEl.textContent = highScore;
+        try { localStorage.setItem(HS_KEY, String(highScore)); } catch {}
+      }
+    }
+    function showToast(text) {
+      toast.textContent = text;
+      toast.classList.remove('show');
+      void toast.offsetWidth; // reflow to restart animation
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 1200);
+    }
+    function showStartScreen(){
+      startScreen.classList.add('show');
+      gameOverScreen.classList.remove('show');
+    }
+    function showGameOverScreen(){
+      gameOverScreen.classList.add('show');
+    }
+    function hideOverlays(){
+      startScreen.classList.remove('show');
+      gameOverScreen.classList.remove('show');
+      instructionsModal.classList.remove('show');
+    }
+
+    // ------------------ Game state transitions ------------------
+    function resetGame() {
+      score = 0;
+      level = 1;
+      spawnTimer = 0.6;
+      gravity = gravityForLevel(level);
+      flashAlpha = 0;
+      fruits.length = 0;
+      halves.length = 0;
+      particles.length = 0;
+      texts.length = 0;
+      trail.length = 0;
+      scoreEl.textContent = '0';
+      levelEl.textContent = '1';
+    }
+
+    function startGame() {
+      initAudio();
+      if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+
+      hideOverlays();
+      resetGame();
+      isPlaying = true;
+
+      // start loop if not running
+      if (!isRunning) {
+        isRunning = true; lastTime = performance.now();
+        requestAnimationFrame(loop);
+      }
+    }
+
+    function endGame() {
+      isPlaying = false;
+
+      finalScoreEl.textContent = score;
+      finalHighScoreEl.textContent = highScore;
+      finalLevelEl.textContent = level;
+      setTimeout(showGameOverScreen, 250);
+    }
+
+    // ------------------ Main loop ------------------
+    function loop(t) {
+      const dt = clamp((t - lastTime) / 1000, 0, 0.033);
+      lastTime = t;
+
+      if (isPlaying) update(dt);
+      draw();
+
+      requestAnimationFrame(loop);
+    }
+
+    // ------------------ Event bindings ------------------
+    playBtn.addEventListener('click', () => {
+      startGame();
+    });
+
+    restartBtn.addEventListener('click', () => {
+      startGame();
+    });
+
+    backToMenuBtn.addEventListener('click', () => {
+      isPlaying = false;
+      showStartScreen();
+    });
+
+    instructionsBtn.addEventListener('click', () => {
+      instructionsModal.classList.add('show');
+    });
+    closeInstructionsBtn.addEventListener('click', () => {
+      instructionsModal.classList.remove('show');
+    });
+    closeInstructions.addEventListener('click', () => {
+      instructionsModal.classList.remove('show');
+    });
+    instructionsModal.addEventListener('click', (e) => {
+      if (e.target === instructionsModal) instructionsModal.classList.remove('show');
+    });
+
+    muteBtn.addEventListener('click', () => {
+      if (!audioCtx) initAudio();
+      if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+      setMuted(!muted);
+    });
+
+    // ------------------ Boot ------------------
+    function boot() {
+      resizeCanvas();
+
+      // Restore high score
+      try {
+        const hs = localStorage.getItem(HS_KEY);
+        if (hs != null) highScore = parseInt(hs, 10) || 0;
+      } catch {}
+      highScoreEl.textContent = highScore;
+      startHighScoreEl.textContent = highScore;
+
+      // Start loop once (idle until isPlaying)
+      if (!isRunning) {
+        isRunning = true; lastTime = performance.now();
+        requestAnimationFrame(loop);
+      }
+    }
+
+    boot();
+  </script>
+</body>
+</html>
