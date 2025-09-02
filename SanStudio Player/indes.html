@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SanStudio Music Player</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <h1 class="app-title">
+                    <i class="fas fa-music"></i>
+                    SanStudio Player
+                </h1>
+                <div class="upload-controls">
+                    <div class="upload-group">
+                        <label for="audioFile" class="upload-btn upload-btn--audio">
+                            <i class="fas fa-upload"></i>
+                            Upload MP3
+                        </label>
+                        <input type="file" id="audioFile" accept=".mp3,.wav,.m4a,.ogg" hidden>
+                        <span class="file-name" id="audioFileName">No audio file selected</span>
+                    </div>
+                    <div class="upload-group">
+                        <label for="lyricsFile" class="upload-btn upload-btn--lyrics">
+                            <i class="fas fa-file-text"></i>
+                            Upload LRC
+                        </label>
+                        <input type="file" id="lyricsFile" accept=".lrc" hidden>
+                        <span class="file-name" id="lyricsFileName">No lyrics file selected</span>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="player-section">
+                <!-- Album Art & Player Controls -->
+                <div class="player-container">
+                    <div class="album-art">
+                        <div class="album-art-placeholder">
+                            <i class="fas fa-music"></i>
+                        </div>
+                    </div>
+                    
+                    <div class="player-controls">
+                        <div class="control-buttons">
+                            <button class="control-btn" id="prevBtn" disabled>
+                                <i class="fas fa-step-backward"></i>
+                            </button>
+                            <button class="control-btn control-btn--play" id="playPauseBtn" disabled>
+                                <i class="fas fa-play"></i>
+                            </button>
+                            <button class="control-btn" id="nextBtn" disabled>
+                                <i class="fas fa-step-forward"></i>
+                            </button>
+                        </div>
+
+                        <div class="progress-container">
+                            <span class="time-display" id="currentTime">0:00</span>
+                            <div class="progress-bar">
+                                <div class="progress-track" id="progressTrack">
+                                    <div class="progress-fill" id="progressFill"></div>
+                                    <div class="progress-thumb" id="progressThumb"></div>
+                                </div>
+                            </div>
+                            <span class="time-display" id="totalTime">0:00</span>
+                        </div>
+
+                        <div class="volume-container">
+                            <button class="volume-btn" id="volumeBtn">
+                                <i class="fas fa-volume-up"></i>
+                            </button>
+                            <div class="volume-slider">
+                                <input type="range" id="volumeSlider" min="0" max="100" value="70">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Spectrum Visualizer -->
+                <div class="spectrum-container">
+                    <canvas id="spectrumCanvas" width="800" height="200"></canvas>
+                </div>
+            </div>
+
+            <!-- Lyrics Panel -->
+            <div class="lyrics-section">
+                <div class="lyrics-header">
+                    <h3>Lyrics</h3>
+                </div>
+                <div class="lyrics-container" id="lyricsContainer">
+                    <div class="lyrics-placeholder">
+                        Upload an LRC file to see synchronized lyrics
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>Developed by SanStudio | Reference: Guhan_S Message</p>
+        </footer>
+
+        <!-- Audio Element -->
+        <audio id="audioPlayer" preload="metadata"></audio>
+
+        <!-- Error Modal -->
+        <div class="modal hidden" id="errorModal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Error</h3>
+                    <button class="modal-close" id="closeError">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p id="errorMessage"></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
