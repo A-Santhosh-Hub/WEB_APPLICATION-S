@@ -124,3 +124,8 @@ Icons: Lucide-React
 QR Engine: QR Server API
 
 Developed by SanStudio
+
+
+
+
+![Dynamic QR  Viewer Screenshot](https://github.com/A-Santhosh-Hub/WEB_APPLICATION-S/blob/main/Dynamic%20Embedded%20QR%20Platform/Screenshot%202026-01-13%20172623.png)
