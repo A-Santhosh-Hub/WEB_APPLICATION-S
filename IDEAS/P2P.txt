@@ -1,0 +1,160 @@
+The Server, in this idea is we don't need to upload the one single server, If this online you Mobile as Server If you selected Folder 📁 , you need only the data only watch and Download, no need to upload .
+
+Like I can see the my friend server and my friend see my server, if my friend online and selected Folder.
+
+------------------------------------------------
+
+P2P Mobile Folder Server (No Upload, Direct Sharing System)
+Core Concept
+Build a peer-to-peer folder sharing system where:
+Each user’s mobile device acts as a temporary server
+No cloud storage is used
+No file upload is required
+Files are transferred directly from device to device
+Folder is accessible only while the owner is online
+This system should work similar to a personal live file server.
+Main Objective
+Create a web-based or app-based system where:
+User selects a folder
+System generates a Share ID or link
+Friend enters the ID
+Friend sees folder contents
+Friend can view or download files
+When owner goes offline, access stops automatically
+Core Technology Requirements
+Primary Technology
+Use WebRTC for direct device-to-device connection.
+Supporting Components
+Signaling server (Node.js)
+WebSocket or Socket.io
+HTML, CSS, JavaScript frontend
+Mobile-friendly UI
+System Architecture
+Flow
+Host (Folder Owner):
+Opens app
+Selects folder
+App generates Share ID
+App waits for connection
+Viewer (Friend):
+Opens app
+Enters Share ID
+Connects to host
+Sees folder contents
+Downloads files directly from host
+Required Features
+1. Host Mode
+Select folder from device
+Display:
+Folder name
+Number of files
+Total size
+Generate:
+Share ID
+Share link
+Start/stop sharing button
+Show connected users
+2. Viewer Mode
+Enter Share ID
+Connect to host
+View folder structure
+File list with:
+Name
+Size
+Type icon
+Download button
+Media preview:
+Images
+Videos
+Audio
+PDFs
+3. Real-Time Behavior
+Works only while host is online
+Auto disconnect if host closes app
+Live connection status
+4. Security Features
+Random Share ID (6–8 characters)
+Optional:
+Password protection
+End-to-end encrypted transfer (WebRTC default)
+5. Performance Requirements
+Direct P2P transfer
+No server storage
+Chunked file transfer for large files
+Resume support (if possible)
+UI/UX Requirements
+Design Style
+Modern 2025 style
+Minimal, clean interface
+Mobile-first design
+Smooth animations
+Main Screens
+Home Screen
+Two buttons:
+“Share Folder”
+“Connect to Friend”
+Host Screen
+Folder details
+Share ID display
+Copy link button
+Start/Stop sharing
+Viewer Screen
+Enter Share ID
+File browser view
+Download buttons
+Technical Stack
+Frontend
+HTML5
+CSS3
+Vanilla JavaScript (or React if preferred)
+Backend (Signaling Only)
+Node.js
+Express
+Socket.io
+Core Protocol
+WebRTC Data Channels
+Folder Access Approach
+Web Version (Browser)
+Use:
+File System Access API
+User selects folder manually
+No background access
+Mobile App Version (Future)
+Use native file system access
+Run local WebRTC server
+Development Phases
+Phase 1: Basic P2P Connection
+Share ID generation
+Device connection
+Text message exchange
+Phase 2: File Transfer
+Single file transfer
+Download support
+Phase 3: Folder Sharing
+Folder listing
+Multiple files
+Media preview
+Phase 4: UI Polish
+Animations
+Mobile optimization
+Dark mode
+Optional Advanced Features
+QR code for Share ID
+Multiple viewers at once
+Download progress bars
+File search
+Temporary session history
+Technical Constraints
+No cloud file storage
+No permanent uploads
+Must work in modern browsers
+Must work on mobile devices
+Deliverables
+Working web app (host + viewer)
+Signaling server
+Deployment instructions
+Mobile-friendly UI
+Source code with comments
+End Goal
+A system where:
+“Any phone can become a temporary online file server, and friends can access it directly without uploads or cloud storage.”
