@@ -17,3 +17,5 @@
 # 10. Browser OS - Desktop Environment -- [ https://santhosh2024.neocities.org/OS/ ]
 
 # 11. SanStudio Player ---- [ https://santhosh2024.neocities.org/SanStudio%20Player/ ] ![image alt]
+
+# 12. PayLink UPI & Link QR Generator ---- [ https://sanstudio.neocities.org/PayLink ]
