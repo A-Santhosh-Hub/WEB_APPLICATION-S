@@ -19,3 +19,9 @@
 # 11. SanStudio Player ---- [ https://santhosh2024.neocities.org/SanStudio%20Player/ ] ![image alt]
 
 # 12. PayLink UPI & Link QR Generator ---- [ https://sanstudio.neocities.org/PayLink ]
+
+
+
+
+
+The SanStudio is not working, wait 🫸 for Update 😒
