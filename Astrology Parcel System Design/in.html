@@ -1,0 +1,1294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ALP Astrology - Management System</title>
+    <link rel="icon" type="image/png" href="https://www.alpastrology.org/static/media/hand.6bbbeeb61439eeec5ca5.webp" />
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Chart.js for Dashboard -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- SheetJS for Excel Export -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0fdfa',
+                            100: '#ccfbf1',
+                            500: '#14b8a6', // Teal main
+                            600: '#0d9488',
+                            900: '#134e4a',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        body { font-family: 'Inter', sans-serif; }
+        
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+        /* Glassmorphism utilities */
+        .glass {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        
+        .dark .glass {
+            background: rgba(30, 41, 59, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        /* Animations */
+        .fade-in { animation: fadeIn 0.3s ease-in-out; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Toast styles */
+        #toast-container { z-index: 9999; }
+        .toast {
+            transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            transform: translateX(120%);
+        }
+        .toast.show { transform: translateX(0); }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-900 h-screen overflow-hidden flex selection:bg-brand-100 selection:text-brand-900">
+
+    <!-- LOGIN SCREEN -->
+    <div id="login-view" class="fixed inset-0 z-50 flex items-center justify-center fade-in bg-gradient-to-r from-[#fef08a] via-[#fbcfe8] to-[#f9a8d4]">
+        <div class="w-full h-full max-w-6xl mx-auto flex items-center justify-between p-6 md:p-12 gap-12">
+            
+            <!-- Left Side: Login Card -->
+            <div class="w-full max-w-[26rem] bg-white p-8 md:p-10 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.1)] shrink-0 mx-auto md:mx-0">
+                <div class="flex justify-center mb-4">
+                    <!-- 🖼️ PLACE YOUR SMALL LOGO HERE (Replace the src link) -->
+                    <img src="https://www.alpastrology.org/static/media/hand.6bbbeeb61439eeec5ca5.webp" alt="ALP Small Logo" class="w-20 h-20 object-contain rounded-full shadow-sm border border-slate-100">
+                </div>
+                <h2 class="text-[2.2rem] leading-none font-black text-center text-slate-900 mb-2 uppercase tracking-tighter">ALP Astrology</h2>
+                <p class="text-center text-slate-500 mb-8 text-sm">Sign in to manage student parcels</p>
+                
+                <form id="login-form" class="space-y-5">
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-1">Username / Role</label>
+                        <select id="login-role" class="w-full px-4 py-3 rounded-xl border-2 border-brand-500 focus:ring-4 focus:ring-brand-500/20 outline-none transition-all bg-white font-medium text-slate-700 shadow-sm cursor-pointer">
+                            <option value="admin">Admin (Full Access)</option>
+                            <option value="staff">Staff (Entry & View)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-1">Password</label>
+                        <input type="password" id="login-pass" class="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-slate-800 focus:border-slate-800 outline-none transition-all bg-white font-medium shadow-sm" placeholder="Enter password">
+                    </div>
+                    <button type="submit" class="w-full bg-[#0f172a] hover:bg-black text-white font-medium py-3.5 rounded-xl transition-all active:scale-[0.98] mt-6 flex justify-center items-center gap-2 shadow-lg">
+                        Sign In <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                    </button>
+                </form>
+                <div class="mt-8 text-center text-xs text-slate-400">
+                    Please enter your designated password to continue.
+                </div>
+            </div>
+
+            <!-- Right Side: Big Logo -->
+            <div class="hidden md:flex flex-1 items-center justify-center">
+                <!-- 🖼️ PLACE YOUR BIG LOGO HERE (Replace the src link) -->
+                <img src="https://www.alpastrology.org/static/media/hand.6bbbeeb61439eeec5ca5.webp" alt="ALP Large Logo" class="w-full max-w-md object-contain drop-shadow-2xl hover:scale-105 transition-transform duration-700">
+            </div>
+            
+        </div>
+    </div>
+
+    <!-- MAIN APP WRAPPER -->
+    <div id="app-wrapper" class="hidden w-full h-full flex">
+        
+        <!-- SIDEBAR -->
+        <aside class="w-64 bg-white border-r border-slate-200 flex flex-col justify-between hidden md:flex z-20 shadow-sm">
+            <div>
+                <div class="h-16 flex items-center px-6 border-b border-slate-100">
+                    <div class="w-8 h-8 bg-brand-500 rounded-lg flex items-center justify-center mr-3">
+                        <i data-lucide="moon-star" class="text-white w-5 h-5"></i>
+                    </div>
+                    <span class="font-bold text-lg tracking-tight text-slate-800">ALP Astrology</span>
+                </div>
+                <nav class="p-4 space-y-1">
+                    <button onclick="navigate('dashboard')" id="nav-dashboard" class="nav-btn w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors bg-brand-50 text-brand-600">
+                        <i data-lucide="layout-dashboard" class="w-4 h-4"></i> Dashboard
+                    </button>
+                    <button onclick="navigate('entry')" id="nav-entry" class="nav-btn w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors">
+                        <i data-lucide="plus-circle" class="w-4 h-4"></i> New Entry
+                    </button>
+                    <button onclick="navigate('records')" id="nav-records" class="nav-btn w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors">
+                        <i data-lucide="database" class="w-4 h-4"></i> Parcel Records
+                    </button>
+                </nav>
+            </div>
+            
+            <div class="p-4 border-t border-slate-100">
+                <div class="flex items-center gap-3 px-4 py-2 mb-2">
+                    <div class="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center text-slate-600 font-bold text-sm" id="user-avatar">A</div>
+                    <div>
+                        <p class="text-sm font-medium text-slate-800" id="user-name">Admin User</p>
+                        <p class="text-xs text-slate-500 capitalize" id="user-role">Role: Admin</p>
+                    </div>
+                </div>
+                <button onclick="logout()" class="w-full flex items-center gap-3 px-4 py-2 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 transition-colors">
+                    <i data-lucide="log-out" class="w-4 h-4"></i> Sign Out
+                </button>
+            </div>
+        </aside>
+
+        <!-- MAIN CONTENT -->
+        <main class="flex-1 flex flex-col h-full overflow-hidden relative">
+            
+            <!-- Mobile Header -->
+            <header class="md:hidden h-16 bg-white border-b border-slate-200 flex items-center justify-between px-4 z-20">
+                <div class="flex items-center gap-2">
+                    <i data-lucide="moon-star" class="text-brand-500 w-6 h-6"></i>
+                    <span class="font-bold text-lg text-slate-800">ALP Astrology</span>
+                </div>
+                <button onclick="toggleMobileMenu()" class="p-2 text-slate-600">
+                    <i data-lucide="menu" class="w-6 h-6"></i>
+                </button>
+            </header>
+
+            <!-- Mobile Menu -->
+            <div id="mobile-menu" class="fixed inset-0 bg-slate-900/50 z-40 hidden md:hidden">
+                <div class="bg-white w-64 h-full p-4 flex flex-col gap-2">
+                    <button onclick="toggleMobileMenu()" class="self-end p-2 text-slate-500 mb-4"><i data-lucide="x" class="w-5 h-5"></i></button>
+                    <button onclick="navigate('dashboard'); toggleMobileMenu()" class="text-left px-4 py-3 rounded-lg font-medium bg-slate-50 text-brand-600">Dashboard</button>
+                    <button onclick="navigate('entry'); toggleMobileMenu()" class="text-left px-4 py-3 rounded-lg font-medium text-slate-600">New Entry</button>
+                    <button onclick="navigate('records'); toggleMobileMenu()" class="text-left px-4 py-3 rounded-lg font-medium text-slate-600">Records</button>
+                    <button onclick="logout()" class="text-left px-4 py-3 rounded-lg font-medium text-red-600 mt-auto">Sign Out</button>
+                </div>
+            </div>
+
+            <!-- VIEWS -->
+            <div class="flex-1 overflow-y-auto bg-slate-50/50 p-4 md:p-8 pb-20">
+                
+                <!-- DASHBOARD VIEW -->
+                <div id="view-dashboard" class="view-section fade-in">
+                    <div class="flex justify-between items-end mb-8">
+                        <div>
+                            <h1 class="text-2xl font-bold text-slate-800">Dashboard Overview</h1>
+                            <p class="text-slate-500 text-sm mt-1">Track and manage incoming astrological study parcels.</p>
+                        </div>
+                        <button onclick="navigate('entry')" class="hidden md:flex items-center gap-2 bg-brand-500 hover:bg-brand-600 text-white px-4 py-2 rounded-lg font-medium transition-colors shadow-sm">
+                            <i data-lucide="plus" class="w-4 h-4"></i> Add Parcel
+                        </button>
+                    </div>
+
+                    <!-- Stats Cards -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+                        <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
+                            <div>
+                                <p class="text-sm font-medium text-slate-500 mb-1">Total Parcels</p>
+                                <h3 class="text-2xl font-bold text-slate-800" id="stat-total">0</h3>
+                            </div>
+                            <div class="w-12 h-12 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center">
+                                <i data-lucide="package" class="w-6 h-6"></i>
+                            </div>
+                        </div>
+                        <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
+                            <div>
+                                <p class="text-sm font-medium text-slate-500 mb-1">Today's Entry</p>
+                                <h3 class="text-2xl font-bold text-slate-800" id="stat-today">0</h3>
+                            </div>
+                            <div class="w-12 h-12 bg-brand-50 text-brand-600 rounded-full flex items-center justify-center">
+                                <i data-lucide="calendar-check" class="w-6 h-6"></i>
+                            </div>
+                        </div>
+                        <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
+                            <div>
+                                <p class="text-sm font-medium text-slate-500 mb-1">Under Review</p>
+                                <h3 class="text-2xl font-bold text-slate-800" id="stat-review">0</h3>
+                            </div>
+                            <div class="w-12 h-12 bg-amber-50 text-amber-600 rounded-full flex items-center justify-center">
+                                <i data-lucide="clock" class="w-6 h-6"></i>
+                            </div>
+                        </div>
+                        <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
+                            <div>
+                                <p class="text-sm font-medium text-slate-500 mb-1">Completed</p>
+                                <h3 class="text-2xl font-bold text-slate-800" id="stat-completed">0</h3>
+                            </div>
+                            <div class="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center">
+                                <i data-lucide="check-circle" class="w-6 h-6"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Charts -->
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <div class="lg:col-span-2 bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+                            <h3 class="text-base font-semibold text-slate-800 mb-4">Parcels Received (Last 7 Days)</h3>
+                            <div class="h-64">
+                                <canvas id="lineChart"></canvas>
+                            </div>
+                        </div>
+                        <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+                            <h3 class="text-base font-semibold text-slate-800 mb-4">Parcel Types</h3>
+                            <div class="h-64 flex justify-center">
+                                <canvas id="doughnutChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ENTRY VIEW -->
+                <div id="view-entry" class="view-section hidden fade-in max-w-4xl mx-auto">
+                    <div class="mb-8">
+                        <h1 class="text-2xl font-bold text-slate-800">New Parcel Entry</h1>
+                        <p class="text-slate-500 text-sm mt-1">Enter details accurately. Press <kbd class="bg-slate-100 border border-slate-300 rounded px-1 text-xs">Enter</kbd> to jump fields.</p>
+                    </div>
+
+                    <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                        <div class="p-6 md:p-8">
+                            <form id="entry-form" class="space-y-6">
+                                
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <!-- Field: Student ID -->
+                                    <div>
+                                        <label class="block text-sm font-medium text-slate-700 mb-1">Student ID (Optional)</label>
+                                        <input type="text" id="f_studentId" class="form-input w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none transition-all" placeholder="e.g. AST-2024-001 or Amazon">
+                                    </div>
+
+                                    <!-- Field: Student Class -->
+                                    <div>
+                                        <label class="block text-sm font-medium text-slate-700 mb-1">Class Category (Optional)</label>
+                                        <select id="f_studentClass" class="form-input w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none transition-all bg-white" onchange="handleClassChange(event)">
+                                            <!-- Populated by JS -->
+                                        </select>
+                                    </div>
+                                    
+                                    <!-- Field: Student Name (Auto Suggest) -->
+                                    <div>
+                                        <label class="block text-sm font-medium text-slate-700 mb-1">Student Name *</label>
+                                        <input type="text" id="f_studentName" list="name-suggestions" required class="form-input w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none transition-all" placeholder="Full Name">
+                                        <datalist id="name-suggestions"></datalist>
+                                    </div>
+
+                                    <!-- Field: Phone Number -->
+                                    <div>
+                                        <label class="block text-sm font-medium text-slate-700 mb-1">Mobile Number (Optional)</label>
+                                        <div class="relative">
+                                            <input type="tel" id="f_phone" class="form-input w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none transition-all" placeholder="e.g. +1 234 567 8900">
+                                        </div>
+                                    </div>
+
+                                    <!-- Field: Location (Auto Suggest) -->
+                                    <div class="md:col-span-2">
+                                        <label class="block text-sm font-medium text-slate-700 mb-1">Location (District / State) *</label>
+                                        <input type="text" id="f_location" list="location-suggestions" required class="form-input w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none transition-all" placeholder="e.g. Chennai, Tamil Nadu">
+                                        <datalist id="location-suggestions">
+                                            <!-- Will be populated via JS -->
+                                        </datalist>
+                                    </div>
+
+                                    <!-- Field: Parcel Type -->
+                                    <div>
+                                        <label class="block text-sm font-medium text-slate-700 mb-1">Parcel Type *</label>
+                                        <select id="f_type" required class="form-input w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none transition-all bg-white">
+                                            <option value="Answer Sheet">Answer Sheet</option>
+                                            <option value="Documents">Documents</option>
+                                            <option value="Study Material">Study Material</option>
+                                            <option value="Other">Other</option>
+                                        </select>
+                                    </div>
+
+                                    <!-- Field: Status -->
+                                    <div>
+                                        <label class="block text-sm font-medium text-slate-700 mb-1">Initial Status *</label>
+                                        <select id="f_status" required class="form-input w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none transition-all bg-white">
+                                            <option value="Received">Received</option>
+                                            <option value="Under Review">Under Review</option>
+                                            <option value="Checked">Checked</option>
+                                            <option value="Completed">Completed</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <!-- Field: Notes -->
+                                    <div class="md:col-span-2">
+                                        <label class="block text-sm font-medium text-slate-700 mb-1">Additional Notes</label>
+                                        <textarea id="f_notes" rows="3" class="form-input w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none transition-all" placeholder="Condition of parcel, missing items, etc."></textarea>
+                                    </div>
+                                </div>
+
+                                <div class="border-t border-slate-100 pt-6 flex justify-end gap-3">
+                                    <button type="button" onclick="document.getElementById('entry-form').reset()" class="px-5 py-2.5 rounded-lg text-slate-600 font-medium hover:bg-slate-100 transition-colors">Clear</button>
+                                    <button type="submit" class="px-6 py-2.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white font-medium shadow-sm transition-all active:scale-[0.98] flex items-center gap-2">
+                                        <i data-lucide="save" class="w-4 h-4"></i> Save Record
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                        <div class="bg-slate-50 px-6 py-4 border-t border-slate-200 text-xs text-slate-500 flex justify-between items-center">
+                            <span><i data-lucide="info" class="w-3 h-3 inline mr-1"></i> Date, Time, and Staff info are saved automatically.</span>
+                            <span id="live-clock" class="font-mono"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- RECORDS VIEW -->
+                <div id="view-records" class="view-section hidden fade-in">
+                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+                        <div>
+                            <h1 class="text-2xl font-bold text-slate-800">Parcel Records</h1>
+                            <p class="text-slate-500 text-sm mt-1">Manage and export all received parcels.</p>
+                        </div>
+                        <div class="flex items-center gap-3 w-full md:w-auto">
+                            <button onclick="exportToExcel()" class="flex-1 md:flex-none flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg font-medium transition-colors shadow-sm">
+                                <i data-lucide="download" class="w-4 h-4"></i> Export .xlsx
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Filters & Search -->
+                    <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm mb-6 flex flex-col gap-4">
+                        <div class="flex flex-col md:flex-row gap-4">
+                            <div class="flex-1 relative">
+                                <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4"></i>
+                                <input type="text" id="search-input" placeholder="Search by name, ID, phone..." class="w-full pl-9 pr-4 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-brand-500 outline-none text-sm">
+                            </div>
+                            <div class="flex gap-4 overflow-x-auto">
+                                <select id="filter-class" class="px-3 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-brand-500 outline-none text-sm bg-white shrink-0">
+                                    <!-- Populated by JS -->
+                                </select>
+                                <select id="filter-type" class="px-3 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-brand-500 outline-none text-sm bg-white shrink-0">
+                                    <option value="">All Types</option>
+                                    <option value="Answer Sheet">Answer Sheet</option>
+                                    <option value="Documents">Documents</option>
+                                    <option value="Study Material">Study Material</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                                <select id="filter-status" class="px-3 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-brand-500 outline-none text-sm bg-white shrink-0">
+                                    <option value="">All Statuses</option>
+                                    <option value="Received">Received</option>
+                                    <option value="Under Review">Under Review</option>
+                                    <option value="Checked">Checked</option>
+                                    <option value="Completed">Completed</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <!-- Date Range Filters -->
+                        <div class="flex flex-col md:flex-row gap-4 items-center border-t border-slate-100 pt-4">
+                            <span class="text-sm font-medium text-slate-700 flex items-center gap-1"><i data-lucide="calendar" class="w-4 h-4 text-brand-500"></i> Date Range:</span>
+                            <input type="date" id="filter-date-from" class="px-3 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-brand-500 outline-none text-sm bg-white text-slate-600" title="From Date">
+                            <span class="text-sm font-medium text-slate-500">to</span>
+                            <input type="date" id="filter-date-to" class="px-3 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-brand-500 outline-none text-sm bg-white text-slate-600" title="To Date">
+                            <button onclick="clearDateFilters()" class="px-3 py-2 text-xs text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition-colors ml-auto md:ml-0"><i data-lucide="x" class="w-3 h-3 inline mr-1"></i>Clear Dates</button>
+                        </div>
+                    </div>
+
+                    <!-- Table -->
+                    <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse">
+                                <thead>
+                                    <tr class="bg-slate-50 border-b border-slate-200 text-xs uppercase text-slate-500 font-semibold tracking-wider">
+                                        <th class="px-6 py-4">Parcel ID / Date</th>
+                                        <th class="px-6 py-4">Student Info & Class</th>
+                                        <th class="px-6 py-4">Type & Location</th>
+                                        <th class="px-6 py-4">Status</th>
+                                        <th class="px-6 py-4 text-right">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="table-body" class="divide-y divide-slate-100 text-sm">
+                                    <!-- Populated by JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                        <!-- Pagination -->
+                        <div class="bg-slate-50 px-6 py-3 border-t border-slate-200 flex items-center justify-between">
+                            <span class="text-sm text-slate-500" id="pagination-info">Showing 0 of 0 results</span>
+                            <div class="flex gap-2">
+                                <button onclick="prevPage()" id="btn-prev" class="px-3 py-1 border border-slate-300 rounded text-slate-600 hover:bg-slate-100 disabled:opacity-50">Prev</button>
+                                <button onclick="nextPage()" id="btn-next" class="px-3 py-1 border border-slate-300 rounded text-slate-600 hover:bg-slate-100 disabled:opacity-50">Next</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Footer Branding -->
+            <footer class="absolute bottom-0 w-full bg-white/80 backdrop-blur border-t border-slate-200 py-3 flex justify-center items-center gap-4 text-xs text-slate-500 z-10">
+                <span>System v1.0 • Developed By <a href="https://a-santhosh-hub.github.io/in/" target="_blank" class="text-brand-600 font-medium hover:underline">Santhosh A</a></span>
+                <span id="db-indicator" class="px-2 py-0.5 rounded bg-slate-100 border border-slate-200">DB: Local</span>
+            </footer>
+
+        </main>
+    </div>
+
+    <!-- Edit Modal -->
+    <div id="edit-modal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-xl w-full max-w-2xl overflow-hidden fade-in">
+            <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+                <h3 class="font-bold text-slate-800">Edit Parcel</h3>
+                <button onclick="closeEditModal()" class="text-slate-400 hover:text-slate-600"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+            <div class="p-6">
+                <form id="edit-form" class="space-y-4">
+                    <input type="hidden" id="edit_id">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-medium text-slate-700 mb-1">Student ID (Optional)</label>
+                            <input type="text" id="edit_studentId" class="w-full px-3 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-brand-500 outline-none text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-700 mb-1">Class Category</label>
+                            <select id="edit_studentClass" class="w-full px-3 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-brand-500 outline-none text-sm bg-white" onchange="handleClassChange(event)">
+                                <!-- Populated by JS -->
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-700 mb-1">Student Name *</label>
+                            <input type="text" id="edit_studentName" required class="w-full px-3 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-brand-500 outline-none text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-700 mb-1">Mobile Number (Optional)</label>
+                            <input type="tel" id="edit_phone" class="w-full px-3 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-brand-500 outline-none text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-700 mb-1">Location *</label>
+                            <input type="text" id="edit_location" required class="w-full px-3 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-brand-500 outline-none text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-700 mb-1">Parcel Type *</label>
+                            <select id="edit_type" required class="w-full px-3 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-brand-500 outline-none text-sm bg-white">
+                                <option value="Answer Sheet">Answer Sheet</option>
+                                <option value="Documents">Documents</option>
+                                <option value="Study Material">Study Material</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-700 mb-1">Status *</label>
+                            <select id="edit_status" required class="w-full px-3 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-brand-500 outline-none text-sm bg-white">
+                                <option value="Received">Received</option>
+                                <option value="Under Review">Under Review</option>
+                                <option value="Checked">Checked</option>
+                                <option value="Completed">Completed</option>
+                            </select>
+                        </div>
+                        <div class="md:col-span-2">
+                            <label class="block text-xs font-medium text-slate-700 mb-1">Notes</label>
+                            <textarea id="edit_notes" rows="2" class="w-full px-3 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-brand-500 outline-none text-sm"></textarea>
+                        </div>
+                    </div>
+                    <div class="pt-4 flex justify-end gap-3 border-t border-slate-100 mt-4">
+                        <button type="button" onclick="closeEditModal()" class="px-4 py-2 rounded-lg text-sm text-slate-600 font-medium hover:bg-slate-100 transition-colors">Cancel</button>
+                        <button type="submit" class="px-5 py-2 rounded-lg bg-brand-600 hover:bg-brand-700 text-white text-sm font-medium shadow-sm transition-all flex items-center gap-2">
+                            <i data-lucide="check" class="w-4 h-4"></i> Update Record
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Details Modal -->
+    <div id="details-modal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden fade-in">
+            <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+                <h3 class="font-bold text-slate-800">Parcel Details</h3>
+                <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+            <div class="p-6 space-y-4" id="modal-content">
+                <!-- Content injected via JS -->
+            </div>
+            <div class="px-6 py-4 border-t border-slate-100 bg-slate-50 flex justify-end">
+                <button onclick="closeModal()" class="px-4 py-2 bg-slate-900 text-white rounded-lg text-sm font-medium">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom Delete Modal -->
+    <div id="delete-modal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-xl w-full max-w-sm overflow-hidden fade-in p-6 text-center">
+            <div class="w-16 h-16 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i data-lucide="alert-triangle" class="w-8 h-8"></i>
+            </div>
+            <h3 class="text-xl font-bold text-slate-800 mb-2">Delete Record?</h3>
+            <p class="text-sm text-slate-500 mb-6">Are you sure you want to delete this record? This action cannot be undone.</p>
+            <div class="flex justify-center gap-3">
+                <button onclick="closeDeleteModal()" class="px-5 py-2.5 rounded-xl text-sm font-medium text-slate-700 bg-slate-100 hover:bg-slate-200 transition-colors flex-1">Cancel</button>
+                <button onclick="confirmDelete()" class="px-5 py-2.5 rounded-xl text-sm font-medium text-white bg-red-600 hover:bg-red-700 transition-colors flex-1 shadow-sm">Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Class Modal -->
+    <div id="add-class-modal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-xl w-full max-w-sm overflow-hidden fade-in">
+            <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+                <h3 class="font-bold text-slate-800">Add New Class</h3>
+                <button onclick="closeAddClassModal()" class="text-slate-400 hover:text-slate-600"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+            <div class="p-6">
+                <label class="block text-sm font-medium text-slate-700 mb-2">Class Category Name</label>
+                <input type="text" id="new_class_input" onkeydown="if(event.key==='Enter') confirmAddClass()" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-brand-500 outline-none text-sm mb-6" placeholder="e.g. ALP Vastu">
+                <div class="flex justify-end gap-3">
+                    <button onclick="closeAddClassModal()" class="px-4 py-2.5 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-100 transition-colors">Cancel</button>
+                    <button onclick="confirmAddClass()" class="px-5 py-2.5 rounded-xl text-sm font-medium text-white bg-brand-600 hover:bg-brand-700 transition-colors shadow-sm">Save Class</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Duplicate Warning Modal -->
+    <div id="duplicate-modal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-xl w-full max-w-sm overflow-hidden fade-in p-6 text-center">
+            <div class="w-16 h-16 bg-amber-50 text-amber-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i data-lucide="alert-circle" class="w-8 h-8"></i>
+            </div>
+            <h3 class="text-xl font-bold text-slate-800 mb-2">Duplicate Entry?</h3>
+            <p id="duplicate-message" class="text-sm text-slate-500 mb-6">...</p>
+            <div class="flex justify-center gap-3">
+                <button onclick="resolveDuplicate(false)" class="px-5 py-2.5 rounded-xl text-sm font-medium text-slate-700 bg-slate-100 hover:bg-slate-200 transition-colors flex-1">Cancel</button>
+                <button onclick="resolveDuplicate(true)" class="px-5 py-2.5 rounded-xl text-sm font-medium text-white bg-amber-500 hover:bg-amber-600 transition-colors flex-1 shadow-sm">Save Anyway</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div id="toast-container" class="fixed bottom-6 right-6 flex flex-col gap-3"></div>
+
+    <script>
+        // Initialize Icons
+        lucide.createIcons();
+
+        // --- DATA & MOCK DB LAYER ---
+        const GOOGLE_SHEETS_URL = "";
+        const DB_KEY = 'astro_parcels_db';
+        let parcels = [];
+        let currentUser = null;
+        
+        // Dynamic Class Management
+        let classCategories = JSON.parse(localStorage.getItem('astro_classes')) || ["None", "ALP Basic", "ALP Advance", "ALP Advance 2", "ALP Vastu"];
+        
+        // Pagination state
+        let currentPage = 1;
+        const rowsPerPage = 10;
+        let filteredParcels = [];
+
+        // UI Modal States
+        let pendingDeleteId = null;
+        let pendingClassSelectId = null;
+        let duplicateResolve = null;
+
+        const tnDistricts = [
+            "Chennai", "Coimbatore", "Madurai", "Tiruchirappalli", "Salem", 
+            "Tirunelveli", "Tiruppur", "Vellore", "Erode", "Thoothukudi", 
+            "Dindigul", "Thanjavur", "Ranipet", "Kanyakumari", "Kancheepuram"
+        ];
+        const indianStates = [
+            "Kerala", "Karnataka", "Andhra Pradesh", "Telangana", "Maharashtra",
+            "Delhi", "Gujarat", "West Bengal", "Uttar Pradesh"
+        ];
+        
+        // --- FORM ENTRY LOGIC ---
+        function populateDatalists() {
+            const locList = document.getElementById('location-suggestions');
+            const allLocs = [...tnDistricts.map(d => `${d}, Tamil Nadu`), ...indianStates];
+            allLocs.forEach(loc => {
+                const option = document.createElement('option');
+                option.value = loc;
+                locList.appendChild(option);
+            });
+            updateNameSuggestions();
+            renderClassDropdowns();
+        }
+
+        function renderClassDropdowns() {
+            const optionsHtml = classCategories.map(c => `<option value="${c}">${c}</option>`).join('') + `<option value="ADD_NEW" class="font-semibold text-brand-600">+ Add New Class...</option>`;
+            
+            document.getElementById('f_studentClass').innerHTML = optionsHtml;
+            document.getElementById('edit_studentClass').innerHTML = optionsHtml;
+            
+            // For Filter, add "All Classes" at top
+            document.getElementById('filter-class').innerHTML = `<option value="">All Classes</option>` + classCategories.map(c => `<option value="${c}">${c}</option>`).join('');
+        }
+
+        function handleClassChange(e) {
+            if (e.target.value === 'ADD_NEW') {
+                pendingClassSelectId = e.target.id;
+                document.getElementById('new_class_input').value = '';
+                document.getElementById('add-class-modal').classList.remove('hidden');
+                setTimeout(() => document.getElementById('new_class_input').focus(), 100);
+            }
+        }
+
+        function closeAddClassModal() {
+            document.getElementById('add-class-modal').classList.add('hidden');
+            if (pendingClassSelectId) {
+                document.getElementById(pendingClassSelectId).value = classCategories[0]; // Revert to fallback (None)
+                pendingClassSelectId = null;
+            }
+        }
+
+        function confirmAddClass() {
+            const input = document.getElementById('new_class_input');
+            const newClass = input.value.trim();
+            
+            if (newClass !== '') {
+                if(!classCategories.includes(newClass)) {
+                    classCategories.push(newClass);
+                    localStorage.setItem('astro_classes', JSON.stringify(classCategories));
+                }
+                renderClassDropdowns();
+                
+                if (pendingClassSelectId) {
+                    document.getElementById(pendingClassSelectId).value = newClass;
+                }
+                showToast(`Added new class: ${newClass}`, 'success');
+            } else if (pendingClassSelectId) {
+                document.getElementById(pendingClassSelectId).value = classCategories[0];
+            }
+            
+            document.getElementById('add-class-modal').classList.add('hidden');
+            pendingClassSelectId = null;
+        }
+
+        // --- DUPLICATE MODAL LOGIC ---
+        function showDuplicateModal(message) {
+            document.getElementById('duplicate-message').innerText = message;
+            document.getElementById('duplicate-modal').classList.remove('hidden');
+            return new Promise(resolve => duplicateResolve = resolve);
+        }
+
+        function resolveDuplicate(result) {
+            document.getElementById('duplicate-modal').classList.add('hidden');
+            if (duplicateResolve) duplicateResolve(result);
+        }
+
+        function updateNameSuggestions() {
+            const nameList = document.getElementById('name-suggestions');
+            nameList.innerHTML = '';
+            const uniqueNames = [...new Set(parcels.map(p => p.studentName))];
+            uniqueNames.forEach(name => {
+                const option = document.createElement('option');
+                option.value = name;
+                nameList.appendChild(option);
+            });
+        }
+
+        function setupQuickEntry() {
+            const inputs = document.querySelectorAll('.form-input');
+            inputs.forEach((input, index) => {
+                input.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        if (index < inputs.length - 1) {
+                            inputs[index + 1].focus();
+                        } else {
+                            // If last field (Notes), don't auto-submit unless ctrl+enter
+                            if(e.ctrlKey) document.getElementById('entry-form').dispatchEvent(new Event('submit'));
+                        }
+                    }
+                });
+            });
+        }
+
+        // --- APP INITIALIZATION ---
+        async function init() {
+            // Check auth FIRST to prevent login screen flash
+            const savedUser = localStorage.getItem('astro_user');
+            if(savedUser) {
+                currentUser = JSON.parse(savedUser);
+                showApp();
+            }
+
+            populateDatalists();
+            setupQuickEntry();
+            setupSearchAndFilter();
+            startClock();
+            
+            showToast('Loading data...', 'info');
+            await loadData();
+        }
+
+        async function loadData() {
+            if (GOOGLE_SHEETS_URL) {
+                try {
+                    // Added method: 'GET' and redirect: 'follow' to ensure Google's 302 redirects are handled
+                    const res = await fetch(GOOGLE_SHEETS_URL + "?action=get", {
+                        method: 'GET',
+                        redirect: 'follow'
+                    });
+                    const data = await res.json();
+                    parcels = data.reverse(); // Show newest first
+                    localStorage.setItem(DB_KEY, JSON.stringify(parcels)); // Sync to local backup
+                    
+                    document.getElementById('db-indicator').innerText = 'DB: Google Sheets';
+                    document.getElementById('db-indicator').className = 'px-2 py-0.5 rounded bg-emerald-50 text-emerald-600 border border-emerald-200';
+                    showToast('Data synced from Google Sheets', 'success');
+                } catch (e) {
+                    console.error("Sheet sync failed", e);
+                    showToast('Sheet sync failed. Using offline local data.', 'error');
+                    parcels = JSON.parse(localStorage.getItem(DB_KEY)) || [];
+                }
+            } else {
+                parcels = JSON.parse(localStorage.getItem(DB_KEY)) || [];
+            }
+        }
+
+        // --- AUTHENTICATION ---
+        document.getElementById('login-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const pass = document.getElementById('login-pass').value;
+            
+            if (pass !== 'Alp@5656') {
+                showToast('Incorrect password!', 'error');
+                return;
+            }
+
+            const role = document.getElementById('login-role').value;
+            currentUser = {
+                name: role === 'admin' ? 'System Admin' : 'Staff Member',
+                role: role,
+                avatar: role === 'admin' ? 'A' : 'S'
+            };
+            localStorage.setItem('astro_user', JSON.stringify(currentUser));
+            showToast('Login successful', 'success');
+            
+            // Clear password field for security
+            document.getElementById('login-pass').value = '';
+            
+            showApp();
+        });
+
+        function logout() {
+            localStorage.removeItem('astro_user');
+            currentUser = null;
+            document.getElementById('app-wrapper').classList.add('hidden');
+            document.getElementById('login-view').classList.remove('hidden');
+            showToast('Logged out securely');
+        }
+
+        // --- NAVIGATION & UI ---
+        function showApp() {
+            document.getElementById('login-view').classList.add('hidden');
+            document.getElementById('app-wrapper').classList.remove('hidden');
+            
+            // Setup User Info
+            document.getElementById('user-name').innerText = currentUser.name;
+            document.getElementById('user-role').innerText = `Role: ${currentUser.role}`;
+            document.getElementById('user-avatar').innerText = currentUser.avatar;
+            document.getElementById('user-avatar').className = `w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm text-white ${currentUser.role === 'admin' ? 'bg-indigo-600' : 'bg-teal-600'}`;
+            
+            navigate('dashboard');
+        }
+
+        function navigate(view) {
+            // Hide all views
+            document.querySelectorAll('.view-section').forEach(el => el.classList.add('hidden'));
+            // Remove active classes from nav
+            document.querySelectorAll('.nav-btn').forEach(el => {
+                el.classList.remove('bg-brand-50', 'text-brand-600');
+                el.classList.add('text-slate-600', 'hover:bg-slate-50');
+            });
+
+            // Show selected view
+            document.getElementById(`view-${view}`).classList.remove('hidden');
+            const navBtn = document.getElementById(`nav-${view}`);
+            if(navBtn) {
+                navBtn.classList.remove('text-slate-600', 'hover:bg-slate-50');
+                navBtn.classList.add('bg-brand-50', 'text-brand-600');
+            }
+
+            if(view === 'dashboard') updateDashboard();
+            if(view === 'records') renderTable();
+        }
+
+        function toggleMobileMenu() {
+            const menu = document.getElementById('mobile-menu');
+            menu.classList.toggle('hidden');
+        }
+
+        // --- DASHBOARD LOGIC ---
+        let lineChartInstance = null;
+        let doughnutChartInstance = null;
+
+        function updateDashboard() {
+            document.getElementById('stat-total').innerText = parcels.length;
+            
+            const today = new Date().toISOString().split('T')[0];
+            const todayCount = parcels.filter(p => p.timestamp.startsWith(today)).length;
+            document.getElementById('stat-today').innerText = todayCount;
+
+            const reviewCount = parcels.filter(p => p.status === 'Under Review').length;
+            document.getElementById('stat-review').innerText = reviewCount;
+
+            const completedCount = parcels.filter(p => p.status === 'Completed').length;
+            document.getElementById('stat-completed').innerText = completedCount;
+
+            renderCharts();
+        }
+
+        function renderCharts() {
+            const ctxLine = document.getElementById('lineChart').getContext('2d');
+            const ctxDoughnut = document.getElementById('doughnutChart').getContext('2d');
+
+            // Generate last 7 days labels
+            const labels = [];
+            const dataCounts = [];
+            for(let i=6; i>=0; i--) {
+                const d = new Date();
+                d.setDate(d.getDate() - i);
+                const dateStr = d.toISOString().split('T')[0];
+                labels.push(d.toLocaleDateString('en-US', {weekday:'short'}));
+                dataCounts.push(parcels.filter(p => p.timestamp.startsWith(dateStr)).length);
+            }
+
+            if(lineChartInstance) lineChartInstance.destroy();
+            lineChartInstance = new Chart(ctxLine, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Parcels Received',
+                        data: dataCounts,
+                        borderColor: '#0d9488', // brand-600
+                        backgroundColor: 'rgba(20, 184, 166, 0.1)', // brand-500
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }
+            });
+
+            // Type counts
+            const types = ['Answer Sheet', 'Documents', 'Study Material', 'Other'];
+            const typeCounts = types.map(t => parcels.filter(p => p.type === t).length);
+
+            if(doughnutChartInstance) doughnutChartInstance.destroy();
+            doughnutChartInstance = new Chart(ctxDoughnut, {
+                type: 'doughnut',
+                data: {
+                    labels: types,
+                    datasets: [{
+                        data: typeCounts,
+                        backgroundColor: ['#14b8a6', '#3b82f6', '#f59e0b', '#64748b'],
+                        borderWidth: 0
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } }, cutout: '70%' }
+            });
+        }
+
+        document.getElementById('entry-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const newParcel = {
+                id: 'P-' + Math.random().toString(36).substr(2, 6).toUpperCase(),
+                studentId: document.getElementById('f_studentId').value.trim(),
+                studentClass: document.getElementById('f_studentClass').value,
+                studentName: document.getElementById('f_studentName').value.trim(),
+                phone: document.getElementById('f_phone').value.trim(),
+                location: document.getElementById('f_location').value.trim(),
+                type: document.getElementById('f_type').value,
+                status: document.getElementById('f_status').value,
+                notes: document.getElementById('f_notes').value.trim(),
+                timestamp: new Date().toISOString(),
+                staffName: currentUser.name
+            };
+
+            // Duplicate Detection
+            const isDup = parcels.some(p => p.studentId && p.studentId === newParcel.studentId && p.type === newParcel.type && p.timestamp.split('T')[0] === newParcel.timestamp.split('T')[0]);
+            
+            if (isDup) {
+                const proceed = await showDuplicateModal(`Warning: A parcel of type "${newParcel.type}" for student ID "${newParcel.studentId}" was already recorded today. Save anyway?`);
+                if(!proceed) {
+                    return;
+                }
+            }
+
+            // UI Loading State
+            const saveBtn = e.target.querySelector('button[type="submit"]');
+            const originalBtnHtml = saveBtn.innerHTML;
+            saveBtn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> Saving...`;
+            saveBtn.disabled = true;
+            lucide.createIcons();
+
+            parcels.unshift(newParcel); // Add to beginning
+            localStorage.setItem(DB_KEY, JSON.stringify(parcels)); // Always keep local backup
+            
+            if (GOOGLE_SHEETS_URL) {
+                try {
+                    await fetch(GOOGLE_SHEETS_URL, {
+                        method: 'POST',
+                        mode: 'no-cors',
+                        body: JSON.stringify({ action: 'add', data: newParcel }),
+                        headers: { 'Content-Type': 'text/plain;charset=utf-8' } 
+                    });
+                } catch(err) {
+                    console.error("Sheet save error", err);
+                    showToast("Saved locally, but Google Sheet sync failed. Check internet.", "error");
+                }
+            }
+            
+            updateNameSuggestions();
+            e.target.reset();
+            // Reset dropdown to first value
+            document.getElementById('f_studentClass').value = classCategories[0];
+            document.getElementById('f_studentId').focus();
+            
+            // Restore UI
+            saveBtn.innerHTML = originalBtnHtml;
+            saveBtn.disabled = false;
+            lucide.createIcons();
+
+            if(document.getElementById('view-dashboard').classList.contains('hidden') === false) updateDashboard();
+
+            showToast(`Parcel ${newParcel.id} saved successfully!`, 'success');
+            
+            // Optional: Notification simulation
+            if(newParcel.phone && Math.random() > 0.5) showToast(`SMS Confirmation sent to ${newParcel.phone}`, 'info');
+        });
+
+        // --- DATA TABLE LOGIC ---
+        function setupSearchAndFilter() {
+            document.getElementById('search-input').addEventListener('input', () => { currentPage=1; renderTable(); });
+            document.getElementById('filter-class').addEventListener('change', () => { currentPage=1; renderTable(); });
+            document.getElementById('filter-type').addEventListener('change', () => { currentPage=1; renderTable(); });
+            document.getElementById('filter-status').addEventListener('change', () => { currentPage=1; renderTable(); });
+            document.getElementById('filter-date-from').addEventListener('change', () => { currentPage=1; renderTable(); });
+            document.getElementById('filter-date-to').addEventListener('change', () => { currentPage=1; renderTable(); });
+        }
+
+        function clearDateFilters() {
+            document.getElementById('filter-date-from').value = '';
+            document.getElementById('filter-date-to').value = '';
+            currentPage = 1;
+            renderTable();
+        }
+
+        function renderTable() {
+            const search = document.getElementById('search-input').value.toLowerCase();
+            const classFilter = document.getElementById('filter-class').value;
+            const typeFilter = document.getElementById('filter-type').value;
+            const statusFilter = document.getElementById('filter-status').value;
+            const dateFrom = document.getElementById('filter-date-from').value;
+            const dateTo = document.getElementById('filter-date-to').value;
+
+            // Apply Filters
+            filteredParcels = parcels.filter(p => {
+                const matchSearch = p.studentName.toLowerCase().includes(search) || 
+                                    (p.studentId && p.studentId.toLowerCase().includes(search)) || 
+                                    (p.phone && p.phone.includes(search)) ||
+                                    p.id.toLowerCase().includes(search);
+                                    
+                const matchClass = classFilter ? p.studentClass === classFilter : true;
+                const matchType = typeFilter ? p.type === typeFilter : true;
+                const matchStatus = statusFilter ? p.status === statusFilter : true;
+                
+                let matchDate = true;
+                if (dateFrom || dateTo) {
+                    const pDate = p.timestamp.split('T')[0];
+                    if (dateFrom && dateTo) {
+                        matchDate = pDate >= dateFrom && pDate <= dateTo;
+                    } else if (dateFrom) {
+                        matchDate = pDate >= dateFrom;
+                    } else if (dateTo) {
+                        matchDate = pDate <= dateTo;
+                    }
+                }
+
+                return matchSearch && matchClass && matchType && matchStatus && matchDate;
+            });
+
+            // Pagination
+            const totalPages = Math.ceil(filteredParcels.length / rowsPerPage) || 1;
+            document.getElementById('btn-prev').disabled = currentPage === 1;
+            document.getElementById('btn-next').disabled = currentPage === totalPages;
+            
+            const startIdx = (currentPage - 1) * rowsPerPage;
+            const paginated = filteredParcels.slice(startIdx, startIdx + rowsPerPage);
+            
+            document.getElementById('pagination-info').innerText = `Showing ${startIdx + 1 > filteredParcels.length ? 0 : startIdx + 1} to ${Math.min(startIdx + rowsPerPage, filteredParcels.length)} of ${filteredParcels.length} entries`;
+
+            const tbody = document.getElementById('table-body');
+            tbody.innerHTML = '';
+
+            if (paginated.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" class="px-6 py-8 text-center text-slate-500">No records found matching criteria.</td></tr>`;
+                return;
+            }
+
+            paginated.forEach(p => {
+                const dateObj = new Date(p.timestamp);
+                const dateStr = dateObj.toLocaleDateString('en-GB');
+                const timeStr = dateObj.toLocaleTimeString('en-US', {hour: '2-digit', minute:'2-digit'});
+                
+                let statusBadge = '';
+                if(p.status === 'Received') statusBadge = 'bg-slate-100 text-slate-700';
+                else if(p.status === 'Under Review') statusBadge = 'bg-amber-100 text-amber-700';
+                else if(p.status === 'Checked') statusBadge = 'bg-blue-100 text-blue-700';
+                else statusBadge = 'bg-emerald-100 text-emerald-700';
+
+                const classLabel = (!p.studentClass || p.studentClass === 'None') ? '' : `<span class="bg-indigo-50 text-indigo-600 px-1.5 py-0.5 rounded text-[10px] font-bold ml-2 uppercase tracking-wide border border-indigo-100">${p.studentClass}</span>`;
+
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="px-6 py-4">
+                        <div class="font-medium text-slate-800">${p.id}</div>
+                        <div class="text-xs text-slate-500">${dateStr} • ${timeStr}</div>
+                    </td>
+                    <td class="px-6 py-4">
+                        <div class="font-medium text-slate-800 flex items-center">${p.studentName} ${classLabel}</div>
+                        <div class="text-xs text-slate-500 mt-0.5">${p.studentId || 'No ID'} • ${p.phone || 'No Number'}</div>
+                    </td>
+                    <td class="px-6 py-4">
+                        <div class="text-sm text-slate-800">${p.type}</div>
+                        <div class="text-xs text-slate-500 truncate max-w-[150px]">${p.location}</div>
+                    </td>
+                    <td class="px-6 py-4">
+                        <span class="px-2.5 py-1 rounded-full text-xs font-medium ${statusBadge}">${p.status}</span>
+                    </td>
+                    <td class="px-6 py-4 text-right">
+                        <button onclick="viewDetails('${p.id}')" class="p-1.5 text-brand-600 hover:bg-brand-50 rounded transition-colors" title="View Details"><i data-lucide="eye" class="w-4 h-4"></i></button>
+                        <button onclick="openEditModal('${p.id}')" class="p-1.5 text-amber-600 hover:bg-amber-50 rounded transition-colors ml-1" title="Edit Record"><i data-lucide="edit" class="w-4 h-4"></i></button>
+                        ${currentUser.role === 'admin' ? `<button onclick="openDeleteModal('${p.id}')" class="p-1.5 text-red-600 hover:bg-red-50 rounded transition-colors ml-1" title="Delete"><i data-lucide="trash-2" class="w-4 h-4"></i></button>` : ''}
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+            lucide.createIcons();
+        }
+
+        function prevPage() { if(currentPage > 1) { currentPage--; renderTable(); } }
+        function nextPage() { const max = Math.ceil(filteredParcels.length/rowsPerPage); if(currentPage < max) { currentPage++; renderTable(); } }
+
+        // --- ACTIONS (View, Edit, Delete) ---
+        function viewDetails(id) {
+            const p = parcels.find(x => x.id === id);
+            if(!p) return;
+            
+            const dateObj = new Date(p.timestamp);
+            const html = `
+                <div class="grid grid-cols-2 gap-y-4 gap-x-6 text-sm">
+                    <div><span class="text-slate-500 block text-xs">Parcel ID</span><span class="font-medium text-slate-800">${p.id}</span></div>
+                    <div><span class="text-slate-500 block text-xs">Date Received</span><span class="font-medium text-slate-800">${dateObj.toLocaleString()}</span></div>
+                    
+                    <div><span class="text-slate-500 block text-xs">Student Name</span><span class="font-medium text-slate-800">${p.studentName}</span></div>
+                    <div><span class="text-slate-500 block text-xs">Class Category</span><span class="font-medium text-slate-800">${p.studentClass || 'None'}</span></div>
+
+                    <div><span class="text-slate-500 block text-xs">Student ID</span><span class="font-medium text-slate-800">${p.studentId || 'N/A'}</span></div>
+                    <div><span class="text-slate-500 block text-xs">Phone Number</span><span class="font-medium text-slate-800">${p.phone || 'N/A'}</span></div>
+                    
+                    <div><span class="text-slate-500 block text-xs">Location</span><span class="font-medium text-slate-800">${p.location}</span></div>
+                    <div><span class="text-slate-500 block text-xs">Parcel Type</span><span class="font-medium text-slate-800">${p.type}</span></div>
+                    
+                    <div><span class="text-slate-500 block text-xs">Status</span><span class="font-medium text-slate-800">${p.status}</span></div>
+                    
+                    <div class="col-span-2"><span class="text-slate-500 block text-xs">Notes</span><span class="font-medium text-slate-800 bg-slate-50 p-2 rounded block mt-1">${p.notes || 'None'}</span></div>
+                    <div class="col-span-2 border-t border-slate-100 pt-3 mt-2"><span class="text-slate-500 text-xs">Processed By: </span><span class="font-medium text-slate-700 text-xs">${p.staffName}</span></div>
+                </div>
+            `;
+            document.getElementById('modal-content').innerHTML = html;
+            document.getElementById('details-modal').classList.remove('hidden');
+        }
+
+        function closeModal() { document.getElementById('details-modal').classList.add('hidden'); }
+
+        // --- EDIT LOGIC ---
+        function openEditModal(id) {
+            const p = parcels.find(x => x.id === id);
+            if(!p) return;
+
+            // Populate the form fields
+            document.getElementById('edit_id').value = p.id;
+            document.getElementById('edit_studentId').value = p.studentId;
+            document.getElementById('edit_studentClass').value = p.studentClass || "None";
+            document.getElementById('edit_studentName').value = p.studentName;
+            document.getElementById('edit_phone').value = p.phone;
+            document.getElementById('edit_location').value = p.location;
+            document.getElementById('edit_type').value = p.type;
+            document.getElementById('edit_status').value = p.status;
+            document.getElementById('edit_notes').value = p.notes || '';
+
+            document.getElementById('edit-modal').classList.remove('hidden');
+        }
+
+        function closeEditModal() {
+            document.getElementById('edit-modal').classList.add('hidden');
+        }
+
+        document.getElementById('edit-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const id = document.getElementById('edit_id').value;
+            const updatedData = {
+                studentId: document.getElementById('edit_studentId').value.trim(),
+                studentClass: document.getElementById('edit_studentClass').value,
+                studentName: document.getElementById('edit_studentName').value.trim(),
+                phone: document.getElementById('edit_phone').value.trim(),
+                location: document.getElementById('edit_location').value.trim(),
+                type: document.getElementById('edit_type').value,
+                status: document.getElementById('edit_status').value,
+                notes: document.getElementById('edit_notes').value.trim(),
+            };
+
+            const index = parcels.findIndex(p => p.id === id);
+            if (index !== -1) {
+                // Merge updated fields with original data (keeps timestamp and staffName same)
+                parcels[index] = { ...parcels[index], ...updatedData };
+                
+                // Save locally
+                localStorage.setItem(DB_KEY, JSON.stringify(parcels));
+                
+                // Update UI
+                renderTable();
+                updateDashboard();
+                closeEditModal();
+                showToast('Record updated successfully', 'success');
+
+                // Update Google Sheets Backend
+                if (GOOGLE_SHEETS_URL) {
+                    try {
+                        await fetch(GOOGLE_SHEETS_URL, {
+                            method: 'POST',
+                            mode: 'no-cors',
+                            body: JSON.stringify({ action: 'update', id: id, data: parcels[index] }),
+                            headers: { 'Content-Type': 'text/plain;charset=utf-8' }
+                        });
+                    } catch(err) {
+                        console.error("Sheet update error", err);
+                        showToast("Updated locally, but Google Sheet sync failed.", "error");
+                    }
+                }
+            }
+        });
+
+        // --- DELETE LOGIC ---
+        function openDeleteModal(id) {
+            pendingDeleteId = id;
+            document.getElementById('delete-modal').classList.remove('hidden');
+        }
+
+        function closeDeleteModal() {
+            document.getElementById('delete-modal').classList.add('hidden');
+            pendingDeleteId = null;
+        }
+
+        async function confirmDelete() {
+            if (!pendingDeleteId) return;
+            const id = pendingDeleteId;
+            closeDeleteModal(); // Close modal immediately for snappy UI
+            
+            parcels = parcels.filter(p => p.id !== id);
+            localStorage.setItem(DB_KEY, JSON.stringify(parcels));
+            
+            if (GOOGLE_SHEETS_URL) {
+                showToast('Deleting from Google Sheets...', 'info');
+                try {
+                    await fetch(GOOGLE_SHEETS_URL, {
+                        method: 'POST',
+                        mode: 'no-cors',
+                        body: JSON.stringify({ action: 'delete', id: id }),
+                        headers: { 'Content-Type': 'text/plain;charset=utf-8' }
+                    });
+                    showToast('Record deleted successfully', 'success');
+                } catch(e) {
+                    console.error("Delete failed", e);
+                    showToast('Deleted locally, but Sheet update failed', 'error');
+                }
+            } else {
+                showToast('Record deleted successfully', 'success');
+            }
+            
+            renderTable();
+            updateDashboard();
+        }
+
+        function exportToExcel() {
+            if(filteredParcels.length === 0) {
+                showToast('No records to export!', 'error');
+                return;
+            }
+            // Format data for export
+            const exportData = filteredParcels.map(p => ({
+                "Parcel ID": p.id,
+                "Student ID": p.studentId,
+                "Class Category": p.studentClass || "None",
+                "Student Name": p.studentName,
+                "Mobile Number": p.phone,
+                "Location / Address": p.location,
+                "Parcel Type": p.type,
+                "Status": p.status,
+                "Date Received": new Date(p.timestamp).toLocaleDateString('en-GB'),
+                "Time": new Date(p.timestamp).toLocaleTimeString('en-US'),
+                "Notes": p.notes,
+                "Processed By": p.staffName
+            }));
+
+            const ws = XLSX.utils.json_to_sheet(exportData);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Parcels");
+            
+            const dateStr = new Date().toISOString().split('T')[0];
+            XLSX.writeFile(wb, `AstroParcels_Export_${dateStr}.xlsx`);
+            showToast('Excel download started', 'success');
+        }
+
+        // --- UTILS ---
+        function showToast(msg, type = 'success') {
+            const toast = document.createElement('div');
+            const bg = type === 'success' ? 'bg-emerald-50 text-emerald-800 border-emerald-200' : 
+                       type === 'error' ? 'bg-red-50 text-red-800 border-red-200' : 
+                       'bg-blue-50 text-blue-800 border-blue-200';
+            const icon = type === 'success' ? 'check-circle' : type === 'error' ? 'alert-circle' : 'info';
+            
+            toast.className = `toast flex items-center gap-3 px-4 py-3 rounded-xl border shadow-lg ${bg}`;
+            toast.innerHTML = `<i data-lucide="${icon}" class="w-5 h-5"></i><span class="text-sm font-medium">${msg}</span>`;
+            
+            document.getElementById('toast-container').appendChild(toast);
+            lucide.createIcons();
+            
+            // Trigger animation
+            setTimeout(() => toast.classList.add('show'), 10);
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        function startClock() {
+            const clockEl = document.getElementById('live-clock');
+            setInterval(() => {
+                clockEl.innerText = new Date().toLocaleString('en-US', {dateStyle: 'medium', timeStyle: 'short'});
+            }, 1000);
+        }
+
+        // Run
+        init();
+    </script>
+</body>
+</html>
