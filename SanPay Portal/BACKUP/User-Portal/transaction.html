@@ -574,7 +574,7 @@
 
       // Trigger native UPI intent ONLY if method is UPI
       if (selectedMethod === 'UPI') {
-        const upiLink = `upi://pay?pa=crazycangstersanthosh@okhdfcbank&pn=SanPay&am=${parseFloat(amount).toFixed(2)}&cu=INR&tn=${encodeURIComponent(remarks || 'SanPay Transaction')}`;
+        const upiLink = `upi://pay?pa=YOUR PAY ID&pn=SanPay&am=${parseFloat(amount).toFixed(2)}&cu=INR&tn=${encodeURIComponent(remarks || 'SanPay Transaction')}`;
         window.location.href = upiLink;
       }
 
