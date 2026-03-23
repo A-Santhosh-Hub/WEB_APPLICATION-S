@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Transaction History — SanPay Portal</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <style>
+    .history-header {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 16px;
+      margin-bottom: 28px;
+    }
+
+    .history-header h1 {
+      font-family: var(--font-display);
+      font-size: clamp(1.5rem, 4vw, 2rem);
+      font-weight: 800;
+      margin: 0;
+    }
+
+    .history-header p {
+      color: var(--text-2);
+      font-size: 0.875rem;
+      margin: 6px 0 0;
+    }
+
+    /* ─── Summary strip ─ */
+    .summary-strip {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 24px;
+    }
+    .sum-pill {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+    .sum-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    /* ─── Cards view (mobile) ─ */
+    .txn-cards { display: none; flex-direction: column; gap: 12px; }
+
+    .txn-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 18px 20px;
+      transition: var(--transition);
+      animation: fadeIn 0.35s ease both;
+    }
+    .txn-card:hover {
+      border-color: rgba(255,255,255,0.15);
+      background: var(--bg-card-hover);
+    }
+    .txn-card.highlight-new {
+      border-color: rgba(255,255,255,0.3);
+      box-shadow: 0 0 0 1px rgba(255,255,255,0.1), var(--shadow-primary);
+    }
+
+    .card-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
+    .card-id {
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      color: var(--violet-light);
+    }
+    .card-body {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      font-size: 0.8125rem;
+      color: var(--text-2);
+    }
+    .card-field strong {
+      display: block;
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--text-3);
+      margin-bottom: 2px;
+    }
+    .card-field span {
+      color: var(--text);
+      font-weight: 500;
+    }
+    .card-amount {
+      font-family: var(--font-mono);
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--cyan-light);
+    }
+    .card-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 14px;
+      padding-top: 12px;
+      border-top: 1px solid var(--border);
+    }
+
+    /* ─── Highlight new TXN row/card ─ */
+    tr.highlight-new td {
+      background: rgba(255,255,255,0.05);
+    }
+
+    /* ─── Table actions cell ─ */
+    .actions-cell { white-space: nowrap; }
+
+    /* ─── Loading ─ */
+    .loader-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 14px;
+      padding: 64px;
+    }
+    .loader-wrap p { color: var(--text-2); font-size: 0.875rem; }
+
+    /* Responsive: cards on small screens */
+    @media (max-width: 860px) {
+      .txn-cards { display: flex; }
+      .table-wrap { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<div id="confetti-container"></div>
+
+<!-- ── Navbar ── -->
+<nav class="navbar">
+  <a href="index.html" class="nav-brand">
+    <div class="brand-icon">💳</div>
+    SanPay
+  </a>
+  <button class="nav-toggle" id="navToggle"><span></span><span></span><span></span></button>
+  <ul class="nav-links" id="navLinks">
+    <li><a href="index.html"><i class="fa-solid fa-shield-halved"></i> Dashboard</a></li>
+    <li><a href="history.html"><i class="fa-solid fa-clock-rotate-left"></i> History</a></li>
+  </ul>
+</nav>
+
+<div class="main-container">
+
+  <!-- Header -->
+  <div class="history-header">
+    <div>
+      <h1>Transaction <span class="grad-text">History</span></h1>
+      <p id="txn-count-label">Loading transactions…</p>
+    </div>
+    <button class="btn btn-secondary" id="refreshBtn" onclick="loadHistory()">
+      <i class="fa-solid fa-rotate-right"></i> Refresh
+    </button>
+  </div>
+
+  <!-- Summary pills -->
+  <div class="summary-strip" id="summaryStrip"></div>
+
+  <!-- Toolbar -->
+  <div class="toolbar">
+    <div class="search-box">
+      <i class="fa-solid fa-magnifying-glass"></i>
+      <input type="text" id="searchInput" placeholder="Search by name, TXN ID, amount…" oninput="handleSearch()">
+    </div>
+    <div class="filter-tabs">
+      <button class="filter-tab active" data-filter="All"     onclick="setFilter(this,'All')">All</button>
+      <button class="filter-tab"        data-filter="Pending" onclick="setFilter(this,'Pending')"><i class="fa-solid fa-clock" style="font-size:.7rem"></i> Pending</button>
+      <button class="filter-tab"        data-filter="Success" onclick="setFilter(this,'Success')"><i class="fa-solid fa-check" style="font-size:.7rem"></i> Success</button>
+      <button class="filter-tab"        data-filter="Failed"  onclick="setFilter(this,'Failed')"><i class="fa-solid fa-xmark" style="font-size:.7rem"></i> Failed</button>
+    </div>
+  </div>
+
+  <!-- Loading state -->
+  <div id="loaderWrap" class="loader-wrap">
+    <div class="spinner-lg"></div>
+    <p>Fetching transactions…</p>
+  </div>
+
+  <!-- Desktop table -->
+  <div class="table-wrap" id="tableWrap" style="display:none">
+    <table>
+      <thead>
+        <tr>
+          <th>TXN ID</th>
+          <th>Name</th>
+          <th>Phone</th>
+          <th>Amount</th>
+          <th>Method</th>
+          <th>Remarks</th>
+          <th>Status</th>
+          <th>Date</th>
+          <th>Receipt</th>
+        </tr>
+      </thead>
+      <tbody id="txnTableBody"></tbody>
+    </table>
+  </div>
+
+  <!-- Mobile cards -->
+  <div class="txn-cards" id="txnCards"></div>
+
+  <!-- Empty state -->
+  <div class="empty-state" id="emptyState" style="display:none">
+    <div class="empty-icon">🧾</div>
+    <h3>No transactions found</h3>
+    <p>Try adjusting your search or filter.</p>
+  </div>
+
+</div>
+
+<!-- Footer -->
+<footer class="footer">
+  <p>Developed By <a href="https://a-santhosh-hub.github.io/in/" target="_blank">Santhosh A</a></p>
+</footer>
+
+<script src="script.js"></script>
+<script>
+  let allTransactions = [];
+  let currentFilter   = 'All';
+  let searchQuery     = '';
+  const lastTxn       = getLastTransaction();
+
+  // ── Load transactions ─────────────────────────────────
+  async function loadHistory() {
+    document.getElementById('loaderWrap').style.display  = 'flex';
+    document.getElementById('tableWrap').style.display   = 'none';
+    document.getElementById('txnCards').style.display    = 'none';
+    document.getElementById('emptyState').style.display  = 'none';
+
+    try {
+      if (API_URL === 'YOUR_APPS_SCRIPT_WEB_APP_URL_HERE') {
+        // Demo data
+        allTransactions = getDemoData();
+        showToast('Demo mode — showing sample transactions.', 'info', 4000);
+      } else {
+        const res = await fetchTransactions();
+        if (!res.success) throw new Error(res.error || 'Failed to load');
+        allTransactions = res.data || [];
+      }
+    } catch (err) {
+      showToast('Failed to load: ' + err.message, 'error');
+      allTransactions = [];
+    }
+
+    renderAll();
+  }
+
+  // ── Render ────────────────────────────────────────────
+  function renderAll() {
+    let rows = [...allTransactions];
+
+    // Filter
+    if (currentFilter !== 'All') {
+      rows = rows.filter(r => (r['Status'] || r.status) === currentFilter);
+    }
+
+    // Search
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase();
+      rows = rows.filter(r =>
+        Object.values(r).some(v => String(v).toLowerCase().includes(q))
+      );
+    }
+
+    updateSummary();
+    document.getElementById('loaderWrap').style.display = 'none';
+
+    if (rows.length === 0) {
+      document.getElementById('tableWrap').style.display  = 'none';
+      document.getElementById('txnCards').style.display   = 'none';
+      document.getElementById('emptyState').style.display = 'block';
+      document.getElementById('txn-count-label').textContent =
+        `${allTransactions.length} total · 0 matching`;
+      return;
+    }
+
+    document.getElementById('emptyState').style.display = 'none';
+    document.getElementById('txn-count-label').textContent =
+      `${rows.length} of ${allTransactions.length} transaction${allTransactions.length !== 1 ? 's' : ''}`;
+
+    renderTable(rows);
+    renderCards(rows);
+
+    document.getElementById('tableWrap').style.display = 'block';
+    document.getElementById('txnCards').style.display  = 'flex';
+  }
+
+  function renderTable(rows) {
+    const tbody = document.getElementById('txnTableBody');
+    tbody.innerHTML = '';
+
+    rows.forEach((r, i) => {
+      const txnId   = r['Transaction ID'] || r.txnId    || '';
+      const name    = r['Name']           || r.name     || '';
+      const phone   = r['Phone']          || r.phone    || '';
+      const amount  = r['Amount']         || r.amount   || 0;
+      const method  = r['Payment Method'] || r.method   || '';
+      const remarks = r['Remarks']        || r.remarks  || '—';
+      const status  = r['Status']         || r.status   || 'Pending';
+      const ts      = r['Timestamp']      || r.timestamp|| '';
+      const isNew   = lastTxn && lastTxn.txnId === txnId;
+
+      const tr = document.createElement('tr');
+      if (isNew) tr.classList.add('highlight-new');
+      tr.style.animationDelay = `${i * 30}ms`;
+
+      tr.innerHTML = `
+        <td class="txn-id">${txnId}</td>
+        <td><strong>${escHtml(name)}</strong></td>
+        <td style="font-family:var(--font-mono);font-size:.85rem;color:var(--text-2)">${escHtml(phone)}</td>
+        <td class="amount-cell">${formatINR(amount)}</td>
+        <td>${methodIcon(method)} <span style="margin-left:4px;font-size:.8rem">${escHtml(method)}</span></td>
+        <td style="color:var(--text-2);font-size:.8rem;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${escHtml(remarks)}">${escHtml(remarks)}</td>
+        <td>${statusBadge(status)}</td>
+        <td style="font-size:.8rem;color:var(--text-2);white-space:nowrap">${formatDateShort(ts)}</td>
+        <td class="actions-cell">
+          <button class="btn btn-icon" title="Download Receipt" onclick='downloadReceipt(${JSON.stringify(r)})'>
+            <i class="fa-solid fa-download"></i>
+          </button>
+        </td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+
+  function renderCards(rows) {
+    const container = document.getElementById('txnCards');
+    container.innerHTML = '';
+
+    rows.forEach((r, i) => {
+      const txnId   = r['Transaction ID'] || r.txnId    || '';
+      const name    = r['Name']           || r.name     || '';
+      const phone   = r['Phone']          || r.phone    || '';
+      const amount  = r['Amount']         || r.amount   || 0;
+      const method  = r['Payment Method'] || r.method   || '';
+      const remarks = r['Remarks']        || r.remarks  || '—';
+      const status  = r['Status']         || r.status   || 'Pending';
+      const ts      = r['Timestamp']      || r.timestamp|| '';
+      const isNew   = lastTxn && lastTxn.txnId === txnId;
+
+      const card = document.createElement('div');
+      card.className = 'txn-card' + (isNew ? ' highlight-new' : '');
+      card.style.animationDelay = `${i * 25}ms`;
+
+      card.innerHTML = `
+        <div class="card-top">
+          <span class="card-id">${txnId}</span>
+          ${statusBadge(status)}
+        </div>
+        <div class="card-body">
+          <div class="card-field"><strong>Sender</strong><span>${escHtml(name)}</span></div>
+          <div class="card-field"><strong>Amount</strong><span class="card-amount">${formatINR(amount)}</span></div>
+          <div class="card-field"><strong>Method</strong><span>${escHtml(method)}</span></div>
+          <div class="card-field"><strong>Phone</strong><span>${escHtml(phone)}</span></div>
+          <div class="card-field"><strong>Date</strong><span style="font-size:.75rem">${formatDateShort(ts)}</span></div>
+          <div class="card-field"><strong>Remarks</strong><span style="font-size:.8rem">${escHtml(remarks)}</span></div>
+        </div>
+        <div class="card-actions">
+          <button class="btn btn-secondary btn-sm" onclick='downloadReceipt(${JSON.stringify(r)})'>
+            <i class="fa-solid fa-download"></i> Receipt
+          </button>
+          <a href="index.html" class="btn btn-secondary btn-sm" style="font-size:.75rem">
+            <i class="fa-solid fa-shield-halved"></i> Dashboard
+          </a>
+        </div>
+      `;
+      container.appendChild(card);
+    });
+  }
+
+  function updateSummary() {
+    const total   = allTransactions.length;
+    const success = allTransactions.filter(r => (r['Status'] || r.status) === 'Success').length;
+    const pending = allTransactions.filter(r => (r['Status'] || r.status) === 'Pending').length;
+    const failed  = allTransactions.filter(r => (r['Status'] || r.status) === 'Failed').length;
+    const volume  = allTransactions
+      .filter(r => (r['Status'] || r.status) === 'Success')
+      .reduce((s,r) => s + (parseFloat(r['Amount'] || r.amount) || 0), 0);
+
+    document.getElementById('summaryStrip').innerHTML = `
+      <div class="sum-pill"><div class="sum-dot" style="background:#94a3b8"></div><span>${total} Total</span></div>
+      <div class="sum-pill"><div class="sum-dot" style="background:var(--emerald)"></div><span>${success} Success</span></div>
+      <div class="sum-pill"><div class="sum-dot" style="background:var(--amber);animation:pulse 1.5s infinite"></div><span>${pending} Pending</span></div>
+      <div class="sum-pill"><div class="sum-dot" style="background:var(--rose)"></div><span>${failed} Failed</span></div>
+      ${volume > 0 ? `<div class="sum-pill"><i class="fa-solid fa-indian-rupee-sign" style="color:var(--cyan-light);font-size:.75rem"></i><span>${formatINR(volume)} Processed</span></div>` : ''}
+    `;
+  }
+
+  // ── Filter & Search ───────────────────────────────────
+  function setFilter(btn, filter) {
+    document.querySelectorAll('.filter-tab').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentFilter = filter;
+    renderAll();
+  }
+
+  let searchDebounce;
+  function handleSearch() {
+    clearTimeout(searchDebounce);
+    searchDebounce = setTimeout(() => {
+      searchQuery = document.getElementById('searchInput').value.trim();
+      renderAll();
+    }, 250);
+  }
+
+  // ── Demo Data ─────────────────────────────────────────
+  function getDemoData() {
+    const methods = ['UPI','Card','Wallet','Cash'];
+    const statuses = ['Success','Success','Success','Pending','Failed'];
+    const names = ['Santhosh Kumar','Priya Sharma','Arjun Patel','Meena Raj','Vikram Singh','Ananya Krishnan'];
+    const remarks = ['Rent','Groceries','Gift','Lunch','Online Shopping','Subscription','—'];
+    const result = [];
+    for (let i = 0; i < 18; i++) {
+      const d = new Date(Date.now() - i * 86400000 * Math.random() * 3);
+      result.push({
+        'Transaction ID': `TXN${(Math.random()*900000+100000)|0}`,
+        'Name':           names[i % names.length],
+        'Phone':          `9${Math.floor(Math.random()*900000000+100000000)}`,
+        'Amount':         Math.floor(Math.random() * 9800 + 200),
+        'Payment Method': methods[i % methods.length],
+        'Remarks':        remarks[i % remarks.length],
+        'Status':         statuses[i % statuses.length],
+        'Timestamp':      d.toISOString()
+      });
+    }
+    return result;
+  }
+
+  // ── HTML escape helper ────────────────────────────────
+  function escHtml(str) {
+    return String(str || '')
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+      .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  // ── Auto-Refresh (Polling) ────────────────────────────
+  setInterval(async () => {
+    if (API_URL === 'YOUR_APPS_SCRIPT_WEB_APP_URL_HERE') return;
+    try {
+      const res = await fetchTransactions();
+      if (res.success && res.data) {
+        if (JSON.stringify(res.data) !== JSON.stringify(allTransactions)) {
+           allTransactions = res.data;
+           renderAll();
+        }
+      }
+    } catch(e) {}
+  }, 5000);
+
+  // ── Init ──────────────────────────────────────────────
+  loadHistory();
+</script>
+</body>
+</html>

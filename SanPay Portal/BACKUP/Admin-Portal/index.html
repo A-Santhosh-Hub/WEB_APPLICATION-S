@@ -1,0 +1,817 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Panel — SanPay Portal</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+  <style>
+    /* ─── Login Overlay ── */
+    #loginOverlay {
+      position: fixed;
+      inset: 0;
+      z-index: 900;
+      background: rgba(3,3,12,0.97);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      backdrop-filter: blur(8px);
+    }
+
+    .login-card {
+      width: 100%;
+      max-width: 420px;
+      background: rgba(12,12,30,0.95);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-xl);
+      padding: 44px 40px;
+      text-align: center;
+      animation: scaleIn 0.4s cubic-bezier(0.34,1.56,0.64,1);
+      box-shadow: 0 40px 100px rgba(0,0,0,0.6);
+    }
+
+    .login-icon {
+      width: 68px; height: 68px;
+      border-radius: 999px;
+      background: var(--text);
+      color: #000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.8rem;
+      margin: 0 auto 24px;
+      box-shadow: var(--shadow-primary);
+    }
+
+    .login-card h2 {
+      font-family: var(--font-display);
+      font-size: 1.6rem;
+      font-weight: 800;
+      margin-bottom: 6px;
+    }
+
+    .login-card p {
+      color: var(--text-2);
+      font-size: 0.875rem;
+      margin-bottom: 28px;
+    }
+
+    .login-card .form-group { text-align: left; }
+
+    @keyframes shake {
+      0%,100% { transform: translateX(0); }
+      20%,60%  { transform: translateX(-8px); }
+      40%,80%  { transform: translateX(8px); }
+    }
+    .shake { animation: shake 0.45s cubic-bezier(.36,.07,.19,.97); }
+
+    .lock-hint {
+      font-size: 0.75rem;
+      color: var(--text-3);
+      margin-top: 14px;
+    }
+
+    /* ─── Admin Dashboard ── */
+    #adminDashboard { display: none; }
+
+    .admin-topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 32px;
+    }
+
+    .admin-topbar h1 {
+      font-family: var(--font-display);
+      font-size: 1.8rem;
+      font-weight: 800;
+    }
+
+    .admin-topbar .top-right { display: flex; align-items: center; gap: 10px; }
+
+    /* ─── Charts row ── */
+    .charts-row {
+      display: grid;
+      grid-template-columns: 1fr 280px;
+      gap: 20px;
+      margin-bottom: 28px;
+    }
+
+    @media (max-width: 768px) { .charts-row { grid-template-columns: 1fr; } }
+
+    .chart-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 20px;
+    }
+
+    .chart-card h3 {
+      font-family: var(--font-display);
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: var(--text-2);
+      margin-bottom: 16px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    /* ─── Status select ── */
+    .status-select {
+      background: var(--bg-2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text);
+      padding: 5px 10px;
+      font-family: var(--font-body);
+      font-size: 0.8rem;
+      cursor: pointer;
+      outline: none;
+      transition: var(--transition);
+      min-width: 100px;
+    }
+    .status-select:focus { border-color: var(--border-focus); }
+
+    /* ─── Confirm Modal ── */
+    .confirm-modal .modal-box {
+      max-width: 380px;
+    }
+    .confirm-modal h3 {
+      font-family: var(--font-display);
+      font-size: 1.3rem;
+      font-weight: 700;
+      margin-bottom: 10px;
+    }
+    .confirm-modal p {
+      color: var(--text-2);
+      font-size: 0.875rem;
+      margin-bottom: 24px;
+    }
+    .confirm-modal .confirm-txn {
+      font-family: var(--font-mono);
+      color: var(--rose);
+      font-size: 0.9rem;
+    }
+    .confirm-actions { display: flex; gap: 12px; justify-content: center; }
+
+    /* ─── Mobile admin cards ── */
+    .admin-cards { display: none; flex-direction: column; gap: 12px; }
+
+    @media (max-width: 860px) {
+      .admin-cards { display: flex; }
+      #adminTableWrap { display: none; }
+    }
+
+    .admin-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 18px;
+      animation: fadeIn 0.35s ease both;
+    }
+    .admin-card-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+    .admin-card-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: .8rem; color: var(--text-2); margin-bottom: 14px; }
+    .admin-card-grid strong { display: block; font-size:.68rem; text-transform:uppercase; letter-spacing:.04em; color:var(--text-3); margin-bottom:1px; }
+    .admin-card-grid span { color: var(--text); font-weight:500; }
+    .admin-card-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  </style>
+</head>
+<body>
+
+<div id="confetti-container"></div>
+
+<!-- ══════════════════════ LOGIN OVERLAY ══════════════════════ -->
+<div id="loginOverlay">
+  <div class="login-card" id="loginCard">
+    <div class="login-icon">🛡️</div>
+    <h2>Admin Access</h2>
+    <p>Enter the admin password to continue</p>
+
+    <div class="form-group">
+      <label class="form-label">Password</label>
+      <div class="input-wrap">
+        <i class="fa-solid fa-lock input-icon"></i>
+        <input type="password" id="adminPass" class="form-control"
+               placeholder="Enter admin password"
+               autocomplete="current-password"
+               onkeydown="if(event.key==='Enter')doLogin()">
+        <button class="input-icon-right" type="button" id="passToggle"
+                onclick="togglePass()" tabindex="-1">
+          <i class="fa-solid fa-eye" id="eyeIcon"></i>
+        </button>
+      </div>
+      <span class="form-hint error-msg" id="loginErr"></span>
+    </div>
+
+    <button class="btn btn-primary" style="width:100%;margin-top:8px;padding:13px" onclick="doLogin()">
+      <i class="fa-solid fa-unlock"></i> Login
+    </button>
+    <p class="lock-hint">🔐 This area is restricted to administrators only.</p>
+  </div>
+</div>
+
+<!-- ══════════════════════ NAVBAR ══════════════════════════════ -->
+<nav class="navbar">
+  <a href="index.html" class="nav-brand">
+    <div class="brand-icon">💳</div>
+    SanPay
+  </a>
+  <button class="nav-toggle" id="navToggle"><span></span><span></span><span></span></button>
+  <ul class="nav-links" id="navLinks">
+    <li style="margin-top:auto"><a href="history.html" style="color:inherit;text-decoration:none"><i class="fa-solid fa-clock-rotate-left"></i> Full History</a></li>
+    <li><a href="index.html"><i class="fa-solid fa-house"></i> Home</a></li>
+    <li><a href="transaction.html"><i class="fa-solid fa-paper-plane"></i> Pay</a></li>
+    <li><a href="history.html"><i class="fa-solid fa-clock-rotate-left"></i> History</a></li>
+    <li><a href="admin.html"><i class="fa-solid fa-shield-halved"></i> Admin</a></li>
+    <li><a href="transaction.html" class="nav-cta"><i class="fa-solid fa-bolt"></i> New Payment</a></li>
+  </ul>
+</nav>
+
+<!-- ══════════════════════ ADMIN DASHBOARD ════════════════════ -->
+<div class="main-container" id="adminDashboard">
+
+  <!-- Top bar -->
+  <div class="admin-topbar">
+    <div>
+      <h1>Admin <span class="grad-text">Dashboard</span></h1>
+      <p style="color:var(--text-2);font-size:.875rem;margin-top:4px" id="adminSubtitle">Loading…</p>
+    </div>
+    <div class="top-right">
+      <button class="btn btn-danger btn-sm" style="background:rgba(239,68,68,0.1);border-color:rgba(239,68,68,0.2);color:var(--rose)" onclick="openResetModal()">
+        <i class="fa-solid fa-triangle-exclamation"></i> Reset All Data
+      </button>
+      <button class="btn btn-secondary btn-sm" id="refreshAdminBtn" onclick="loadAdmin()">
+        <i class="fa-solid fa-rotate-right"></i> Refresh
+      </button>
+      <button class="btn btn-danger btn-sm" onclick="doLogout()">
+        <i class="fa-solid fa-right-from-bracket"></i> Logout
+      </button>
+    </div>
+  </div>
+
+  <!-- Stats row -->
+  <div class="stats-grid" id="adminStats">
+    <div class="stat-card">
+      <div class="stat-label">Total Transactions</div>
+      <div class="stat-value grad-text" id="s-total">—</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Successful</div>
+      <div class="stat-value" style="color:var(--emerald)" id="s-success">—</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Pending</div>
+      <div class="stat-value" style="color:var(--amber)" id="s-pending">—</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Failed</div>
+      <div class="stat-value" style="color:var(--rose)" id="s-failed">—</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Volume Processed</div>
+      <div class="stat-value" style="color:var(--cyan-light)" id="s-volume">—</div>
+    </div>
+  </div>
+
+  <!-- Charts -->
+  <div class="charts-row">
+    <div class="chart-card">
+      <h3><i class="fa-solid fa-chart-bar" style="margin-right:6px"></i>Transactions Over Time</h3>
+      <canvas id="barChart" height="120"></canvas>
+    </div>
+    <div class="chart-card">
+      <h3><i class="fa-solid fa-chart-pie" style="margin-right:6px"></i>Status Split</h3>
+      <canvas id="doughnutChart" height="160"></canvas>
+      <div id="chartLegend" style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap;justify-content:center;font-size:.75rem"></div>
+    </div>
+  </div>
+
+  <!-- Toolbar -->
+  <div class="toolbar">
+    <div class="search-box">
+      <i class="fa-solid fa-magnifying-glass"></i>
+      <input type="text" id="adminSearch" placeholder="Search transactions…" oninput="filterAdmin()">
+    </div>
+    <div class="filter-tabs">
+      <button class="filter-tab active" data-af="All"     onclick="setAdminFilter(this,'All')">All</button>
+      <button class="filter-tab"        data-af="Pending" onclick="setAdminFilter(this,'Pending')">Pending</button>
+      <button class="filter-tab"        data-af="Success" onclick="setAdminFilter(this,'Success')">Success</button>
+      <button class="filter-tab"        data-af="Failed"  onclick="setAdminFilter(this,'Failed')">Failed</button>
+    </div>
+  </div>
+
+  <!-- Desktop Table -->
+  <div class="table-wrap" id="adminTableWrap">
+    <table>
+      <thead>
+        <tr>
+          <th>TXN ID</th>
+          <th>Name</th>
+          <th>Phone</th>
+          <th>Amount</th>
+          <th>Method</th>
+          <th>Remarks</th>
+          <th>Status</th>
+          <th>Date</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="adminTableBody"></tbody>
+    </table>
+  </div>
+
+  <!-- Mobile admin cards -->
+  <div class="admin-cards" id="adminCards"></div>
+
+  <!-- Empty state -->
+  <div class="empty-state" id="adminEmpty" style="display:none">
+    <div class="empty-icon">📋</div>
+    <h3>No transactions</h3>
+    <p>No transactions match your search.</p>
+  </div>
+
+</div><!-- end adminDashboard -->
+
+<!-- ── Delete Confirm Modal ── -->
+<div class="modal-overlay confirm-modal" id="confirmModal">
+  <div class="modal-box">
+    <div style="font-size:2.5rem;margin-bottom:16px">🗑️</div>
+    <h3>Delete Transaction?</h3>
+    <p>This action cannot be undone.<br>
+       <span class="confirm-txn" id="confirmTxnId">TXN000</span>
+    </p>
+    <div class="confirm-actions">
+      <button class="btn btn-secondary" onclick="document.getElementById('confirmModal').classList.remove('visible')">Cancel</button>
+      <button class="btn btn-danger" id="confirmDeleteBtn">
+        <i class="fa-solid fa-trash"></i> Delete
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Reset All Confirm Modal ── -->
+<div class="modal-overlay confirm-modal" id="resetModal">
+  <div class="modal-box">
+    <div style="font-size:2.5rem;margin-bottom:16px"><i class="fa-solid fa-triangle-exclamation" style="color:var(--rose)"></i></div>
+    <h3 style="color:var(--rose)">Reset ALL Data?</h3>
+    <p>This will permanently delete all transactions and history from Google Sheets.<br>
+       <strong>This action cannot be undone.</strong>
+    </p>
+    <div class="confirm-actions">
+      <button class="btn btn-secondary" onclick="document.getElementById('resetModal').classList.remove('visible')">Cancel</button>
+      <button class="btn btn-danger" id="confirmResetBtn">
+        <i class="fa-solid fa-triangle-exclamation"></i> Yes, Reset All
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Footer -->
+<footer class="footer">
+  <p>Developed By <a href="https://a-santhosh-hub.github.io/in/" target="_blank">Santhosh A</a></p>
+</footer>
+
+<script src="script.js"></script>
+<script>
+  // ── Auth ──────────────────────────────────────────────
+  const SESSION_KEY = 'sanpay_admin_session';
+  let allAdminTxns  = [];
+  let adminFilter   = 'All';
+  let adminSearch   = '';
+  let barChartInst, doughnutInst;
+
+  function doLogin() {
+    const pass = document.getElementById('adminPass').value;
+    if (pass === ADMIN_PASSWORD) {
+      sessionStorage.setItem(SESSION_KEY, '1');
+      document.getElementById('loginOverlay').style.opacity = '0';
+      document.getElementById('loginOverlay').style.transition = '0.4s ease';
+      setTimeout(() => {
+        document.getElementById('loginOverlay').style.display = 'none';
+        document.getElementById('adminDashboard').style.display = 'block';
+      }, 400);
+      loadAdmin();
+    } else {
+      const card = document.getElementById('loginCard');
+      card.classList.remove('shake');
+      void card.offsetWidth;
+      card.classList.add('shake');
+      document.getElementById('loginErr').textContent = 'Incorrect password. Try again.';
+      document.getElementById('adminPass').value = '';
+    }
+  }
+
+  function doLogout() {
+    sessionStorage.removeItem(SESSION_KEY);
+    location.reload();
+  }
+
+  function togglePass() {
+    const inp  = document.getElementById('adminPass');
+    const icon = document.getElementById('eyeIcon');
+    if (inp.type === 'password') {
+      inp.type = 'text';
+      icon.className = 'fa-solid fa-eye-slash';
+    } else {
+      inp.type = 'password';
+      icon.className = 'fa-solid fa-eye';
+    }
+  }
+
+  // Check session on load
+  if (sessionStorage.getItem(SESSION_KEY) === '1') {
+    document.getElementById('loginOverlay').style.display = 'none';
+    document.getElementById('adminDashboard').style.display = 'block';
+    loadAdmin();
+  }
+
+  // ── Load admin data ───────────────────────────────────
+  async function loadAdmin() {
+    document.getElementById('adminSubtitle').textContent = 'Loading…';
+    document.getElementById('adminTableBody').innerHTML  = `<tr><td colspan="9" style="text-align:center;padding:40px"><div class="spinner-lg" style="margin:0 auto"></div></td></tr>`;
+    document.getElementById('adminCards').innerHTML      = '';
+
+    try {
+      if (API_URL === 'YOUR_APPS_SCRIPT_WEB_APP_URL_HERE') {
+        allAdminTxns = getDemoData();
+        showToast('Demo mode — showing sample data.', 'info', 4000);
+      } else {
+        const res = await fetchTransactions();
+        if (!res.success) throw new Error(res.error);
+        allAdminTxns = res.data || [];
+      }
+    } catch(e) {
+      showToast('Load failed: ' + e.message, 'error');
+      allAdminTxns = [];
+    }
+
+    renderAdminStats();
+    renderCharts();
+    renderAdminTable();
+  }
+
+  // ── Stats ─────────────────────────────────────────────
+  function renderAdminStats() {
+    const total   = allAdminTxns.length;
+    const success = allAdminTxns.filter(r => g(r,'Status') === 'Success').length;
+    const pending = allAdminTxns.filter(r => g(r,'Status') === 'Pending').length;
+    const failed  = allAdminTxns.filter(r => g(r,'Status') === 'Failed').length;
+    const volume  = allAdminTxns
+      .filter(r => g(r,'Status') === 'Success')
+      .reduce((s,r) => s + (parseFloat(g(r,'Amount')) || 0), 0);
+
+    document.getElementById('s-total').textContent   = total;
+    document.getElementById('s-success').textContent = success;
+    document.getElementById('s-pending').textContent = pending;
+    document.getElementById('s-failed').textContent  = failed;
+    document.getElementById('s-volume').textContent  = formatINR(volume);
+    document.getElementById('adminSubtitle').textContent = `${total} transactions · Last updated ${new Date().toLocaleTimeString()}`;
+  }
+
+  // ── Charts ────────────────────────────────────────────
+  function renderCharts() {
+    // Bar: transactions by date (last 7 active days)
+    const dateCounts = {};
+    allAdminTxns.forEach(r => {
+      const d = new Date(g(r,'Timestamp')).toLocaleDateString('en-IN',{day:'2-digit',month:'short'});
+      dateCounts[d] = (dateCounts[d] || 0) + 1;
+    });
+    const dateLabels = Object.keys(dateCounts).slice(-10);
+    const dateVals   = dateLabels.map(d => dateCounts[d]);
+
+    const barCtx = document.getElementById('barChart').getContext('2d');
+    if (barChartInst) barChartInst.destroy();
+    barChartInst = new Chart(barCtx, {
+      type: 'bar',
+      data: {
+        labels: dateLabels,
+        datasets: [{
+          label: 'Transactions',
+          data: dateVals,
+          backgroundColor: 'rgba(255,255,255,0.6)',
+          borderColor:     'rgba(255,255,255,0.9)',
+          borderWidth:     1.5,
+          borderRadius:    999
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#94a3b8', font: { size: 11 } } },
+          y: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#94a3b8', font: { size: 11 }, stepSize: 1 } }
+        }
+      }
+    });
+
+    // Doughnut: status split
+    const success = allAdminTxns.filter(r => g(r,'Status') === 'Success').length;
+    const pending = allAdminTxns.filter(r => g(r,'Status') === 'Pending').length;
+    const failed  = allAdminTxns.filter(r => g(r,'Status') === 'Failed').length;
+
+    const dCtx = document.getElementById('doughnutChart').getContext('2d');
+    if (doughnutInst) doughnutInst.destroy();
+    doughnutInst = new Chart(dCtx, {
+      type: 'doughnut',
+      data: {
+        labels: ['Success','Pending','Failed'],
+        datasets: [{
+          data: [success, pending, failed],
+          backgroundColor: ['rgba(16,185,129,0.8)', 'rgba(245,158,11,0.8)', 'rgba(239,68,68,0.8)'],
+          borderColor:     ['#10b981','#f59e0b','#ef4444'],
+          borderWidth: 2,
+          hoverOffset: 6
+        }]
+      },
+      options: {
+        responsive: true,
+        cutout: '70%',
+        plugins: {
+          legend: { display: false }
+        }
+      }
+    });
+
+    document.getElementById('chartLegend').innerHTML = `
+      <span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;background:#10b981;border-radius:2px"></span>Success (${success})</span>
+      <span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;background:#f59e0b;border-radius:2px"></span>Pending (${pending})</span>
+      <span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;background:#ef4444;border-radius:2px"></span>Failed (${failed})</span>
+    `;
+  }
+
+  // ── Render table / cards ──────────────────────────────
+  function renderAdminTable() {
+    let rows = [...allAdminTxns];
+    if (adminFilter !== 'All') rows = rows.filter(r => g(r,'Status') === adminFilter);
+    if (adminSearch) {
+      const q = adminSearch.toLowerCase();
+      rows = rows.filter(r => Object.values(r).some(v => String(v).toLowerCase().includes(q)));
+    }
+
+    document.getElementById('adminEmpty').style.display = rows.length === 0 ? 'block' : 'none';
+
+    const tbody = document.getElementById('adminTableBody');
+    const cards = document.getElementById('adminCards');
+    tbody.innerHTML = '';
+    cards.innerHTML = '';
+
+    rows.forEach((r, i) => {
+      const txnId  = g(r,'Transaction ID');
+      const name   = g(r,'Name');
+      const phone  = g(r,'Phone');
+      const amount = g(r,'Amount');
+      const method = g(r,'Payment Method');
+      const rem    = g(r,'Remarks') || '—';
+      const status = g(r,'Status') || 'Pending';
+      const ts     = g(r,'Timestamp');
+
+      // Desktop row
+      const tr = document.createElement('tr');
+      tr.style.animationDelay = `${i*25}ms`;
+      tr.innerHTML = `
+        <td class="txn-id">${esc(txnId)}</td>
+        <td><strong>${esc(name)}</strong></td>
+        <td style="font-family:var(--font-mono);font-size:.82rem;color:var(--text-2)">${esc(phone)}</td>
+        <td class="amount-cell">${formatINR(amount)}</td>
+        <td>${methodIcon(method)} <span style="margin-left:4px;font-size:.8rem">${esc(method)}</span></td>
+        <td style="color:var(--text-2);font-size:.8rem;max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(rem)}</td>
+        <td>
+          <select class="status-select" onchange="handleStatusChange('${esc(txnId)}', this)">
+            <option value="Pending" ${status==='Pending'?'selected':''}>Pending</option>
+            <option value="Success" ${status==='Success'?'selected':''}>Success</option>
+            <option value="Failed"  ${status==='Failed'?'selected':''}>Failed</option>
+          </select>
+        </td>
+        <td style="font-size:.8rem;color:var(--text-2);white-space:nowrap">${formatDateShort(ts)}</td>
+        <td class="actions-cell" style="white-space:nowrap">
+          <button class="btn btn-icon" title="Download Receipt" onclick='downloadReceipt(${JSON.stringify(r)})' style="margin-right:4px">
+            <i class="fa-solid fa-download"></i>
+          </button>
+          <button class="btn btn-icon" title="Delete" onclick="confirmDelete('${esc(txnId)}')"
+                  style="background:rgba(239,68,68,0.1);border-color:rgba(239,68,68,0.2);color:var(--rose)">
+            <i class="fa-solid fa-trash"></i>
+          </button>
+        </td>
+      `;
+      tbody.appendChild(tr);
+
+      // Mobile card
+      const card = document.createElement('div');
+      card.className = 'admin-card';
+      card.style.animationDelay = `${i*25}ms`;
+      card.innerHTML = `
+        <div class="admin-card-top">
+          <span class="txn-id">${esc(txnId)}</span>
+          ${statusBadge(status)}
+        </div>
+        <div class="admin-card-grid">
+          <div><strong>Name</strong><span>${esc(name)}</span></div>
+          <div><strong>Amount</strong><span style="color:var(--cyan-light);font-weight:700">${formatINR(amount)}</span></div>
+          <div><strong>Method</strong><span>${esc(method)}</span></div>
+          <div><strong>Phone</strong><span>${esc(phone)}</span></div>
+        </div>
+        <div class="admin-card-actions">
+          <select class="status-select" onchange="handleStatusChange('${esc(txnId)}', this)">
+            <option value="Pending" ${status==='Pending'?'selected':''}>Pending</option>
+            <option value="Success" ${status==='Success'?'selected':''}>Success</option>
+            <option value="Failed"  ${status==='Failed'?'selected':''}>Failed</option>
+          </select>
+          <button class="btn btn-secondary btn-sm" onclick='downloadReceipt(${JSON.stringify(r)})'>
+            <i class="fa-solid fa-download"></i>
+          </button>
+          <button class="btn btn-danger btn-sm" onclick="confirmDelete('${esc(txnId)}')">
+            <i class="fa-solid fa-trash"></i>
+          </button>
+        </div>
+      `;
+      cards.appendChild(card);
+    });
+  }
+
+  // ── Status update ─────────────────────────────────────
+  async function handleStatusChange(txnId, selectEl) {
+    const newStatus = selectEl.value;
+    selectEl.disabled = true;
+
+    try {
+      if (API_URL === 'YOUR_APPS_SCRIPT_WEB_APP_URL_HERE') {
+        await new Promise(r => setTimeout(r, 500));
+        // Update local demo data
+        allAdminTxns.forEach(r => {
+          if (g(r,'Transaction ID') === txnId) r['Status'] = newStatus;
+        });
+        showToast(`Status updated to ${newStatus}`, 'success');
+      } else {
+        const res = await updateTxnStatus(txnId, newStatus);
+        if (!res.success) throw new Error(res.error || 'Update failed');
+        allAdminTxns.forEach(r => {
+          if (g(r,'Transaction ID') === txnId) r['Status'] = newStatus;
+        });
+        showToast(`${txnId} → ${newStatus}`, 'success');
+      }
+      renderAdminStats();
+      renderCharts();
+    } catch(e) {
+      showToast('Update failed: ' + e.message, 'error');
+    } finally {
+      selectEl.disabled = false;
+    }
+  }
+
+  // ── Reset All Data ────────────────────────────────────
+  function openResetModal() {
+    document.getElementById('resetModal').classList.add('visible');
+  }
+
+  document.getElementById('confirmResetBtn').addEventListener('click', async () => {
+    document.getElementById('resetModal').classList.remove('visible');
+    
+    try {
+      if (API_URL === 'YOUR_APPS_SCRIPT_WEB_APP_URL_HERE') {
+        await new Promise(r => setTimeout(r, 800));
+        allAdminTxns = [];
+        showToast('All data reset successfully (demo mode).', 'success');
+      } else {
+        const res = await resetAllData();
+        if (!res.success) throw new Error(res.error || 'Reset failed');
+        allAdminTxns = [];
+        showToast('Database wiped successfully.', 'success');
+      }
+      renderAdminStats();
+      renderCharts();
+      renderAdminTable();
+    } catch(e) {
+      showToast('Reset failed: ' + e.message, 'error');
+    }
+  });
+
+  // ── Delete ────────────────────────────────────────────
+  let pendingDeleteId = null;
+
+  function confirmDelete(txnId) {
+    pendingDeleteId = txnId;
+    document.getElementById('confirmTxnId').textContent = txnId;
+    document.getElementById('confirmModal').classList.add('visible');
+  }
+
+  document.getElementById('confirmDeleteBtn').addEventListener('click', async () => {
+    if (!pendingDeleteId) return;
+    const id  = pendingDeleteId;
+    document.getElementById('confirmModal').classList.remove('visible');
+
+    try {
+      if (API_URL === 'YOUR_APPS_SCRIPT_WEB_APP_URL_HERE') {
+        await new Promise(r => setTimeout(r, 500));
+        allAdminTxns = allAdminTxns.filter(r => g(r,'Transaction ID') !== id);
+        showToast('Transaction deleted (demo).', 'info');
+      } else {
+        const res = await deleteTxn(id);
+        if (!res.success) throw new Error(res.error || 'Delete failed');
+        allAdminTxns = allAdminTxns.filter(r => g(r,'Transaction ID') !== id);
+        showToast('Deleted: ' + id, 'success');
+      }
+      renderAdminStats();
+      renderCharts();
+      renderAdminTable();
+    } catch(e) {
+      showToast('Delete failed: ' + e.message, 'error');
+    }
+    pendingDeleteId = null;
+  });
+
+  document.getElementById('confirmModal').addEventListener('click', function(e) {
+    if (e.target === this) this.classList.remove('visible');
+  });
+
+  if (document.getElementById('resetModal')) {
+    document.getElementById('resetModal').addEventListener('click', function(e) {
+      if (e.target === this) this.classList.remove('visible');
+    });
+  }
+
+  // ── Filter / Search ───────────────────────────────────
+  function setAdminFilter(btn, filter) {
+    document.querySelectorAll('[data-af]').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    adminFilter = filter;
+    renderAdminTable();
+  }
+
+  let adSearchTimer;
+  function filterAdmin() {
+    clearTimeout(adSearchTimer);
+    adSearchTimer = setTimeout(() => {
+      adminSearch = document.getElementById('adminSearch').value.trim();
+      renderAdminTable();
+    }, 250);
+  }
+
+  // ── Demo Data ─────────────────────────────────────────
+  function getDemoData() {
+    const methods  = ['UPI','Card','Wallet','Cash'];
+    const statuses = ['Success','Success','Pending','Failed','Success'];
+    const names    = ['Santhosh Kumar','Priya Nair','Arjun Dev','Meena Rajan','Vikram Singh','Ananya K'];
+    const remarks  = ['Rent','Groceries','Gift','Fees','Transfer','—'];
+    const result   = [];
+    for (let i = 0; i < 22; i++) {
+      const d = new Date(Date.now() - i * 86400000 * Math.random() * 2);
+      result.push({
+        'Transaction ID': `TXN${(Math.random()*900000+100000)|0}`,
+        'Name':           names[i % names.length],
+        'Phone':          `9${Math.floor(Math.random()*900000000+100000000)}`,
+        'Amount':         Math.floor(Math.random() * 9800 + 200),
+        'Payment Method': methods[i % methods.length],
+        'Remarks':        remarks[i % remarks.length],
+        'Status':         statuses[i % statuses.length],
+        'Timestamp':      d.toISOString()
+      });
+    }
+    return result;
+  }
+
+  // ── Auto-Refresh (Polling) ────────────────────────────
+  setInterval(async () => {
+    if (document.getElementById('adminDashboard').style.display === 'none') return;
+    if (API_URL === 'YOUR_APPS_SCRIPT_WEB_APP_URL_HERE') return;
+
+    try {
+      const res = await fetchTransactions();
+      if (res.success && res.data) {
+        const newData = res.data;
+        
+        // Deep compare
+        if (JSON.stringify(newData) !== JSON.stringify(allAdminTxns)) {
+          // Do not interrupt if admin is currently interacting with UI
+          const isInteracting = document.querySelector('.status-select:focus') || 
+                                document.getElementById('confirmModal').classList.contains('visible') || 
+                                document.getElementById('resetModal').classList.contains('visible');
+          
+          if (!isInteracting) {
+            allAdminTxns = newData;
+            renderAdminStats();
+            renderCharts();
+            renderAdminTable();
+          }
+        }
+      }
+    } catch(e) {}
+  }, 5000);
+
+  // ── Helpers ────────────────────────────────────────────
+  function g(obj, key) {
+    return obj[key] !== undefined ? obj[key] : (obj[key.toLowerCase()] || '');
+  }
+  function esc(str) {
+    return String(str || '')
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+      .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+</script>
+</body>
+</html>
