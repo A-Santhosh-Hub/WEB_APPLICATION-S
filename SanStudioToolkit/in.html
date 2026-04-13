@@ -1,0 +1,1993 @@
+<!DOCTYPE html>
+<html lang="en" class="light">
+<head>
+    <meta charset="UTF-8">
+    <!-- Viewport configured for native mobile app feel (disables pinch-to-zoom on the document itself) -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>SanStudio Image Toolkit</title>
+    
+    <!-- Tailwind CSS for utility-first styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Phosphor Icons for modern, clean iconography -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    
+    <!-- Google Fonts (Inter & Google Sans fallback) -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Montserrat:wght@700&family=Pacifico&family=Oswald:wght@700&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/png" href="San.png">
+    <!-- Tailwind Config for custom theming aligned with OriginOS / Android 16 -->
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'Google Sans', 'sans-serif'],
+                    },
+                    colors: {
+                        os: {
+                            50: '#f8fafc',
+                            100: '#f1f5f9',
+                            800: '#1e293b',
+                            900: '#0f172a',
+                            accent: '#4f46e5', // Indigo
+                        }
+                    },
+                    boxShadow: {
+                        'glass': '0 8px 32px 0 rgba(0, 0, 0, 0.1)',
+                        'glass-dark': '0 8px 32px 0 rgba(0, 0, 0, 0.4)',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* --- CSS ARCHITECTURE & MICRO-INTERACTIONS --- */
+        body {
+            font-family: 'Inter', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: none; /* Prevents default browser panning, managed by our Canvas Engine */
+        }
+
+        /* Glassmorphism primitives */
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.75);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+        }
+        .dark .glass-panel {
+            background: rgba(20, 25, 35, 0.75);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        /* OriginOS Spring Animations */
+        .spring-in {
+            animation: springIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.1) forwards;
+        }
+        .spring-out {
+            animation: springOut 0.3s cubic-bezier(0.6, -0.28, 0.735, 0.045) forwards;
+        }
+        @keyframes springIn {
+            0% { transform: translateY(20px) scale(0.95); opacity: 0; }
+            100% { transform: translateY(0) scale(1); opacity: 1; }
+        }
+        @keyframes springOut {
+            0% { transform: translateY(0) scale(1); opacity: 1; }
+            100% { transform: translateY(20px) scale(0.95); opacity: 0; }
+        }
+
+        /* Custom Range Slider (Android 16 style) */
+        input[type=range] {
+            -webkit-appearance: none;
+            width: 100%;
+            background: transparent;
+            height: 24px;
+        }
+        input[type=range]:focus { outline: none; }
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 6px;
+            cursor: pointer;
+            background: #cbd5e1;
+            border-radius: 999px;
+            transition: all 0.2s;
+        }
+        .dark input[type=range]::-webkit-slider-runnable-track { background: #334155; }
+        input[type=range]::-webkit-slider-thumb {
+            height: 24px;
+            width: 24px;
+            border-radius: 50%;
+            background: #4f46e5;
+            cursor: pointer;
+            -webkit-appearance: none;
+            margin-top: -9px;
+            box-shadow: 0 2px 8px rgba(79, 70, 229, 0.5);
+            border: 2px solid #ffffff;
+            transition: transform 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .dark input[type=range]::-webkit-slider-thumb { border-color: #1e293b; }
+        input[type=range]::-webkit-slider-thumb:active { transform: scale(1.25); }
+
+        /* Canvas pattern background to show transparency */
+        .checker-bg {
+            background-color: #e5e5f7;
+            background-image:  repeating-linear-gradient(45deg, #d4d4d8 25%, transparent 25%, transparent 75%, #d4d4d8 75%, #d4d4d8), repeating-linear-gradient(45deg, #d4d4d8 25%, #e5e5f7 25%, #e5e5f7 75%, #d4d4d8 75%, #d4d4d8);
+            background-position: 0 0, 10px 10px;
+            background-size: 20px 20px;
+        }
+        .dark .checker-bg {
+            background-color: #18181b;
+            background-image:  repeating-linear-gradient(45deg, #27272a 25%, transparent 25%, transparent 75%, #27272a 75%, #27272a), repeating-linear-gradient(45deg, #27272a 25%, #18181b 25%, #18181b 75%, #27272a 75%, #27272a);
+        }
+
+        /* Hide scrollbar for clean UI */
+        ::-webkit-scrollbar { width: 0px; height: 0px; background: transparent; }
+
+        /* Tool Button Active State */
+        .tool-btn.active { background-color: #4f46e5; color: white; }
+        
+        /* Crop UI shadow trick to dim outside area */
+        .crop-shadow { box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.65); }
+    </style>
+</head>
+<body class="bg-os-50 dark:bg-os-900 text-gray-800 dark:text-gray-100 h-screen w-screen overflow-hidden transition-colors duration-300 flex flex-col">
+
+    <!-- Toast Notification Container -->
+    <div id="toastContainer" class="fixed top-20 left-1/2 -translate-x-1/2 z-[100] flex flex-col gap-2 pointer-events-none"></div>
+
+    <!-- ========================================== -->
+    <!-- HEADER / APP BAR                           -->
+    <!-- ========================================== -->
+    <header class="fixed top-4 left-4 right-4 h-16 z-40 flex items-center justify-between px-4 lg:px-6 glass-panel rounded-3xl shadow-glass dark:shadow-glass-dark transition-all">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-gradient-to-tr from-indigo-500 to-purple-500 rounded-xl flex items-center justify-center text-white shadow-lg">
+                <i class="ph-fill ph-aperture text-2xl"></i>
+            </div>
+            <div class="hidden sm:block">
+                <h1 class="font-bold tracking-tight text-lg leading-tight">SanStudio</h1>
+                <p class="text-[10px] uppercase tracking-wider font-semibold text-gray-500 dark:text-gray-400 flex items-center gap-1">
+                    <i class="ph-fill ph-lock-key"></i> Privacy First
+                </p>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-1 sm:gap-2">
+            <button id="btnNewProject" class="w-10 h-10 rounded-full hover:bg-gray-200/50 dark:hover:bg-gray-700/50 flex items-center justify-center transition-colors text-red-500 hover:text-red-600 hidden" title="New Project">
+                <i class="ph ph-trash text-xl"></i>
+            </button>
+            <div id="newProjectDivider" class="w-px h-6 bg-gray-300 dark:bg-gray-700 mx-1 hidden"></div>
+            <button id="btnUndo" class="w-10 h-10 rounded-full hover:bg-gray-200/50 dark:hover:bg-gray-700/50 flex items-center justify-center transition-colors disabled:opacity-30 disabled:cursor-not-allowed" title="Undo (Ctrl+Z)">
+                <i class="ph ph-arrow-u-up-left text-xl"></i>
+            </button>
+            <button id="btnRedo" class="w-10 h-10 rounded-full hover:bg-gray-200/50 dark:hover:bg-gray-700/50 flex items-center justify-center transition-colors disabled:opacity-30 disabled:cursor-not-allowed" title="Redo (Ctrl+Y)">
+                <i class="ph ph-arrow-u-up-right text-xl"></i>
+            </button>
+            <div class="w-px h-6 bg-gray-300 dark:bg-gray-700 mx-1"></div>
+            <button id="btnThemeToggle" class="w-10 h-10 rounded-full hover:bg-gray-200/50 dark:hover:bg-gray-700/50 flex items-center justify-center transition-colors" title="Toggle Dark Mode">
+                <i id="themeIcon" class="ph ph-moon text-xl"></i>
+            </button>
+            <button id="btnExportMenu" class="ml-2 px-4 py-2 bg-gray-900 dark:bg-white text-white dark:text-gray-900 font-medium rounded-full hover:scale-105 active:scale-95 transition-transform shadow-lg disabled:opacity-50 disabled:pointer-events-none">
+                Export
+            </button>
+        </div>
+    </header>
+
+    <!-- ========================================== -->
+    <!-- WORKSPACE (CANVAS & GESTURES)              -->
+    <!-- ========================================== -->
+    <main id="workspace" class="relative flex-1 w-full h-full checker-bg overflow-hidden flex items-center justify-center">
+        
+        <!-- Empty State UI -->
+        <div id="emptyState" class="absolute inset-0 flex flex-col items-center justify-center z-10 p-6 pointer-events-none transition-opacity duration-300">
+            <div class="w-32 h-32 mb-6 bg-white/50 dark:bg-gray-800/50 rounded-full flex items-center justify-center shadow-2xl backdrop-blur-md border border-white/20">
+                <i class="ph ph-image text-5xl text-indigo-500"></i>
+            </div>
+            <h2 class="text-2xl font-bold mb-2 text-center text-gray-800 dark:text-white">Import an Image</h2>
+            <p class="text-sm text-gray-500 dark:text-gray-400 text-center max-w-sm mb-8">
+                Drag & drop, paste from clipboard, or click below to start. All processing happens locally in your browser.
+            </p>
+            <div class="pointer-events-auto flex gap-4">
+                <label class="px-6 py-3 bg-indigo-500 text-white font-semibold rounded-full hover:bg-indigo-600 active:scale-95 transition-all shadow-lg shadow-indigo-500/30 cursor-pointer flex items-center gap-2">
+                    <i class="ph ph-upload-simple text-xl"></i> Upload File
+                    <input type="file" id="fileInput" accept="image/png, image/jpeg, image/webp" class="hidden">
+                </label>
+                <label class="md:hidden px-6 py-3 bg-white dark:bg-gray-800 text-gray-800 dark:text-white font-semibold rounded-full hover:bg-gray-50 dark:hover:bg-gray-700 active:scale-95 transition-all shadow-lg cursor-pointer flex items-center gap-2 border border-gray-200 dark:border-gray-700">
+                    <i class="ph ph-camera text-xl"></i> Camera
+                    <input type="file" id="cameraInput" accept="image/*" capture="environment" class="hidden">
+                </label>
+            </div>
+        </div>
+
+        <!-- The Rendering Canvas -->
+        <canvas id="mainCanvas" class="absolute z-0"></canvas>
+
+        <!-- Viewport Framing Crop Overlay (Hidden by default) -->
+        <div id="cropOverlay" class="absolute inset-0 z-20 pointer-events-none hidden flex items-center justify-center transition-opacity duration-300 opacity-0">
+            <!-- The dark backdrop is created by the massive shadow of the cutout -->
+            <div id="cropFrame" class="relative border-2 border-white crop-shadow rounded-sm transition-all duration-300" style="width: 250px; height: 250px;">
+                <!-- Grid Guide -->
+                <div class="absolute inset-0 grid grid-cols-3 grid-rows-3 opacity-50 pointer-events-none mix-blend-difference text-white">
+                    <div class="border-b border-r border-current"></div><div class="border-b border-r border-current"></div><div class="border-b border-current"></div>
+                    <div class="border-b border-r border-current"></div><div class="border-b border-r border-current"></div><div class="border-b border-current"></div>
+                    <div class="border-r border-current"></div><div class="border-r border-current"></div><div></div>
+                </div>
+            </div>
+            <!-- Overlay Instructions -->
+            <div class="absolute top-24 px-4 py-2 bg-black/60 backdrop-blur-md rounded-full text-white text-sm tracking-wide font-medium">
+                Pan & Zoom to frame your crop
+            </div>
+        </div>
+
+    </main>
+
+    <!-- ========================================== -->
+    <!-- PRIMARY TOOLBAR                            -->
+    <!-- ========================================== -->
+    <nav id="mainToolbar" class="fixed bottom-6 left-1/2 -translate-x-1/2 md:bottom-auto md:left-6 md:top-1/2 md:-translate-y-1/2 md:translate-x-0 z-40 glass-panel rounded-full px-2 py-2 md:px-3 md:py-4 flex flex-row md:flex-col items-center gap-2 shadow-2xl transition-all opacity-0 pointer-events-none translate-y-10 md:-translate-x-10 duration-500 max-w-[90vw] md:max-h-[90vh] overflow-x-auto md:overflow-y-auto overflow-y-hidden md:overflow-x-hidden">
+        <button class="tool-btn w-12 h-12 rounded-full flex items-center justify-center text-gray-600 dark:text-gray-300 transition-all hover:bg-gray-100 dark:hover:bg-gray-800 relative group shrink-0" data-panel="transformPanel">
+            <i class="ph ph-faders text-2xl"></i>
+            <span class="absolute left-16 bg-gray-900 text-white text-xs px-2 py-1 rounded hidden md:group-hover:block whitespace-nowrap">Transform</span>
+        </button>
+        <button class="tool-btn w-12 h-12 rounded-full flex items-center justify-center text-gray-600 dark:text-gray-300 transition-all hover:bg-gray-100 dark:hover:bg-gray-800 relative group shrink-0" data-panel="cropPanel">
+            <i class="ph ph-crop text-2xl"></i>
+            <span class="absolute left-16 bg-gray-900 text-white text-xs px-2 py-1 rounded hidden md:group-hover:block whitespace-nowrap">Crop</span>
+        </button>
+        <button class="tool-btn w-12 h-12 rounded-full flex items-center justify-center text-gray-600 dark:text-gray-300 transition-all hover:bg-gray-100 dark:hover:bg-gray-800 relative group shrink-0" data-panel="resizePanel">
+            <i class="ph ph-arrows-out text-2xl"></i>
+            <span class="absolute left-16 bg-gray-900 text-white text-xs px-2 py-1 rounded hidden md:group-hover:block whitespace-nowrap">Resize</span>
+        </button>
+        <button class="tool-btn w-12 h-12 rounded-full flex items-center justify-center text-gray-600 dark:text-gray-300 transition-all hover:bg-gray-100 dark:hover:bg-gray-800 relative group shrink-0" data-panel="drawPanel">
+            <i class="ph ph-pencil-simple text-2xl"></i>
+            <span class="absolute left-16 bg-gray-900 text-white text-xs px-2 py-1 rounded hidden md:group-hover:block whitespace-nowrap">Draw</span>
+        </button>
+        <button class="tool-btn w-12 h-12 rounded-full flex items-center justify-center text-gray-600 dark:text-gray-300 transition-all hover:bg-gray-100 dark:hover:bg-gray-800 relative group shrink-0" data-panel="imageOverlayPanel">
+            <i class="ph ph-image-square text-2xl"></i>
+            <span class="absolute left-16 bg-gray-900 text-white text-xs px-2 py-1 rounded hidden md:group-hover:block whitespace-nowrap">Add Image</span>
+        </button>
+        <button class="tool-btn w-12 h-12 rounded-full flex items-center justify-center text-gray-600 dark:text-gray-300 transition-all hover:bg-gray-100 dark:hover:bg-gray-800 relative group shrink-0" data-panel="shapePanel">
+            <i class="ph ph-shapes text-2xl"></i>
+            <span class="absolute left-16 bg-gray-900 text-white text-xs px-2 py-1 rounded hidden md:group-hover:block whitespace-nowrap">Shapes</span>
+        </button>
+        <button class="tool-btn w-12 h-12 rounded-full flex items-center justify-center text-gray-600 dark:text-gray-300 transition-all hover:bg-gray-100 dark:hover:bg-gray-800 relative group shrink-0" data-panel="emojiPanel">
+            <i class="ph ph-smiley text-2xl"></i>
+            <span class="absolute left-16 bg-gray-900 text-white text-xs px-2 py-1 rounded hidden md:group-hover:block whitespace-nowrap">Emoji</span>
+        </button>
+        <button class="tool-btn w-12 h-12 rounded-full flex items-center justify-center text-gray-600 dark:text-gray-300 transition-all hover:bg-gray-100 dark:hover:bg-gray-800 relative group shrink-0" data-panel="textPanel">
+            <i class="ph ph-text-t text-2xl"></i>
+            <span class="absolute left-16 bg-gray-900 text-white text-xs px-2 py-1 rounded hidden md:group-hover:block whitespace-nowrap">Text</span>
+        </button>
+        <button class="tool-btn w-12 h-12 rounded-full flex items-center justify-center text-gray-600 dark:text-gray-300 transition-all hover:bg-gray-100 dark:hover:bg-gray-800 relative group shrink-0" data-panel="adjustPanel">
+            <i class="ph ph-sliders-horizontal text-2xl"></i>
+            <span class="absolute left-16 bg-gray-900 text-white text-xs px-2 py-1 rounded hidden md:group-hover:block whitespace-nowrap">Adjust</span>
+        </button>
+    </nav>
+
+    <!-- ========================================== -->
+    <!-- TOOL PANELS (Slide in logic)               -->
+    <!-- ========================================== -->
+    <!-- Container for sliding panels -->
+    <div id="panelsContainer" class="fixed z-30 bottom-24 left-4 right-4 md:bottom-auto md:left-28 md:top-1/2 md:-translate-y-1/2 md:right-auto md:w-80 pointer-events-none">
+        
+        <!-- Transform Panel -->
+        <div id="transformPanel" class="sub-panel pointer-events-auto hidden opacity-0 glass-panel rounded-[2rem] p-5 shadow-2xl transition-all duration-300">
+            <h3 class="text-sm font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-4">Transform</h3>
+            <div class="space-y-6">
+                <!-- Rotate Control -->
+                <div>
+                    <div class="flex justify-between text-sm font-medium mb-2">
+                        <span>Angle</span>
+                        <span id="valAngle" class="text-indigo-500">0°</span>
+                    </div>
+                    <input type="range" id="sliderAngle" min="-180" max="180" value="0" class="w-full">
+                    <div class="flex justify-between mt-3">
+                        <button id="btnRotateLeft" class="px-4 py-2 bg-gray-100 dark:bg-gray-800 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-700 active:scale-95 transition-all text-sm font-medium flex gap-2 items-center"><i class="ph ph-arrow-u-up-left"></i> -90°</button>
+                        <button id="btnResetTransform" class="px-3 py-2 text-gray-400 hover:text-gray-800 dark:hover:text-white transition-colors"><i class="ph ph-arrow-counter-clockwise text-lg"></i></button>
+                        <button id="btnRotateRight" class="px-4 py-2 bg-gray-100 dark:bg-gray-800 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-700 active:scale-95 transition-all text-sm font-medium flex gap-2 items-center">90° <i class="ph ph-arrow-u-up-right"></i></button>
+                    </div>
+                </div>
+                <!-- Flip Control -->
+                <div>
+                    <span class="text-sm font-medium block mb-2">Flip</span>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button id="btnFlipH" class="py-3 bg-gray-100 dark:bg-gray-800 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-700 active:scale-95 transition-all flex justify-center"><i class="ph ph-arrows-left-right text-xl"></i></button>
+                        <button id="btnFlipV" class="py-3 bg-gray-100 dark:bg-gray-800 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-700 active:scale-95 transition-all flex justify-center"><i class="ph ph-arrows-down-up text-xl"></i></button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Crop Panel -->
+        <div id="cropPanel" class="sub-panel pointer-events-auto hidden opacity-0 glass-panel rounded-[2rem] p-5 shadow-2xl transition-all duration-300">
+            <h3 class="text-sm font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-4">Crop Aspect Ratio</h3>
+            <div class="grid grid-cols-3 gap-2 mb-4">
+                <button class="crop-ratio-btn py-2 bg-gray-100 dark:bg-gray-800 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-700 transition-all text-sm font-medium" data-ratio="free">Free</button>
+                <button class="crop-ratio-btn py-2 bg-gray-100 dark:bg-gray-800 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-700 transition-all text-sm font-medium" data-ratio="1">1:1</button>
+                <button class="crop-ratio-btn py-2 bg-gray-100 dark:bg-gray-800 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-700 transition-all text-sm font-medium" data-ratio="1.333">4:3</button>
+                <button class="crop-ratio-btn py-2 bg-gray-100 dark:bg-gray-800 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-700 transition-all text-sm font-medium" data-ratio="1.777">16:9</button>
+                <button class="crop-ratio-btn py-2 bg-gray-100 dark:bg-gray-800 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-700 transition-all text-sm font-medium" data-ratio="0.562">9:16</button>
+                <button class="crop-ratio-btn py-2 bg-gray-100 dark:bg-gray-800 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-700 transition-all text-sm font-medium" data-ratio="0.75">3:4</button>
+            </div>
+            <button id="btnApplyCrop" class="w-full py-3 bg-indigo-500 text-white rounded-xl font-bold hover:bg-indigo-600 active:scale-95 transition-all shadow-lg shadow-indigo-500/30 flex items-center justify-center gap-2">
+                <i class="ph ph-scissors"></i> Apply Crop
+            </button>
+        </div>
+
+        <!-- Resize Panel -->
+        <div id="resizePanel" class="sub-panel pointer-events-auto hidden opacity-0 glass-panel rounded-[2rem] p-5 shadow-2xl transition-all duration-300">
+            <h3 class="text-sm font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-4">Resize Dimensions</h3>
+            <div class="space-y-4 mb-4">
+                <div class="flex items-center gap-2">
+                    <div class="flex-1 bg-gray-100 dark:bg-gray-800 rounded-xl px-3 py-2 border border-transparent focus-within:border-indigo-500 transition-colors">
+                        <span class="text-xs text-gray-500 block mb-1">Width (px)</span>
+                        <input type="number" id="inputResW" class="w-full bg-transparent outline-none text-lg font-medium" min="10">
+                    </div>
+                    <button id="btnLockRatio" class="w-10 h-10 flex items-center justify-center bg-gray-100 dark:bg-gray-800 rounded-xl text-indigo-500 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors shrink-0">
+                        <i id="iconLockRatio" class="ph-fill ph-link text-xl"></i>
+                    </button>
+                    <div class="flex-1 bg-gray-100 dark:bg-gray-800 rounded-xl px-3 py-2 border border-transparent focus-within:border-indigo-500 transition-colors">
+                        <span class="text-xs text-gray-500 block mb-1">Height (px)</span>
+                        <input type="number" id="inputResH" class="w-full bg-transparent outline-none text-lg font-medium" min="10">
+                    </div>
+                </div>
+            </div>
+            <button id="btnApplyResize" class="w-full py-3 bg-indigo-500 text-white rounded-xl font-bold hover:bg-indigo-600 active:scale-95 transition-all shadow-lg shadow-indigo-500/30">
+                Resample Image
+            </button>
+        </div>
+
+        <!-- Text Overlay Panel -->
+        <div id="textPanel" class="sub-panel pointer-events-auto hidden opacity-0 glass-panel rounded-[2rem] p-5 shadow-2xl transition-all duration-300">
+            <h3 class="text-sm font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-4">Add Text Watermark</h3>
+            <div class="space-y-4 mb-4">
+                <div>
+                    <input type="text" id="inputText" placeholder="Enter text..." class="w-full bg-gray-100 dark:bg-gray-800 rounded-xl px-4 py-3 outline-none focus:ring-2 ring-indigo-500 transition-shadow text-sm font-medium text-gray-900 dark:text-white">
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <div class="bg-gray-100 dark:bg-gray-800 rounded-xl px-3 py-2 flex items-center justify-between">
+                        <span class="text-xs text-gray-500 font-medium">Color</span>
+                        <input type="color" id="inputTextColor" value="#ffffff" class="w-8 h-8 rounded cursor-pointer bg-transparent border-0 p-0">
+                    </div>
+                    <select id="inputTextFont" class="bg-gray-100 dark:bg-gray-800 rounded-xl px-3 py-2 outline-none text-sm font-medium cursor-pointer text-gray-900 dark:text-white">
+                        <option value="Inter">Inter</option>
+                        <option value="Montserrat">Montserrat</option>
+                        <option value="Pacifico">Pacifico</option>
+                        <option value="Oswald">Oswald</option>
+                    </select>
+                </div>
+                <div>
+                    <div class="flex justify-between text-xs font-semibold text-gray-500 mb-2">
+                        <span>Font Size</span>
+                        <span id="valTextSize">150</span>
+                    </div>
+                    <input type="range" id="sliderTextSize" min="20" max="800" value="150">
+                </div>
+                <p class="text-[10px] text-gray-400 text-center flex items-center justify-center gap-1 mt-2">
+                    <i class="ph-fill ph-hand-swipe-right text-indigo-400"></i> Drag on image to position text
+                </p>
+            </div>
+            <button id="btnApplyText" class="w-full py-3 bg-indigo-500 text-white rounded-xl font-bold hover:bg-indigo-600 active:scale-95 transition-all shadow-lg shadow-indigo-500/30 flex items-center justify-center gap-2">
+                <i class="ph ph-stamp"></i> Apply to Image
+            </button>
+        </div>
+
+        <!-- Draw Panel -->
+        <div id="drawPanel" class="sub-panel pointer-events-auto hidden opacity-0 glass-panel rounded-[2rem] p-5 shadow-2xl transition-all duration-300">
+            <h3 class="text-sm font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-4">Freehand Draw</h3>
+            <div class="space-y-4 mb-4">
+                <div class="flex items-center justify-between bg-gray-100 dark:bg-gray-800 rounded-xl px-4 py-3">
+                    <span class="text-xs font-semibold text-gray-500">Brush Color</span>
+                    <input type="color" id="inputDrawColor" value="#ef4444" class="w-8 h-8 rounded cursor-pointer bg-transparent border-0 p-0">
+                </div>
+                <div>
+                    <div class="flex justify-between text-xs font-semibold text-gray-500 mb-2">
+                        <span>Brush Size</span>
+                        <span id="valDrawSize">10</span>
+                    </div>
+                    <input type="range" id="sliderDrawSize" min="1" max="100" value="10">
+                </div>
+                <p class="text-[10px] text-gray-400 text-center flex items-center justify-center gap-1 mt-2">
+                    <i class="ph-fill ph-hand-swipe-right text-indigo-400"></i> Draw anywhere on the canvas
+                </p>
+            </div>
+            <button id="btnApplyDraw" class="w-full py-3 bg-indigo-500 text-white rounded-xl font-bold hover:bg-indigo-600 active:scale-95 transition-all shadow-lg shadow-indigo-500/30 flex items-center justify-center gap-2">
+                <i class="ph ph-pencil-simple"></i> Save Drawing
+            </button>
+        </div>
+
+        <!-- Add Image Overlay Panel -->
+        <div id="imageOverlayPanel" class="sub-panel pointer-events-auto hidden opacity-0 glass-panel rounded-[2rem] p-5 shadow-2xl transition-all duration-300">
+            <h3 class="text-sm font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-4">Add Image Overlay</h3>
+            <div class="space-y-4 mb-4">
+                <label class="w-full py-3 bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white rounded-xl font-bold hover:bg-gray-200 dark:hover:bg-gray-700 active:scale-95 transition-all cursor-pointer flex items-center justify-center gap-2 border border-gray-200 dark:border-gray-700">
+                    <i class="ph ph-upload-simple"></i> Choose Image
+                    <input type="file" id="overlayFileInput" accept="image/png, image/jpeg, image/webp" class="hidden">
+                </label>
+                
+                <div id="overlayControls" class="hidden space-y-4">
+                    <div>
+                        <div class="flex justify-between text-xs font-semibold text-gray-500 mb-2">
+                            <span>Image Scale</span>
+                            <span id="valOverlaySize">100%</span>
+                        </div>
+                        <input type="range" id="sliderOverlaySize" min="10" max="300" value="100">
+                    </div>
+                    <p class="text-[10px] text-gray-400 text-center flex items-center justify-center gap-1 mt-2">
+                        <i class="ph-fill ph-hand-swipe-right text-indigo-400"></i> Drag image to position
+                    </p>
+                </div>
+            </div>
+            <button id="btnApplyOverlay" class="w-full py-3 bg-indigo-500 text-white rounded-xl font-bold hover:bg-indigo-600 active:scale-95 transition-all shadow-lg shadow-indigo-500/30 flex items-center justify-center gap-2 opacity-50 pointer-events-none">
+                <i class="ph ph-stamp"></i> Stamp Image
+            </button>
+        </div>
+
+        <!-- Shape Panel -->
+        <div id="shapePanel" class="sub-panel pointer-events-auto hidden opacity-0 glass-panel rounded-[2rem] p-5 shadow-2xl transition-all duration-300">
+            <h3 class="text-sm font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-4">Add Shapes</h3>
+            <div class="space-y-4 mb-4">
+                <div class="grid grid-cols-5 gap-2" id="shapeGrid">
+                    <button class="shape-btn ring-2 ring-indigo-500 py-2 bg-gray-100 dark:bg-gray-800 rounded-xl hover:bg-gray-200 transition-all flex justify-center text-xl" data-shape="rectangle"><i class="ph ph-rectangle"></i></button>
+                    <button class="shape-btn py-2 bg-gray-100 dark:bg-gray-800 rounded-xl hover:bg-gray-200 transition-all flex justify-center text-xl" data-shape="circle"><i class="ph ph-circle"></i></button>
+                    <button class="shape-btn py-2 bg-gray-100 dark:bg-gray-800 rounded-xl hover:bg-gray-200 transition-all flex justify-center text-xl" data-shape="triangle"><i class="ph ph-triangle"></i></button>
+                    <button class="shape-btn py-2 bg-gray-100 dark:bg-gray-800 rounded-xl hover:bg-gray-200 transition-all flex justify-center text-xl" data-shape="heart"><i class="ph ph-heart"></i></button>
+                    <button class="shape-btn py-2 bg-gray-100 dark:bg-gray-800 rounded-xl hover:bg-gray-200 transition-all flex justify-center text-xl" data-shape="star"><i class="ph ph-star"></i></button>
+                </div>
+                <div class="flex items-center justify-between bg-gray-100 dark:bg-gray-800 rounded-xl px-4 py-3">
+                    <span class="text-xs font-semibold text-gray-500">Fill Color</span>
+                    <input type="color" id="inputShapeColor" value="#3b82f6" class="w-8 h-8 rounded cursor-pointer bg-transparent border-0 p-0">
+                </div>
+                <div>
+                    <div class="flex justify-between text-xs font-semibold text-gray-500 mb-2">
+                        <span>Shape Size</span>
+                        <span id="valShapeSize">150</span>
+                    </div>
+                    <input type="range" id="sliderShapeSize" min="20" max="800" value="150">
+                </div>
+            </div>
+            <button id="btnApplyShape" class="w-full py-3 bg-indigo-500 text-white rounded-xl font-bold hover:bg-indigo-600 active:scale-95 transition-all shadow-lg shadow-indigo-500/30 flex items-center justify-center gap-2">
+                <i class="ph ph-shapes"></i> Stamp Shape
+            </button>
+        </div>
+
+        <!-- Emoji Panel -->
+        <div id="emojiPanel" class="sub-panel pointer-events-auto hidden opacity-0 glass-panel rounded-[2rem] p-5 shadow-2xl transition-all duration-300">
+            <h3 class="text-sm font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-4">Add Emoji</h3>
+            <div class="space-y-4 mb-4">
+                <div class="grid grid-cols-6 gap-2 text-2xl h-32 overflow-y-auto p-2 bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-gray-200 dark:border-gray-700" id="emojiGrid">
+                    <!-- Populated via JS -->
+                </div>
+                <div>
+                    <div class="flex justify-between text-xs font-semibold text-gray-500 mb-2">
+                        <span>Emoji Size</span>
+                        <span id="valEmojiSize">100</span>
+                    </div>
+                    <input type="range" id="sliderEmojiSize" min="20" max="500" value="100">
+                </div>
+            </div>
+            <button id="btnApplyEmoji" class="w-full py-3 bg-indigo-500 text-white rounded-xl font-bold hover:bg-indigo-600 active:scale-95 transition-all shadow-lg shadow-indigo-500/30 flex items-center justify-center gap-2">
+                <i class="ph ph-smiley"></i> Stamp Emoji
+            </button>
+        </div>
+
+        <!-- Adjust Panel (Background / Canvas) -->
+        <div id="adjustPanel" class="sub-panel pointer-events-auto hidden opacity-0 glass-panel rounded-[2rem] p-5 shadow-2xl transition-all duration-300">
+            <h3 class="text-sm font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-4">Canvas Settings</h3>
+            <div class="space-y-6">
+                <div>
+                    <span class="text-sm font-medium block mb-3">Background Color (For transparent images)</span>
+                    <div class="flex items-center gap-3">
+                        <input type="color" id="inputBgColor" value="#ffffff" class="w-10 h-10 rounded-lg cursor-pointer bg-transparent border-0 p-0">
+                        <button id="btnBgTransparent" class="px-4 py-2 bg-gray-100 dark:bg-gray-800 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-700 transition-all text-sm font-medium">Transparent</button>
+                    </div>
+                </div>
+                <div class="p-3 bg-blue-50 dark:bg-blue-900/20 text-blue-800 dark:text-blue-300 rounded-xl text-xs flex items-start gap-2">
+                    <i class="ph ph-info mt-0.5"></i>
+                    <p>Background color only applies during export to formats that don't support transparency (like JPG), or if the original image has alpha channels.</p>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- ========================================== -->
+    <!-- EXPORT MODAL                               -->
+    <!-- ========================================== -->
+    <div id="exportModal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden items-center justify-center opacity-0 transition-opacity duration-300">
+        <div class="bg-white dark:bg-gray-900 w-full max-w-sm rounded-[2rem] p-6 shadow-2xl transform scale-95 transition-transform duration-300 m-4 relative border border-gray-200 dark:border-gray-800">
+            <button id="btnCloseExport" class="absolute top-4 right-4 w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
+                <i class="ph ph-x"></i>
+            </button>
+            
+            <h2 class="text-xl font-bold mb-4 flex items-center gap-2"><i class="ph-fill ph-export text-indigo-500"></i> Export Image</h2>
+
+            <!-- Final Size Indicator -->
+            <div class="mb-5 text-center p-3 bg-indigo-50 dark:bg-indigo-900/20 rounded-xl border border-indigo-100 dark:border-indigo-800/30">
+                <span class="text-[10px] font-bold text-indigo-400 dark:text-indigo-300 uppercase tracking-widest">Final Output Size</span>
+                <div id="exportDimensions" class="text-lg font-black text-indigo-600 dark:text-indigo-400 mt-0.5">-- x -- px</div>
+            </div>
+            
+            <div class="space-y-5">
+                <!-- Filename -->
+                <div>
+                    <label class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1 block">File Name</label>
+                    <input type="text" id="expFilename" value="SanStudio_Edit" class="w-full bg-gray-100 dark:bg-gray-800 rounded-xl px-4 py-3 outline-none focus:ring-2 ring-indigo-500 transition-shadow text-sm font-medium">
+                </div>
+                
+                <!-- Format -->
+                <div>
+                    <label class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1 block">Format</label>
+                    <div class="grid grid-cols-3 gap-2">
+                        <label class="cursor-pointer">
+                            <input type="radio" name="expFormat" value="image/png" class="peer hidden" checked>
+                            <div class="py-2 text-center rounded-xl bg-gray-100 dark:bg-gray-800 peer-checked:bg-indigo-500 peer-checked:text-white transition-colors text-sm font-semibold">PNG</div>
+                        </label>
+                        <label class="cursor-pointer">
+                            <input type="radio" name="expFormat" value="image/jpeg" class="peer hidden">
+                            <div class="py-2 text-center rounded-xl bg-gray-100 dark:bg-gray-800 peer-checked:bg-indigo-500 peer-checked:text-white transition-colors text-sm font-semibold">JPG</div>
+                        </label>
+                        <label class="cursor-pointer">
+                            <input type="radio" name="expFormat" value="image/webp" class="peer hidden">
+                            <div class="py-2 text-center rounded-xl bg-gray-100 dark:bg-gray-800 peer-checked:bg-indigo-500 peer-checked:text-white transition-colors text-sm font-semibold">WEBP</div>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Quality (conditional) -->
+                <div id="qualityControl" class="hidden">
+                    <div class="flex justify-between text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+                        <span>Quality</span>
+                        <span id="valQuality">90%</span>
+                    </div>
+                    <input type="range" id="sliderQuality" min="0.1" max="1.0" step="0.1" value="0.9">
+                </div>
+            </div>
+
+            <div class="mt-8 flex flex-col gap-3">
+                <button id="btnDownload" class="w-full py-3.5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-xl font-bold hover:scale-[1.02] active:scale-[0.98] transition-transform shadow-lg flex items-center justify-center gap-2">
+                    <i class="ph ph-download-simple text-lg"></i> Download
+                </button>
+                <button id="btnCopyClip" class="w-full py-3.5 bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white rounded-xl font-bold hover:bg-gray-200 dark:hover:bg-gray-700 active:scale-[0.98] transition-all flex items-center justify-center gap-2">
+                    <i class="ph ph-copy text-lg"></i> Copy to Clipboard
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- FOOTER                                     -->
+    <!-- ========================================== -->
+    <footer class="fixed bottom-0 w-full z-50 text-center pb-2 pointer-events-none">
+        <p class="text-[10px] sm:text-xs text-gray-400 dark:text-gray-500 font-medium">
+            Developed By <a href="https://sanstudio-hub.github.io/SanStudio-Hub/in" target="_blank" class="pointer-events-auto text-indigo-500 hover:text-indigo-600 dark:hover:text-indigo-400 hover:underline transition-colors">San Developers</a>
+        </p>
+    </footer>
+
+    <!-- ========================================== -->
+    <!-- APPLICATION LOGIC (JS ENGINE)              -->
+    <!-- ========================================== -->
+    <script>
+        /**
+         * SanStudio Image Toolkit - Core Engine
+         * Architecture: Modular object-literal patterns simulating separate files.
+         * Principle: 100% Local Processing via HTML5 Canvas API.
+         */
+
+        // --- MODULE: STATE MANAGEMENT ---
+        const State = {
+            baseImage: null, // Holds the current committed image as an OffscreenCanvas or regular Canvas
+            originalFilename: 'image',
+            transforms: {
+                zoom: 1,
+                panX: 0,
+                panY: 0,
+                angle: 0,
+                flipX: 1,
+                flipY: 1
+            },
+            settings: {
+                bgColor: 'transparent',
+                cropRatio: null // null means freeform
+            },
+            textMode: false,
+            textLayer: { text: '', x: 0, y: 0, size: 150, color: '#ffffff', font: 'Inter' },
+            drawMode: false,
+            drawingCanvas: null, // Overlay canvas for drawing strokes
+            imageOverlayMode: false,
+            imageOverlayLayer: { image: null, x: 0, y: 0, scale: 1 },
+            shapeMode: false,
+            shapeLayer: { type: 'rectangle', x: 0, y: 0, size: 150, color: '#3b82f6' },
+            emojiMode: false,
+            emojiLayer: { emoji: '', x: 0, y: 0, size: 100 },
+            history: [], // Stack of data URLs (compressed)
+            historyIndex: -1,
+            activeTool: null,
+            isCropMode: false,
+            
+            resetTransforms() {
+                this.transforms = { zoom: 1, panX: 0, panY: 0, angle: 0, flipX: 1, flipY: 1 };
+                UI.updateTransformInputs();
+            }
+        };
+
+        // --- MODULE: UTILITIES ---
+        const Utils = {
+            showToast(msg, type = 'info') {
+                const container = document.getElementById('toastContainer');
+                const toast = document.createElement('div');
+                
+                let icon = 'ph-info';
+                let colors = 'bg-gray-900 dark:bg-white text-white dark:text-gray-900';
+                if(type === 'success') { icon = 'ph-check-circle'; colors = 'bg-green-500 text-white'; }
+                if(type === 'warning') { icon = 'ph-warning'; colors = 'bg-orange-500 text-white'; }
+                if(type === 'error') { icon = 'ph-warning-octagon'; colors = 'bg-red-500 text-white'; }
+
+                toast.className = `flex items-center gap-2 px-4 py-3 rounded-full shadow-lg text-sm font-medium ${colors} transform transition-all duration-300 translate-y-[-20px] opacity-0`;
+                toast.innerHTML = `<i class="ph-fill ${icon} text-lg"></i> ${msg}`;
+                
+                container.appendChild(toast);
+                
+                // Animate in
+                requestAnimationFrame(() => {
+                    toast.classList.remove('translate-y-[-20px]', 'opacity-0');
+                    toast.classList.add('translate-y-0', 'opacity-100');
+                });
+
+                // Remove after 3s
+                setTimeout(() => {
+                    toast.classList.remove('translate-y-0', 'opacity-100');
+                    toast.classList.add('translate-y-[-20px]', 'opacity-0');
+                    setTimeout(() => toast.remove(), 300);
+                }, 3000);
+            },
+            
+            createCanvas(w, h) {
+                const c = document.createElement('canvas');
+                c.width = w; c.height = h;
+                return c;
+            }
+        };
+
+        // --- MODULE: HISTORY ENGINE ---
+        const HistoryEngine = {
+            MAX_STATES: 10,
+            
+            push() {
+                if (!State.baseImage) return;
+                
+                // Discard future states if we are in middle of undo stack
+                if (State.historyIndex < State.history.length - 1) {
+                    State.history = State.history.slice(0, State.historyIndex + 1);
+                }
+                
+                // High-res images crash localStorage/memory if stacked too many times.
+                // We store the visual state. To be bulletproof for undo/redo, we serialize the baseImage to DataURL.
+                // Using low quality jpeg for history thumbnails to save RAM, but actual application quality is degraded...
+                // Better approach for pure memory session: Store references to Canvas objects.
+                
+                const canvasCopy = Utils.createCanvas(State.baseImage.width, State.baseImage.height);
+                canvasCopy.getContext('2d').drawImage(State.baseImage, 0, 0);
+                
+                const snapshot = {
+                    imageCanvas: canvasCopy,
+                    transforms: { ...State.transforms }
+                };
+
+                State.history.push(snapshot);
+                if (State.history.length > this.MAX_STATES) State.history.shift();
+                else State.historyIndex++;
+                
+                this.updateUI();
+                StorageEngine.saveSession(); // Persist latest state
+            },
+
+            undo() {
+                if (State.historyIndex > 0) {
+                    State.historyIndex--;
+                    this.restoreState(State.history[State.historyIndex]);
+                }
+            },
+
+            redo() {
+                if (State.historyIndex < State.history.length - 1) {
+                    State.historyIndex++;
+                    this.restoreState(State.history[State.historyIndex]);
+                }
+            },
+
+            restoreState(snapshot) {
+                // Copy the historical canvas to prevent mutating it
+                const canvasCopy = Utils.createCanvas(snapshot.imageCanvas.width, snapshot.imageCanvas.height);
+                canvasCopy.getContext('2d').drawImage(snapshot.imageCanvas, 0, 0);
+                
+                State.baseImage = canvasCopy;
+                State.transforms = { ...snapshot.transforms };
+                
+                UI.updateTransformInputs();
+                CanvasEngine.render();
+                this.updateUI();
+            },
+
+            updateUI() {
+                document.getElementById('btnUndo').disabled = State.historyIndex <= 0;
+                document.getElementById('btnRedo').disabled = State.historyIndex >= State.history.length - 1;
+            }
+        };
+
+        // --- MODULE: STORAGE ENGINE ---
+        const StorageEngine = {
+            saveSession() {
+                if(!State.baseImage) return;
+                try {
+                    // Compress heavily for localStorage to avoid 5MB quota errors
+                    const dataUrl = State.baseImage.toDataURL('image/jpeg', 0.4);
+                    localStorage.setItem('sanstudio_session_img', dataUrl);
+                    localStorage.setItem('sanstudio_session_state', JSON.stringify({
+                        transforms: State.transforms,
+                        filename: State.originalFilename
+                    }));
+                } catch(e) {
+                    console.warn('Storage quota exceeded, session not fully saved.');
+                }
+            },
+            
+            loadSession() {
+                const dataUrl = localStorage.getItem('sanstudio_session_img');
+                const stateStr = localStorage.getItem('sanstudio_session_state');
+                if(dataUrl && stateStr) {
+                    const img = new Image();
+                    img.onload = () => {
+                        const c = Utils.createCanvas(img.width, img.height);
+                        c.getContext('2d').drawImage(img, 0, 0);
+                        State.baseImage = c;
+                        
+                        const savedState = JSON.parse(stateStr);
+                        State.transforms = savedState.transforms || State.transforms;
+                        State.originalFilename = savedState.filename || 'Session_Recovered';
+                        
+                        HistoryEngine.push(); // Set initial history
+                        CanvasEngine.fitToScreen();
+                        UI.showWorkspace();
+                        Utils.showToast('Previous session recovered', 'info');
+                    };
+                    img.src = dataUrl;
+                }
+            }
+        };
+
+        // --- MODULE: CANVAS ENGINE ---
+        const CanvasEngine = {
+            canvas: document.getElementById('mainCanvas'),
+            ctx: document.getElementById('mainCanvas').getContext('2d'),
+            viewport: { w: 0, h: 0 },
+            
+            init() {
+                this.resize();
+                window.onresize = () => { this.resize(); this.render(); };
+            },
+            
+            resize() {
+                const rect = document.getElementById('workspace').getBoundingClientRect();
+                this.canvas.width = rect.width * window.devicePixelRatio;
+                this.canvas.height = rect.height * window.devicePixelRatio;
+                this.canvas.style.width = `${rect.width}px`;
+                this.canvas.style.height = `${rect.height}px`;
+                this.viewport = { w: this.canvas.width, h: this.canvas.height };
+                this.ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+            },
+
+            fitToScreen() {
+                if(!State.baseImage) return;
+                const cw = this.canvas.width / window.devicePixelRatio;
+                const ch = this.canvas.height / window.devicePixelRatio;
+                
+                // Account for rotation to fit bounding box
+                const rad = State.transforms.angle * Math.PI / 180;
+                const bw = Math.abs(State.baseImage.width * Math.cos(rad)) + Math.abs(State.baseImage.height * Math.sin(rad));
+                const bh = Math.abs(State.baseImage.width * Math.sin(rad)) + Math.abs(State.baseImage.height * Math.cos(rad));
+                
+                // Padding 40px
+                const ratio = Math.min((cw - 80) / bw, (ch - 80) / bh);
+                
+                State.transforms.zoom = ratio;
+                State.transforms.panX = 0;
+                State.transforms.panY = 0;
+                this.render();
+            },
+
+            render() {
+                if (!State.baseImage) return;
+                
+                const cw = this.canvas.width / window.devicePixelRatio;
+                const ch = this.canvas.height / window.devicePixelRatio;
+                
+                this.ctx.clearRect(0, 0, cw, ch);
+                
+                // Draw Canvas background if set and not transparent
+                if(State.settings.bgColor !== 'transparent') {
+                    this.ctx.fillStyle = State.settings.bgColor;
+                    this.ctx.fillRect(0,0,cw,ch);
+                }
+
+                this.ctx.save();
+                
+                // Move origin to center of viewport + pan
+                this.ctx.translate(cw / 2 + State.transforms.panX, ch / 2 + State.transforms.panY);
+                
+                // Apply transforms
+                this.ctx.scale(State.transforms.zoom * State.transforms.flipX, State.transforms.zoom * State.transforms.flipY);
+                this.ctx.rotate(State.transforms.angle * Math.PI / 180);
+                
+                // Draw image centered
+                this.ctx.drawImage(State.baseImage, -State.baseImage.width / 2, -State.baseImage.height / 2);
+                
+                // Draw Freehand Overlay if exists
+                if (State.drawingCanvas) {
+                    this.ctx.drawImage(State.drawingCanvas, -State.drawingCanvas.width / 2, -State.drawingCanvas.height / 2);
+                }
+
+                // Draw Image Overlay if active
+                if (State.imageOverlayMode && State.imageOverlayLayer.image) {
+                    this.ctx.save();
+                    this.ctx.translate(State.imageOverlayLayer.x, State.imageOverlayLayer.y);
+                    this.ctx.scale(State.imageOverlayLayer.scale, State.imageOverlayLayer.scale);
+                    
+                    // Add subtle shadow for distinction while editing
+                    this.ctx.shadowColor = 'rgba(0,0,0,0.3)';
+                    this.ctx.shadowBlur = 15;
+                    
+                    const img = State.imageOverlayLayer.image;
+                    this.ctx.drawImage(img, -img.width / 2, -img.height / 2);
+                    this.ctx.restore();
+                }
+
+                // Draw Shape Layer if active
+                if (State.shapeMode && State.shapeLayer.type) {
+                    this.ctx.save();
+                    this.ctx.translate(State.shapeLayer.x, State.shapeLayer.y);
+                    this.ctx.fillStyle = State.shapeLayer.color;
+                    this.ctx.shadowColor = 'rgba(0,0,0,0.5)';
+                    this.ctx.shadowBlur = Math.max(5, State.shapeLayer.size / 10);
+                    this.ctx.beginPath();
+                    const s = State.shapeLayer.size;
+                    
+                    switch(State.shapeLayer.type) {
+                        case 'rectangle': this.ctx.rect(-s/2, -s/2, s, s); break;
+                        case 'circle': this.ctx.arc(0, 0, s/2, 0, Math.PI*2); break;
+                        case 'triangle': 
+                            this.ctx.moveTo(0, -s/2); 
+                            this.ctx.lineTo(s/2, s/2); 
+                            this.ctx.lineTo(-s/2, s/2); 
+                            break;
+                        case 'heart':
+                            this.ctx.moveTo(0, s * 0.3);
+                            this.ctx.arc(-s * 0.25, -s * 0.1, s * 0.25, Math.PI * 0.8, Math.PI * 2, false);
+                            this.ctx.arc(s * 0.25, -s * 0.1, s * 0.25, Math.PI, Math.PI * 0.2, false);
+                            this.ctx.lineTo(0, s * 0.3);
+                            break;
+                        case 'star':
+                            for (let i = 0; i < 5; i++) {
+                                this.ctx.lineTo(Math.cos((18+i*72)/180*Math.PI)*s/2, -Math.sin((18+i*72)/180*Math.PI)*s/2);
+                                this.ctx.lineTo(Math.cos((54+i*72)/180*Math.PI)*s/4, -Math.sin((54+i*72)/180*Math.PI)*s/4);
+                            }
+                            break;
+                    }
+                    this.ctx.closePath();
+                    this.ctx.fill();
+                    this.ctx.restore();
+                }
+
+                // Draw Emoji Layer if active
+                if (State.emojiMode && State.emojiLayer.emoji) {
+                    this.ctx.font = `${State.emojiLayer.size}px Arial`;
+                    this.ctx.textAlign = 'center';
+                    this.ctx.textBaseline = 'middle';
+                    this.ctx.shadowColor = 'rgba(0,0,0,0.6)';
+                    this.ctx.shadowBlur = Math.max(2, State.emojiLayer.size / 15);
+                    this.ctx.fillText(State.emojiLayer.emoji, State.emojiLayer.x, State.emojiLayer.y);
+                    this.ctx.shadowBlur = 0;
+                }
+
+                // Draw Text Layer if active
+                if (State.textMode && State.textLayer.text) {
+                    this.ctx.font = `bold ${State.textLayer.size}px '${State.textLayer.font}'`;
+                    this.ctx.fillStyle = State.textLayer.color;
+                    this.ctx.textAlign = 'center';
+                    this.ctx.textBaseline = 'middle';
+                    this.ctx.shadowColor = 'rgba(0,0,0,0.6)';
+                    this.ctx.shadowBlur = Math.max(2, State.textLayer.size / 15);
+                    this.ctx.fillText(State.textLayer.text, State.textLayer.x, State.textLayer.y);
+                    this.ctx.shadowBlur = 0; // reset
+                }
+
+                this.ctx.restore();
+            }
+        };
+
+        // --- MODULE: IMPORT ENGINE ---
+        const ImportEngine = {
+            init() {
+                const fInput = document.getElementById('fileInput');
+                const cInput = document.getElementById('cameraInput');
+                
+                fInput.addEventListener('change', (e) => this.handleFile(e.target.files[0]));
+                cInput.addEventListener('change', (e) => this.handleFile(e.target.files[0]));
+                
+                // Drag & Drop
+                const ws = document.getElementById('workspace');
+                ws.addEventListener('dragover', (e) => { e.preventDefault(); e.stopPropagation(); });
+                ws.addEventListener('drop', (e) => {
+                    e.preventDefault(); e.stopPropagation();
+                    if(e.dataTransfer.files && e.dataTransfer.files[0]) this.handleFile(e.dataTransfer.files[0]);
+                });
+
+                // Paste
+                window.onpaste = (e) => {
+                    const items = e.clipboardData.items;
+                    for (let i = 0; i < items.length; i++) {
+                        if (items[i].type.indexOf('image') !== -1) {
+                            this.handleFile(items[i].getAsFile());
+                            break;
+                        }
+                    }
+                };
+            },
+
+            handleFile(file) {
+                if(!file || !file.type.startsWith('image/')) {
+                    Utils.showToast('Please select a valid image file', 'error');
+                    return;
+                }
+                
+                State.originalFilename = file.name ? file.name.split('.')[0] : 'Pasted_Image';
+                document.getElementById('expFilename').value = State.originalFilename + '_Edit';
+
+                const url = URL.createObjectURL(file);
+                const img = new Image();
+                img.onload = () => {
+                    URL.revokeObjectURL(url);
+                    
+                    // Safety Limiter for mobile RAM (Max dimension 4096)
+                    const MAX_DIM = 4096;
+                    let w = img.width, h = img.height;
+                    if(w > MAX_DIM || h > MAX_DIM) {
+                        const r = Math.min(MAX_DIM/w, MAX_DIM/h);
+                        w = Math.round(w*r); h = Math.round(h*r);
+                        Utils.showToast('Image scaled down to prevent memory overflow', 'warning');
+                    }
+                    
+                    const c = Utils.createCanvas(w, h);
+                    c.getContext('2d').drawImage(img, 0, 0, w, h);
+                    
+                    State.baseImage = c;
+                    State.resetTransforms();
+                    HistoryEngine.push();
+                    
+                    UI.showWorkspace();
+                    CanvasEngine.fitToScreen();
+                    
+                    // Populate resize inputs
+                    document.getElementById('inputResW').value = w;
+                    document.getElementById('inputResH').value = h;
+                };
+                img.src = url;
+            }
+        };
+
+        // --- MODULE: GESTURE ENGINE ---
+        const GestureEngine = {
+            state: { isDown: false, startX: 0, startY: 0, lastPanX: 0, lastPanY: 0, pinchDist: 0, lastZoom: 1, lastItemX: 0, lastItemY: 0 },
+            
+            getAbsoluteCoords(clientX, clientY) {
+                const rect = document.getElementById('mainCanvas').getBoundingClientRect();
+                const cx = rect.left + rect.width / 2;
+                const cy = rect.top + rect.height / 2;
+                let dx = (clientX - cx - State.transforms.panX) / State.transforms.zoom;
+                let dy = (clientY - cy - State.transforms.panY) / State.transforms.zoom;
+                const rad = -State.transforms.angle * Math.PI / 180;
+                const ix = dx * Math.cos(rad) - dy * Math.sin(rad);
+                const iy = dx * Math.sin(rad) + dy * Math.cos(rad);
+                return { x: ix * State.transforms.flipX, y: iy * State.transforms.flipY };
+            },
+
+            init() {
+                const c = document.getElementById('mainCanvas');
+                
+                // Touch Events
+                c.addEventListener('touchstart', (e) => {
+                    if(!State.baseImage) return;
+                    if(e.touches.length === 1) {
+                        this.state.isDown = true;
+                        this.state.startX = e.touches[0].clientX;
+                        this.state.startY = e.touches[0].clientY;
+                        this.state.lastPanX = State.transforms.panX;
+                        this.state.lastPanY = State.transforms.panY;
+                        
+                        if (State.textMode) { this.state.lastItemX = State.textLayer.x; this.state.lastItemY = State.textLayer.y; }
+                        if (State.shapeMode) { this.state.lastItemX = State.shapeLayer.x; this.state.lastItemY = State.shapeLayer.y; }
+                        if (State.emojiMode) { this.state.lastItemX = State.emojiLayer.x; this.state.lastItemY = State.emojiLayer.y; }
+                        
+                        if (State.drawMode) {
+                            const coords = this.getAbsoluteCoords(e.touches[0].clientX, e.touches[0].clientY);
+                            DrawEngine.draw(coords.x, coords.y, true);
+                        }
+                    } else if(e.touches.length === 2) {
+                        this.state.pinchDist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+                        this.state.lastZoom = State.transforms.zoom;
+                    }
+                });
+
+                c.addEventListener('touchmove', (e) => {
+                    if(!State.baseImage) return;
+                    e.preventDefault();
+                    if(e.touches.length === 1 && this.state.isDown) {
+                        if (State.textMode || State.shapeMode || State.emojiMode) {
+                            let dx = (e.touches[0].clientX - this.state.startX) / State.transforms.zoom;
+                            let dy = (e.touches[0].clientY - this.state.startY) / State.transforms.zoom;
+                            const rad = -State.transforms.angle * Math.PI / 180;
+                            const ix = dx * Math.cos(rad) - dy * Math.sin(rad);
+                            const iy = dx * Math.sin(rad) + dy * Math.cos(rad);
+                            
+                            if (State.textMode) { State.textLayer.x = this.state.lastItemX + (ix * State.transforms.flipX); State.textLayer.y = this.state.lastItemY + (iy * State.transforms.flipY); }
+                            if (State.shapeMode) { State.shapeLayer.x = this.state.lastItemX + (ix * State.transforms.flipX); State.shapeLayer.y = this.state.lastItemY + (iy * State.transforms.flipY); }
+                            if (State.emojiMode) { State.emojiLayer.x = this.state.lastItemX + (ix * State.transforms.flipX); State.emojiLayer.y = this.state.lastItemY + (iy * State.transforms.flipY); }
+                            CanvasEngine.render();
+                        } else if (State.drawMode) {
+                            const coords = this.getAbsoluteCoords(e.touches[0].clientX, e.touches[0].clientY);
+                            DrawEngine.draw(coords.x, coords.y, false);
+                        } else {
+                            State.transforms.panX = this.state.lastPanX + (e.touches[0].clientX - this.state.startX);
+                            State.transforms.panY = this.state.lastPanY + (e.touches[0].clientY - this.state.startY);
+                            CanvasEngine.render();
+                        }
+                    } else if(e.touches.length === 2) {
+                        const dist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+                        const scale = dist / this.state.pinchDist;
+                        State.transforms.zoom = Math.max(0.05, Math.min(this.state.lastZoom * scale, 10));
+                        CanvasEngine.render();
+                    }
+                }, {passive: false});
+
+                c.addEventListener('touchend', () => { this.state.isDown = false; });
+                
+                // Mouse Events
+                c.onmousedown = (e) => {
+                    if(!State.baseImage) return;
+                    e.preventDefault(); // Prevent native browser dragging
+                    this.state.isDown = true;
+                    this.state.startX = e.clientX;
+                    this.state.startY = e.clientY;
+                    this.state.lastPanX = State.transforms.panX;
+                    this.state.lastPanY = State.transforms.panY;
+                    
+                    if (State.textMode) { this.state.lastItemX = State.textLayer.x; this.state.lastItemY = State.textLayer.y; }
+                    if (State.shapeMode) { this.state.lastItemX = State.shapeLayer.x; this.state.lastItemY = State.shapeLayer.y; }
+                    if (State.emojiMode) { this.state.lastItemX = State.emojiLayer.x; this.state.lastItemY = State.emojiLayer.y; }
+                    if (State.imageOverlayMode) { this.state.lastItemX = State.imageOverlayLayer.x; this.state.lastItemY = State.imageOverlayLayer.y; }
+                    
+                    if (State.drawMode) {
+                        const coords = this.getAbsoluteCoords(e.clientX, e.clientY);
+                        DrawEngine.draw(coords.x, coords.y, true);
+                    }
+                    c.style.cursor = (State.textMode || State.shapeMode || State.emojiMode || State.imageOverlayMode) ? 'move' : (State.drawMode ? 'crosshair' : 'grabbing');
+                };
+                
+                window.onmousemove = (e) => {
+                    if(!this.state.isDown || !State.baseImage) return;
+                    
+                    if (State.textMode || State.shapeMode || State.emojiMode || State.imageOverlayMode) {
+                        let dx = (e.clientX - this.state.startX) / State.transforms.zoom;
+                        let dy = (e.clientY - this.state.startY) / State.transforms.zoom;
+                        const rad = -State.transforms.angle * Math.PI / 180;
+                        const ix = dx * Math.cos(rad) - dy * Math.sin(rad);
+                        const iy = dx * Math.sin(rad) + dy * Math.cos(rad);
+                        
+                        if (State.textMode) { State.textLayer.x = this.state.lastItemX + (ix * State.transforms.flipX); State.textLayer.y = this.state.lastItemY + (iy * State.transforms.flipY); }
+                        if (State.shapeMode) { State.shapeLayer.x = this.state.lastItemX + (ix * State.transforms.flipX); State.shapeLayer.y = this.state.lastItemY + (iy * State.transforms.flipY); }
+                        if (State.emojiMode) { State.emojiLayer.x = this.state.lastItemX + (ix * State.transforms.flipX); State.emojiLayer.y = this.state.lastItemY + (iy * State.transforms.flipY); }
+                        if (State.imageOverlayMode) { State.imageOverlayLayer.x = this.state.lastItemX + (ix * State.transforms.flipX); State.imageOverlayLayer.y = this.state.lastItemY + (iy * State.transforms.flipY); }
+                        CanvasEngine.render();
+                    } else if (State.drawMode) {
+                        const coords = this.getAbsoluteCoords(e.clientX, e.clientY);
+                        DrawEngine.draw(coords.x, coords.y, false);
+                    } else {
+                        State.transforms.panX = this.state.lastPanX + (e.clientX - this.state.startX);
+                        State.transforms.panY = this.state.lastPanY + (e.clientY - this.state.startY);
+                        CanvasEngine.render();
+                    }
+                };
+                
+                window.onmouseup = () => { 
+                    this.state.isDown = false; 
+                    c.style.cursor = (State.textMode || State.shapeMode || State.emojiMode || State.imageOverlayMode) ? 'move' : (State.drawMode ? 'crosshair' : 'grab');
+                };
+
+                c.addEventListener('wheel', (e) => {
+                    if(!State.baseImage) return;
+                    e.preventDefault();
+                    const zf = e.deltaY > 0 ? 0.9 : 1.1;
+                    State.transforms.zoom = Math.max(0.05, Math.min(State.transforms.zoom * zf, 10));
+                    CanvasEngine.render();
+                }, {passive: false});
+            }
+        };
+
+        // --- MODULE: CROP ENGINE ---
+        const CropEngine = {
+            init() {
+                const ratios = document.querySelectorAll('.crop-ratio-btn');
+                ratios.forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        ratios.forEach(b => b.classList.remove('ring-2', 'ring-indigo-500'));
+                        e.target.classList.add('ring-2', 'ring-indigo-500');
+                        State.settings.cropRatio = e.target.dataset.ratio === 'free' ? null : parseFloat(e.target.dataset.ratio);
+                        this.updateFrameBox();
+                    });
+                });
+
+                document.getElementById('btnApplyCrop').addEventListener('click', () => this.applyCrop());
+            },
+
+            enterMode() {
+                State.isCropMode = true;
+                const overlay = document.getElementById('cropOverlay');
+                overlay.classList.remove('hidden');
+                setTimeout(() => overlay.classList.remove('opacity-0'), 10);
+                
+                // Soft reset to fit framing box
+                CanvasEngine.fitToScreen();
+                this.updateFrameBox();
+            },
+
+            exitMode() {
+                State.isCropMode = false;
+                const overlay = document.getElementById('cropOverlay');
+                overlay.classList.add('opacity-0');
+                setTimeout(() => overlay.classList.add('hidden'), 300);
+            },
+
+            updateFrameBox() {
+                const frame = document.getElementById('cropFrame');
+                const ws = document.getElementById('workspace').getBoundingClientRect();
+                const padding = 40;
+                let maxW = ws.width - padding * 2;
+                let maxH = ws.height - padding * 2;
+                
+                let fw = maxW;
+                let fh = maxH;
+
+                if (State.settings.cropRatio) {
+                    if (maxW / maxH > State.settings.cropRatio) {
+                        fw = maxH * State.settings.cropRatio;
+                        fh = maxH;
+                    } else {
+                        fw = maxW;
+                        fh = maxW / State.settings.cropRatio;
+                    }
+                } else {
+                    // Freeform defaults to a square for initial framing
+                    fw = Math.min(maxW, maxH);
+                    fh = fw;
+                }
+
+                frame.style.width = `${fw}px`;
+                frame.style.height = `${fh}px`;
+            },
+
+            applyCrop() {
+                const frameDOM = document.getElementById('cropFrame').getBoundingClientRect();
+                const wsDOM = document.getElementById('workspace').getBoundingClientRect();
+                
+                // Calculate scale factor from screen to high-res image
+                const cssToImageScale = 1 / State.transforms.zoom;
+                
+                const finalCropW = frameDOM.width * cssToImageScale;
+                const finalCropH = frameDOM.height * cssToImageScale;
+
+                if (finalCropW === 0 || finalCropH === 0) {
+                    Utils.showToast('Invalid crop area', 'error');
+                    return;
+                }
+
+                // Create perfectly sized canvas for the cropped area
+                const finalCrop = Utils.createCanvas(finalCropW, finalCropH);
+                const ctx = finalCrop.getContext('2d');
+                
+                // Translate so the frame aligns with canvas origin, factoring screen-to-image scale
+                ctx.scale(cssToImageScale, cssToImageScale);
+                ctx.translate(-(frameDOM.left - wsDOM.left), -(frameDOM.top - wsDOM.top));
+                
+                // Apply the exact same transforms currently applied to the main workspace
+                ctx.translate(wsDOM.width / 2 + State.transforms.panX, wsDOM.height / 2 + State.transforms.panY);
+                ctx.scale(State.transforms.zoom * State.transforms.flipX, State.transforms.zoom * State.transforms.flipY);
+                ctx.rotate(State.transforms.angle * Math.PI / 180);
+                
+                // Draw the original high-res image
+                ctx.drawImage(State.baseImage, -State.baseImage.width / 2, -State.baseImage.height / 2);
+
+                // Update system state
+                State.baseImage = finalCrop;
+                State.resetTransforms();
+                HistoryEngine.push();
+                
+                // Update resize inputs
+                document.getElementById('inputResW').value = Math.round(finalCrop.width);
+                document.getElementById('inputResH').value = Math.round(finalCrop.height);
+
+                this.exitMode();
+                UI.closeAllPanels();
+                CanvasEngine.fitToScreen();
+                Utils.showToast('Crop Applied Successfully', 'success');
+            }
+        };
+
+        // --- MODULE: TEXT ENGINE ---
+        const TextEngine = {
+            init() {
+                document.getElementById('inputText').addEventListener('input', (e) => {
+                    State.textLayer.text = e.target.value;
+                    CanvasEngine.render();
+                });
+                document.getElementById('inputTextColor').addEventListener('input', (e) => {
+                    State.textLayer.color = e.target.value;
+                    CanvasEngine.render();
+                });
+                document.getElementById('inputTextFont').addEventListener('change', (e) => {
+                    State.textLayer.font = e.target.value;
+                    CanvasEngine.render();
+                });
+                document.getElementById('sliderTextSize').addEventListener('input', (e) => {
+                    State.textLayer.size = parseInt(e.target.value);
+                    document.getElementById('valTextSize').textContent = State.textLayer.size;
+                    CanvasEngine.render();
+                });
+                document.getElementById('btnApplyText').addEventListener('click', () => {
+                    if (!State.textLayer.text) {
+                        Utils.showToast('Please enter some text', 'warning');
+                        return;
+                    }
+                    this.applyText();
+                });
+            },
+
+            enterMode() {
+                State.textMode = true;
+                State.textLayer.x = 0;
+                State.textLayer.y = 0;
+                
+                // Provide a default watermark to guide the user
+                const input = document.getElementById('inputText');
+                if (!input.value) {
+                    input.value = 'SanStudio';
+                    State.textLayer.text = 'SanStudio';
+                }
+                CanvasEngine.render();
+            },
+
+            exitMode() {
+                State.textMode = false;
+                CanvasEngine.render();
+            },
+
+            applyText() {
+                const c = Utils.createCanvas(State.baseImage.width, State.baseImage.height);
+                const ctx = c.getContext('2d');
+                ctx.drawImage(State.baseImage, 0, 0);
+                
+                // Draw text at exact relative coordinates
+                ctx.translate(c.width / 2, c.height / 2);
+                ctx.font = `bold ${State.textLayer.size}px '${State.textLayer.font}'`;
+                ctx.fillStyle = State.textLayer.color;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.shadowColor = 'rgba(0,0,0,0.6)';
+                ctx.shadowBlur = Math.max(2, State.textLayer.size / 15);
+                ctx.fillText(State.textLayer.text, State.textLayer.x, State.textLayer.y);
+                
+                State.baseImage = c;
+                
+                // Clear UI so next time it's fresh
+                State.textLayer.text = '';
+                document.getElementById('inputText').value = '';
+                
+                HistoryEngine.push();
+                this.exitMode();
+                UI.closeAllPanels();
+                CanvasEngine.render();
+                Utils.showToast('Text Stamp Applied!', 'success');
+            }
+        };
+
+        // --- MODULE: DRAW ENGINE ---
+        const DrawEngine = {
+            brushColor: '#ef4444',
+            brushSize: 10,
+            
+            init() {
+                document.getElementById('inputDrawColor').addEventListener('input', (e) => this.brushColor = e.target.value);
+                document.getElementById('sliderDrawSize').addEventListener('input', (e) => {
+                    this.brushSize = parseInt(e.target.value);
+                    document.getElementById('valDrawSize').textContent = this.brushSize;
+                });
+                document.getElementById('btnApplyDraw').addEventListener('click', () => this.applyDraw());
+            },
+
+            enterMode() {
+                State.drawMode = true;
+                State.drawingCanvas = Utils.createCanvas(State.baseImage.width, State.baseImage.height);
+                document.getElementById('mainCanvas').style.cursor = 'crosshair';
+                CanvasEngine.render();
+            },
+
+            exitMode() {
+                State.drawMode = false;
+                State.drawingCanvas = null;
+                document.getElementById('mainCanvas').style.cursor = 'grab';
+                CanvasEngine.render();
+            },
+
+            draw(x, y, isStart) {
+                if(!State.drawingCanvas) return;
+                const ctx = State.drawingCanvas.getContext('2d');
+                ctx.lineCap = 'round';
+                ctx.lineJoin = 'round';
+                ctx.strokeStyle = this.brushColor;
+                ctx.lineWidth = this.brushSize;
+                
+                // Map from center-origin coords to drawing canvas coords (top-left origin)
+                const mappedX = x + State.baseImage.width / 2;
+                const mappedY = y + State.baseImage.height / 2;
+
+                if (isStart) {
+                    ctx.beginPath();
+                    ctx.moveTo(mappedX, mappedY);
+                } else {
+                    ctx.lineTo(mappedX, mappedY);
+                    ctx.stroke();
+                }
+                CanvasEngine.render();
+            },
+
+            applyDraw() {
+                if(!State.drawingCanvas) return;
+                const c = Utils.createCanvas(State.baseImage.width, State.baseImage.height);
+                const ctx = c.getContext('2d');
+                ctx.drawImage(State.baseImage, 0, 0);
+                ctx.drawImage(State.drawingCanvas, 0, 0);
+                
+                State.baseImage = c;
+                HistoryEngine.push();
+                
+                this.exitMode();
+                UI.closeAllPanels();
+                CanvasEngine.render();
+                Utils.showToast('Drawing Saved!', 'success');
+            }
+        };
+
+        // --- MODULE: IMAGE OVERLAY ENGINE ---
+        const ImageOverlayEngine = {
+            init() {
+                const fInput = document.getElementById('overlayFileInput');
+                fInput.addEventListener('change', (e) => this.handleFile(e.target.files[0]));
+                
+                document.getElementById('sliderOverlaySize').addEventListener('input', (e) => {
+                    State.imageOverlayLayer.scale = parseInt(e.target.value) / 100;
+                    document.getElementById('valOverlaySize').textContent = `${e.target.value}%`;
+                    CanvasEngine.render();
+                });
+                
+                document.getElementById('btnApplyOverlay').addEventListener('click', () => {
+                    if(!State.imageOverlayLayer.image) return;
+                    this.applyOverlay();
+                });
+            },
+
+            handleFile(file) {
+                if(!file || !file.type.startsWith('image/')) {
+                    Utils.showToast('Please select a valid image file', 'error');
+                    return;
+                }
+
+                const url = URL.createObjectURL(file);
+                const img = new Image();
+                img.onload = () => {
+                    URL.revokeObjectURL(url);
+                    
+                    // Create an offscreen canvas to store the overlay image
+                    const c = Utils.createCanvas(img.width, img.height);
+                    c.getContext('2d').drawImage(img, 0, 0, img.width, img.height);
+                    
+                    State.imageOverlayLayer.image = c;
+                    State.imageOverlayLayer.x = 0;
+                    State.imageOverlayLayer.y = 0;
+                    State.imageOverlayLayer.scale = 1;
+                    
+                    document.getElementById('sliderOverlaySize').value = 100;
+                    document.getElementById('valOverlaySize').textContent = '100%';
+                    
+                    document.getElementById('overlayControls').classList.remove('hidden');
+                    document.getElementById('btnApplyOverlay').classList.remove('opacity-50', 'pointer-events-none');
+                    
+                    this.enterMode();
+                };
+                img.src = url;
+            },
+
+            enterMode() {
+                State.imageOverlayMode = true;
+                CanvasEngine.render();
+            },
+
+            exitMode() {
+                State.imageOverlayMode = false;
+                // Don't clear the image immediately so they don't lose it if they accidentally switch tabs
+                CanvasEngine.render();
+            },
+
+            applyOverlay() {
+                const c = Utils.createCanvas(State.baseImage.width, State.baseImage.height);
+                const ctx = c.getContext('2d');
+                ctx.drawImage(State.baseImage, 0, 0);
+                
+                ctx.translate(c.width / 2 + State.imageOverlayLayer.x, c.height / 2 + State.imageOverlayLayer.y);
+                ctx.scale(State.imageOverlayLayer.scale, State.imageOverlayLayer.scale);
+                
+                const img = State.imageOverlayLayer.image;
+                ctx.drawImage(img, -img.width / 2, -img.height / 2);
+                
+                State.baseImage = c;
+                
+                // Clear the overlay layer to reset tool
+                State.imageOverlayLayer.image = null;
+                document.getElementById('overlayFileInput').value = '';
+                document.getElementById('overlayControls').classList.add('hidden');
+                document.getElementById('btnApplyOverlay').classList.add('opacity-50', 'pointer-events-none');
+                
+                HistoryEngine.push();
+                this.exitMode();
+                UI.closeAllPanels();
+                CanvasEngine.render();
+                Utils.showToast('Image Overlay Stamped!', 'success');
+            }
+        };
+
+        // --- MODULE: SHAPE ENGINE ---
+        const ShapeEngine = {
+            init() {
+                const shapeBtns = document.querySelectorAll('.shape-btn');
+                shapeBtns.forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        shapeBtns.forEach(b => b.classList.remove('ring-2', 'ring-indigo-500'));
+                        btn.classList.add('ring-2', 'ring-indigo-500');
+                        State.shapeLayer.type = btn.dataset.shape;
+                        CanvasEngine.render();
+                    });
+                });
+                
+                document.getElementById('inputShapeColor').addEventListener('input', (e) => {
+                    State.shapeLayer.color = e.target.value;
+                    CanvasEngine.render();
+                });
+                document.getElementById('sliderShapeSize').addEventListener('input', (e) => {
+                    State.shapeLayer.size = parseInt(e.target.value);
+                    document.getElementById('valShapeSize').textContent = State.shapeLayer.size;
+                    CanvasEngine.render();
+                });
+                document.getElementById('btnApplyShape').addEventListener('click', () => this.applyShape());
+            },
+
+            enterMode() {
+                State.shapeMode = true;
+                State.shapeLayer.x = 0;
+                State.shapeLayer.y = 0;
+                CanvasEngine.render();
+            },
+
+            exitMode() {
+                State.shapeMode = false;
+                CanvasEngine.render();
+            },
+
+            applyShape() {
+                // To apply, we just let the regular render logic draw it to a fresh intermediate canvas
+                const c = Utils.createCanvas(State.baseImage.width, State.baseImage.height);
+                const ctx = c.getContext('2d');
+                
+                // Draw base
+                ctx.drawImage(State.baseImage, 0, 0);
+                
+                // Draw shape in relative space
+                ctx.translate(c.width / 2 + State.shapeLayer.x, c.height / 2 + State.shapeLayer.y);
+                ctx.fillStyle = State.shapeLayer.color;
+                ctx.shadowColor = 'rgba(0,0,0,0.5)';
+                ctx.shadowBlur = Math.max(5, State.shapeLayer.size / 10);
+                ctx.beginPath();
+                const s = State.shapeLayer.size;
+                
+                switch(State.shapeLayer.type) {
+                    case 'rectangle': ctx.rect(-s/2, -s/2, s, s); break;
+                    case 'circle': ctx.arc(0, 0, s/2, 0, Math.PI*2); break;
+                    case 'triangle': 
+                        ctx.moveTo(0, -s/2); 
+                        ctx.lineTo(s/2, s/2); 
+                        ctx.lineTo(-s/2, s/2); 
+                        break;
+                    case 'heart':
+                        ctx.moveTo(0, s * 0.3);
+                        ctx.arc(-s * 0.25, -s * 0.1, s * 0.25, Math.PI * 0.8, Math.PI * 2, false);
+                        ctx.arc(s * 0.25, -s * 0.1, s * 0.25, Math.PI, Math.PI * 0.2, false);
+                        ctx.lineTo(0, s * 0.3);
+                        break;
+                    case 'star':
+                        for (let i = 0; i < 5; i++) {
+                            ctx.lineTo(Math.cos((18+i*72)/180*Math.PI)*s/2, -Math.sin((18+i*72)/180*Math.PI)*s/2);
+                            ctx.lineTo(Math.cos((54+i*72)/180*Math.PI)*s/4, -Math.sin((54+i*72)/180*Math.PI)*s/4);
+                        }
+                        break;
+                }
+                ctx.closePath();
+                ctx.fill();
+                
+                State.baseImage = c;
+                HistoryEngine.push();
+                this.exitMode();
+                UI.closeAllPanels();
+                CanvasEngine.render();
+                Utils.showToast('Shape Stamped!', 'success');
+            }
+        };
+
+        // --- MODULE: EMOJI ENGINE ---
+        const EmojiEngine = {
+            init() {
+                const emojis = ['😀','😂','🥰','😎','🤩','😭','😡','🤯','🥳','🥺','❤️','💖','💯','🔥','✨','🎉','👑','🐶','🐱','🍕','🍔','☕️','🚀','🎸','⚽️'];
+                const grid = document.getElementById('emojiGrid');
+                grid.innerHTML = emojis.map(e => `<button class="emoji-btn hover:scale-125 transition-transform" data-emoji="${e}">${e}</button>`).join('');
+                
+                const btns = document.querySelectorAll('.emoji-btn');
+                btns.forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        State.emojiLayer.emoji = btn.dataset.emoji;
+                        CanvasEngine.render();
+                    });
+                });
+
+                document.getElementById('sliderEmojiSize').addEventListener('input', (e) => {
+                    State.emojiLayer.size = parseInt(e.target.value);
+                    document.getElementById('valEmojiSize').textContent = State.emojiLayer.size;
+                    CanvasEngine.render();
+                });
+                
+                document.getElementById('btnApplyEmoji').addEventListener('click', () => {
+                    if(!State.emojiLayer.emoji) { Utils.showToast('Select an emoji first', 'warning'); return; }
+                    this.applyEmoji();
+                });
+            },
+
+            enterMode() {
+                State.emojiMode = true;
+                State.emojiLayer.x = 0;
+                State.emojiLayer.y = 0;
+                if(!State.emojiLayer.emoji) State.emojiLayer.emoji = '😀'; // default
+                CanvasEngine.render();
+            },
+
+            exitMode() {
+                State.emojiMode = false;
+                CanvasEngine.render();
+            },
+
+            applyEmoji() {
+                const c = Utils.createCanvas(State.baseImage.width, State.baseImage.height);
+                const ctx = c.getContext('2d');
+                ctx.drawImage(State.baseImage, 0, 0);
+                
+                ctx.translate(c.width / 2, c.height / 2);
+                ctx.font = `${State.emojiLayer.size}px Arial`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.shadowColor = 'rgba(0,0,0,0.6)';
+                ctx.shadowBlur = Math.max(2, State.emojiLayer.size / 15);
+                ctx.fillText(State.emojiLayer.emoji, State.emojiLayer.x, State.emojiLayer.y);
+                
+                State.baseImage = c;
+                HistoryEngine.push();
+                this.exitMode();
+                UI.closeAllPanels();
+                CanvasEngine.render();
+                Utils.showToast('Emoji Stamped!', 'success');
+            }
+        };
+
+        // --- MODULE: EXPORT ENGINE ---
+        const ExportEngine = {
+            init() {
+                document.getElementById('btnExportMenu').addEventListener('click', () => {
+                    const modal = document.getElementById('exportModal');
+                    modal.classList.remove('hidden');
+                    
+                    // Update Final Dimension UI
+                    if(State.baseImage) {
+                        const rad = State.transforms.angle * Math.PI / 180;
+                        const w = State.baseImage.width;
+                        const h = State.baseImage.height;
+                        const boundW = Math.round(Math.abs(w * Math.cos(rad)) + Math.abs(h * Math.sin(rad)));
+                        const boundH = Math.round(Math.abs(w * Math.sin(rad)) + Math.abs(h * Math.cos(rad)));
+                        document.getElementById('exportDimensions').textContent = `${boundW} × ${boundH} px`;
+                    }
+
+                    // Add slight delay for display block to register before opacity transition
+                    requestAnimationFrame(() => {
+                        modal.classList.remove('opacity-0');
+                        modal.querySelector('div').classList.remove('scale-95');
+                    });
+                });
+
+                document.getElementById('btnCloseExport').addEventListener('click', this.closeModal);
+                
+                // Format change listener to show/hide quality slider
+                document.querySelectorAll('input[name="expFormat"]').forEach(rad => {
+                    rad.addEventListener('change', (e) => {
+                        const qc = document.getElementById('qualityControl');
+                        if (['image/jpeg', 'image/webp'].includes(e.target.value)) qc.classList.remove('hidden');
+                        else qc.classList.add('hidden');
+                    });
+                });
+
+                document.getElementById('sliderQuality').addEventListener('input', (e) => {
+                    document.getElementById('valQuality').textContent = `${Math.round(e.target.value * 100)}%`;
+                });
+
+                document.getElementById('btnDownload').addEventListener('click', () => this.executeExport('download'));
+                document.getElementById('btnCopyClip').addEventListener('click', () => this.executeExport('clipboard'));
+            },
+
+            closeModal() {
+                const modal = document.getElementById('exportModal');
+                modal.classList.add('opacity-0');
+                modal.querySelector('div').classList.add('scale-95');
+                setTimeout(() => modal.classList.add('hidden'), 300);
+            },
+
+            getFinalCanvas() {
+                // Determine bounding box based on transformations
+                const rad = State.transforms.angle * Math.PI / 180;
+                const w = State.baseImage.width;
+                const h = State.baseImage.height;
+                
+                const boundW = Math.abs(w * Math.cos(rad)) + Math.abs(h * Math.sin(rad));
+                const boundH = Math.abs(w * Math.sin(rad)) + Math.abs(h * Math.cos(rad));
+
+                const exportCanvas = Utils.createCanvas(boundW, boundH);
+                const ctx = exportCanvas.getContext('2d');
+
+                // Apply Background if set
+                if(State.settings.bgColor !== 'transparent') {
+                    ctx.fillStyle = State.settings.bgColor;
+                    ctx.fillRect(0, 0, boundW, boundH);
+                }
+
+                ctx.translate(boundW / 2, boundH / 2);
+                ctx.scale(State.transforms.flipX, State.transforms.flipY);
+                ctx.rotate(rad);
+                ctx.drawImage(State.baseImage, -w / 2, -h / 2);
+
+                return exportCanvas;
+            },
+
+            executeExport(action) {
+                if(!State.baseImage) return;
+
+                const format = document.querySelector('input[name="expFormat"]:checked').value;
+                const quality = parseFloat(document.getElementById('sliderQuality').value);
+                const filename = document.getElementById('expFilename').value || 'SanStudio';
+
+                const btn = action === 'download' ? document.getElementById('btnDownload') : document.getElementById('btnCopyClip');
+                const origText = btn.innerHTML;
+                btn.innerHTML = `<i class="ph ph-spinner animate-spin text-lg"></i> Processing...`;
+                btn.disabled = true;
+
+                // Use setTimeout to allow UI to update to loading state
+                setTimeout(() => {
+                    const finalCanvas = this.getFinalCanvas();
+                    
+                    finalCanvas.toBlob((blob) => {
+                        if (!blob) {
+                            Utils.showToast('Export failed. Image might be too large.', 'error');
+                            btn.innerHTML = origText;
+                            btn.disabled = false;
+                            return;
+                        }
+
+                        if (action === 'download') {
+                            const url = URL.createObjectURL(blob);
+                            const a = document.createElement('a');
+                            a.href = url;
+                            a.download = `${filename}.${format.split('/')[1]}`;
+                            a.click();
+                            URL.revokeObjectURL(url);
+                            Utils.showToast('Download Complete!', 'success');
+                        } else if (action === 'clipboard') {
+                            try {
+                                navigator.clipboard.write([new ClipboardItem({ [blob.type]: blob })])
+                                    .then(() => Utils.showToast('Copied to Clipboard!', 'success'))
+                                    .catch(() => Utils.showToast('Clipboard API failed', 'error'));
+                            } catch(e) {
+                                Utils.showToast('Clipboard not supported for this format in your browser', 'error');
+                            }
+                        }
+                        
+                        btn.innerHTML = origText;
+                        btn.disabled = false;
+                        this.closeModal();
+                    }, format, ['image/jpeg', 'image/webp'].includes(format) ? quality : undefined);
+                }, 50);
+            }
+        };
+
+        // --- MODULE: UI CONTROLLER ---
+        const UI = {
+            init() {
+                this.bindThemeToggle();
+                this.bindToolbar();
+                this.bindTransformControls();
+                this.bindResizeControls();
+                this.bindAdjustControls();
+                this.bindNewProject();
+                
+                document.getElementById('btnUndo').addEventListener('click', () => HistoryEngine.undo());
+                document.getElementById('btnRedo').addEventListener('click', () => HistoryEngine.redo());
+
+                // Keyboard shortcuts
+                window.onkeydown = (e) => {
+                    if(e.ctrlKey || e.metaKey) {
+                        if(e.key === 'z') { e.preventDefault(); HistoryEngine.undo(); }
+                        if(e.key === 'y') { e.preventDefault(); HistoryEngine.redo(); }
+                        if(e.key === 's') { e.preventDefault(); document.getElementById('btnExportMenu').click(); }
+                    }
+                };
+            },
+
+            bindThemeToggle() {
+                const btn = document.getElementById('btnThemeToggle');
+                const icon = document.getElementById('themeIcon');
+                
+                const setTheme = (isDark) => {
+                    document.documentElement.classList.toggle('dark', isDark);
+                    icon.className = isDark ? 'ph-fill ph-sun text-xl text-yellow-400' : 'ph ph-moon text-xl text-gray-700';
+                    localStorage.setItem('sanstudio_theme', isDark ? 'dark' : 'light');
+                };
+
+                // Initial load
+                const savedTheme = localStorage.getItem('sanstudio_theme');
+                const sysDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                setTheme(savedTheme === 'dark' || (!savedTheme && sysDark));
+
+                btn.addEventListener('click', () => setTheme(!document.documentElement.classList.contains('dark')));
+            },
+
+            showWorkspace() {
+                document.getElementById('emptyState').classList.add('opacity-0');
+                setTimeout(() => document.getElementById('emptyState').classList.add('hidden'), 300);
+                
+                const tb = document.getElementById('mainToolbar');
+                tb.classList.remove('opacity-0', 'pointer-events-none', 'translate-y-10', 'md:-translate-x-10');
+                
+                document.getElementById('btnExportMenu').disabled = false;
+                document.getElementById('btnNewProject').classList.remove('hidden');
+                document.getElementById('newProjectDivider').classList.remove('hidden');
+            },
+
+            bindNewProject() {
+                document.getElementById('btnNewProject').addEventListener('click', () => {
+                    if(confirm("Are you sure you want to discard this image and start a new project?")) {
+                        // Reset everything
+                        State.baseImage = null;
+                        State.history = [];
+                        State.historyIndex = -1;
+                        State.resetTransforms();
+                        
+                        localStorage.removeItem('sanstudio_session_img');
+                        localStorage.removeItem('sanstudio_session_state');
+                        
+                        this.closeAllPanels();
+                        
+                        // Hide UI elements
+                        const tb = document.getElementById('mainToolbar');
+                        tb.classList.add('opacity-0', 'pointer-events-none', 'translate-y-10', 'md:-translate-x-10');
+                        
+                        document.getElementById('btnExportMenu').disabled = true;
+                        document.getElementById('btnNewProject').classList.add('hidden');
+                        document.getElementById('newProjectDivider').classList.add('hidden');
+                        
+                        // Show empty state
+                        const es = document.getElementById('emptyState');
+                        es.classList.remove('hidden');
+                        requestAnimationFrame(() => es.classList.remove('opacity-0'));
+                        
+                        CanvasEngine.ctx.clearRect(0, 0, CanvasEngine.canvas.width, CanvasEngine.canvas.height);
+                        Utils.showToast('Canvas Cleared', 'info');
+                    }
+                });
+            },
+
+            bindToolbar() {
+                const btns = document.querySelectorAll('.tool-btn');
+                btns.forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const targetId = btn.dataset.panel;
+                        const targetPanel = document.getElementById(targetId);
+                        
+                        const isActive = btn.classList.contains('active');
+                        this.closeAllPanels();
+                        
+                        if(State.isCropMode) CropEngine.exitMode();
+                        if(State.textMode) TextEngine.exitMode();
+                        if(State.drawMode) DrawEngine.exitMode();
+                        if(State.imageOverlayMode) ImageOverlayEngine.exitMode();
+                        if(State.shapeMode) ShapeEngine.exitMode();
+                        if(State.emojiMode) EmojiEngine.exitMode();
+                        
+                        if (!isActive) {
+                            btn.classList.add('active');
+                            targetPanel.classList.remove('hidden');
+                            
+                            // Triggers CSS transition
+                            requestAnimationFrame(() => {
+                                targetPanel.classList.remove('opacity-0', 'translate-y-10', 'md:-translate-x-10');
+                            });
+
+                            if(targetId === 'cropPanel') CropEngine.enterMode();
+                            if(targetId === 'textPanel') TextEngine.enterMode();
+                            if(targetId === 'drawPanel') DrawEngine.enterMode();
+                            if(targetId === 'imageOverlayPanel') ImageOverlayEngine.enterMode();
+                            if(targetId === 'shapePanel') ShapeEngine.enterMode();
+                            if(targetId === 'emojiPanel') EmojiEngine.enterMode();
+                        }
+                    });
+                });
+            },
+
+            closeAllPanels() {
+                document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
+                document.querySelectorAll('.sub-panel').forEach(p => {
+                    p.classList.add('opacity-0', 'translate-y-10', 'md:-translate-x-10');
+                    setTimeout(() => {
+                        // FIX: Only hide the panel if it hasn't been reopened in the last 300ms
+                        if (p.classList.contains('opacity-0')) {
+                            p.classList.add('hidden');
+                        }
+                    }, 300);
+                });
+            },
+
+            updateTransformInputs() {
+                document.getElementById('sliderAngle').value = State.transforms.angle;
+                document.getElementById('valAngle').textContent = `${State.transforms.angle}°`;
+            },
+
+            bindTransformControls() {
+                const slider = document.getElementById('sliderAngle');
+                const val = document.getElementById('valAngle');
+                
+                slider.addEventListener('input', (e) => {
+                    State.transforms.angle = parseInt(e.target.value);
+                    val.textContent = `${State.transforms.angle}°`;
+                    CanvasEngine.render();
+                });
+                
+                // Save state to history on release
+                slider.addEventListener('change', () => HistoryEngine.push());
+
+                document.getElementById('btnRotateLeft').addEventListener('click', () => {
+                    State.transforms.angle -= 90;
+                    if(State.transforms.angle <= -180) State.transforms.angle += 360;
+                    this.updateTransformInputs(); CanvasEngine.render(); HistoryEngine.push();
+                });
+                document.getElementById('btnRotateRight').addEventListener('click', () => {
+                    State.transforms.angle += 90;
+                    if(State.transforms.angle > 180) State.transforms.angle -= 360;
+                    this.updateTransformInputs(); CanvasEngine.render(); HistoryEngine.push();
+                });
+                document.getElementById('btnFlipH').addEventListener('click', () => {
+                    State.transforms.flipX *= -1; CanvasEngine.render(); HistoryEngine.push();
+                });
+                document.getElementById('btnFlipV').addEventListener('click', () => {
+                    State.transforms.flipY *= -1; CanvasEngine.render(); HistoryEngine.push();
+                });
+                document.getElementById('btnResetTransform').addEventListener('click', () => {
+                    State.resetTransforms(); CanvasEngine.fitToScreen(); HistoryEngine.push();
+                });
+            },
+
+            bindResizeControls() {
+                let ratioLocked = true;
+                const lockBtn = document.getElementById('btnLockRatio');
+                const lockIcon = document.getElementById('iconLockRatio');
+                const inW = document.getElementById('inputResW');
+                const inH = document.getElementById('inputResH');
+
+                lockBtn.addEventListener('click', () => {
+                    ratioLocked = !ratioLocked;
+                    lockIcon.className = ratioLocked ? 'ph-fill ph-link text-xl' : 'ph ph-link-break text-xl';
+                    lockBtn.classList.toggle('text-indigo-500', ratioLocked);
+                    lockBtn.classList.toggle('text-gray-400', !ratioLocked);
+                });
+
+                inW.addEventListener('input', (e) => {
+                    if(!State.baseImage) return;
+                    if(ratioLocked) inH.value = Math.round(e.target.value * (State.baseImage.height / State.baseImage.width));
+                });
+                inH.addEventListener('input', (e) => {
+                    if(!State.baseImage) return;
+                    if(ratioLocked) inW.value = Math.round(e.target.value * (State.baseImage.width / State.baseImage.height));
+                });
+
+                document.getElementById('btnApplyResize').addEventListener('click', () => {
+                    if(!State.baseImage) return;
+                    const w = parseInt(inW.value);
+                    const h = parseInt(inH.value);
+                    if(w < 10 || h < 10) { Utils.showToast('Dimensions too small', 'error'); return; }
+                    
+                    const c = Utils.createCanvas(w, h);
+                    c.getContext('2d').drawImage(State.baseImage, 0, 0, w, h);
+                    State.baseImage = c;
+                    
+                    HistoryEngine.push();
+                    CanvasEngine.fitToScreen();
+                    Utils.showToast('Image Resampled', 'success');
+                    this.closeAllPanels();
+                });
+            },
+
+            bindAdjustControls() {
+                const bgPicker = document.getElementById('inputBgColor');
+                bgPicker.addEventListener('input', (e) => {
+                    State.settings.bgColor = e.target.value;
+                    CanvasEngine.render();
+                });
+                document.getElementById('btnBgTransparent').addEventListener('click', () => {
+                    State.settings.bgColor = 'transparent';
+                    CanvasEngine.render();
+                });
+            }
+        };
+
+        // --- APP BOOTSTRAP ---
+        const App = {
+            init() {
+                UI.init();
+                CanvasEngine.init();
+                ImportEngine.init();
+                GestureEngine.init();
+                CropEngine.init();
+                TextEngine.init();
+                DrawEngine.init();
+                ImageOverlayEngine.init();
+                ShapeEngine.init();
+                EmojiEngine.init();
+                ExportEngine.init();
+                
+                // Attempt to restore previous session silently
+                setTimeout(() => StorageEngine.loadSession(), 500);
+            }
+        };
+
+        document.addEventListener('DOMContentLoaded', () => App.init());
+
+        // --- PWA / OFFLINE SUPPORT (Bonus Module 23) ---
+        // Registering a dummy Service Worker to enable Add to Homescreen prompts in Chromium
+        if ('serviceWorker' in navigator) {
+            const swCode = `
+                self.addEventListener('install', (e) => self.skipWaiting());
+                self.addEventListener('activate', (e) => self.clients.claim());
+                self.addEventListener('fetch', (e) => {});
+            `;
+            const blob = new Blob([swCode], {type: 'application/javascript'});
+            navigator.serviceWorker.register(URL.createObjectURL(blob)).catch(()=>{});
+        }
+    </script>
+</body>
+</html>
