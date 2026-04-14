@@ -1,0 +1,1638 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>SanOS - Web Environment</title>
+    
+    <!-- Dynamic Manifest for PWA Support built into 1 file -->
+    <script>
+        const manifest = {
+            name: "SanOS Environment",
+            short_name: "SanOS",
+            start_url: ".",
+            display: "standalone",
+            background_color: "#0f172a",
+            theme_color: "#0f172a",
+            icons: [{ src: "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48Y2lyY2xlIGN4PSI1MCIgY3k9IjUwIiByPSI1MCIgZmlsbD0iIzM4YmRmOCIvPjwvc3ZnPg==", sizes: "192x192", type: "image/svg+xml" }]
+        };
+        const stringManifest = JSON.stringify(manifest);
+        const blobManifest = new Blob([stringManifest], {type: 'application/json'});
+        const manifestURL = URL.createObjectURL(blobManifest);
+        document.write(`<link rel="manifest" href="${manifestURL}">`);
+    </script>
+
+    <!-- Google Fonts & Lucide Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+        /* ================= THEME & CSS VARIABLES ================= */
+        :root {
+            --sys-bg: url('https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564&auto=format&fit=crop');
+            --glass-bg: rgba(20, 25, 35, 0.65);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+            
+            --window-bg: rgba(22, 27, 34, 0.85);
+            --window-header: rgba(30, 35, 45, 0.9);
+            --text-main: #f1f5f9;
+            --text-muted: #94a3b8;
+            --accent: #3b82f6;
+            --accent-hover: #2563eb;
+            --danger: #ef4444;
+            --danger-hover: #dc2626;
+
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 16px;
+            --radius-xl: 24px;
+        }
+
+        .light-mode {
+            --glass-bg: rgba(255, 255, 255, 0.6);
+            --glass-border: rgba(0, 0, 0, 0.1);
+            --window-bg: rgba(248, 250, 252, 0.85);
+            --window-header: rgba(226, 232, 240, 0.9);
+            --text-main: #0f172a;
+            --text-muted: #475569;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; user-select: none; }
+        
+        body {
+            width: 100vw; height: 100vh;
+            background-image: var(--sys-bg);
+            background-size: cover; background-position: center;
+            overflow: hidden; color: var(--text-main);
+            display: flex; flex-direction: column;
+        }
+
+        /* Glassmorphism Utility */
+        .glass {
+            background: var(--glass-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--glass-border);
+            box-shadow: var(--glass-shadow);
+        }
+
+        /* ================= DESKTOP ================= */
+        #desktop {
+            flex: 1; position: relative; padding: 10px;
+            display: grid; grid-template-columns: repeat(auto-fill, 80px);
+            grid-auto-rows: 100px; gap: 10px; grid-auto-flow: column;
+        }
+
+        .desktop-icon {
+            display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
+            padding: 8px; border-radius: var(--radius-sm); cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); text-align: center;
+        }
+        .desktop-icon:hover { background: rgba(255,255,255,0.1); transform: translateY(-2px); }
+        .desktop-icon img, .desktop-icon svg { width: 40px; height: 40px; margin-bottom: 8px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5)); }
+        .desktop-icon span { font-size: 11px; text-shadow: 0 1px 3px rgba(0,0,0,0.8); color: white; word-wrap: break-word; max-width: 100%; line-height: 1.2; }
+
+        /* Widget Area */
+        #widgets-container { position: absolute; top: 20px; right: 20px; width: 250px; display: flex; flex-direction: column; gap: 15px; pointer-events: none; }
+        .widget { background: var(--glass-bg); backdrop-filter: blur(20px); border: 1px solid var(--glass-border); border-radius: var(--radius-lg); padding: 15px; color: var(--text-main); pointer-events: auto; }
+        .clock-widget h1 { font-size: 3rem; font-weight: 300; margin: 0; line-height: 1; }
+        .clock-widget p { font-size: 0.9rem; color: var(--text-muted); margin-top: 5px; }
+
+        /* ================= TASKBAR ================= */
+        #taskbar {
+            height: 52px; width: 100%; z-index: 10000;
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 0 10px; border-top: 1px solid var(--glass-border);
+        }
+        
+        .tb-section { display: flex; align-items: center; height: 100%; gap: 6px; }
+        
+        .tb-btn {
+            width: 40px; height: 40px; border-radius: var(--radius-sm);
+            display: flex; justify-content: center; align-items: center;
+            cursor: pointer; transition: all 0.2s; border: none; background: transparent; color: var(--text-main);
+        }
+        .tb-btn:hover { background: rgba(255,255,255,0.15); }
+        .tb-btn.active { background: rgba(255,255,255,0.25); box-shadow: inset 0 -2px 0 var(--accent); }
+        
+        #start-btn { border-radius: 50%; color: var(--accent); }
+        #start-btn:hover { transform: scale(1.05); }
+
+        .tray { font-size: 12px; display: flex; align-items: center; gap: 12px; padding: 0 10px; border-radius: var(--radius-md); transition: 0.2s; cursor: pointer; height: 36px; }
+        .tray:hover { background: rgba(255,255,255,0.1); }
+        .tray-icons { display: flex; gap: 6px; }
+        .tray-icons svg { width: 16px; height: 16px; }
+
+        /* ================= START MENU ================= */
+        #start-menu {
+            position: absolute; bottom: 65px; left: 10px; width: 380px; max-height: 600px;
+            border-radius: var(--radius-xl); z-index: 9999; padding: 20px;
+            display: flex; flex-direction: column; gap: 20px;
+            transform: translateY(20px); opacity: 0; pointer-events: none;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        #start-menu.open { transform: translateY(0); opacity: 1; pointer-events: auto; }
+        
+        .search-box { width: 100%; background: rgba(0,0,0,0.2); border: 1px solid var(--glass-border); border-radius: 20px; padding: 10px 15px; color: var(--text-main); outline: none; transition: 0.2s; }
+        .search-box:focus { background: rgba(0,0,0,0.4); border-color: var(--accent); }
+
+        .pinned-apps { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; }
+        .app-grid-item { display: flex; flex-direction: column; align-items: center; gap: 8px; cursor: pointer; padding: 10px; border-radius: var(--radius-md); transition: 0.2s; }
+        .app-grid-item:hover { background: rgba(255,255,255,0.1); transform: scale(1.05); }
+        .app-grid-item svg { width: 32px; height: 32px; }
+        .app-grid-item span { font-size: 12px; }
+
+        /* SanStudio Panel */
+        .sanstudio-panel { background: rgba(0,0,0,0.2); border-radius: var(--radius-md); padding: 15px; }
+        .sanstudio-panel h3 { font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); margin-bottom: 10px; }
+        .team-list { display: flex; flex-direction: column; gap: 8px; }
+        .team-member { display: flex; align-items: center; gap: 10px; font-size: 13px; }
+        .team-member .avatar { width: 24px; height: 24px; border-radius: 50%; background: var(--accent); display: flex; justify-content: center; align-items: center; font-weight: bold; font-size: 10px; color: white; }
+
+        /* ================= WINDOW MANAGER ================= */
+        #window-container { position: absolute; top: 0; left: 0; width: 100%; height: calc(100% - 52px); pointer-events: none; z-index: 5000; overflow: hidden; }
+        
+        .os-window {
+            position: absolute; width: 600px; height: 400px; top: 10%; left: 20%;
+            background: var(--window-bg); border-radius: var(--radius-md);
+            border: 1px solid var(--glass-border); box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+            display: flex; flex-direction: column; pointer-events: auto; overflow: hidden;
+            backdrop-filter: blur(20px);
+            animation: windowOpen 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+            min-width: 300px; min-height: 200px;
+        }
+        
+        .os-window.maximized { top: 0 !important; left: 0 !important; width: 100% !important; height: 100% !important; border-radius: 0; }
+        .os-window.minimized { display: none; }
+        .os-window.focus { box-shadow: 0 15px 50px rgba(0,0,0,0.6); border-color: rgba(255,255,255,0.2); }
+
+        .window-header {
+            height: 36px; background: var(--window-header); display: flex; align-items: center; justify-content: space-between;
+            padding: 0 10px; cursor: move; user-select: none; border-bottom: 1px solid var(--glass-border);
+        }
+        .window-title { font-size: 13px; font-weight: 500; display: flex; align-items: center; gap: 8px; }
+        .window-controls { display: flex; gap: 6px; }
+        .win-ctrl { width: 14px; height: 14px; border-radius: 50%; border: none; cursor: pointer; display: flex; justify-content: center; align-items: center; opacity: 0.8; }
+        .win-ctrl:hover { opacity: 1; }
+        .win-ctrl svg { width: 8px; height: 8px; opacity: 0; transition: 0.2s; color: rgba(0,0,0,0.7); }
+        .win-ctrl:hover svg { opacity: 1; }
+        .ctrl-close { background: #ff5f56; } .ctrl-max { background: #27c93f; } .ctrl-min { background: #ffbd2e; }
+
+        .window-content { flex: 1; position: relative; background: rgba(0,0,0,0.1); overflow: auto; display: flex; }
+        .window-resize-handle { position: absolute; bottom: 0; right: 0; width: 15px; height: 15px; cursor: se-resize; z-index: 10; }
+
+        @keyframes windowOpen {
+            from { transform: scale(0.9) translateY(20px); opacity: 0; }
+            to { transform: scale(1) translateY(0); opacity: 1; }
+        }
+
+        /* ================= APP SPECIFIC STYLES ================= */
+        /* Explorer */
+        .explorer-layout { display: flex; width: 100%; height: 100%; }
+        .explorer-sidebar { width: 160px; background: rgba(0,0,0,0.2); border-right: 1px solid var(--glass-border); padding: 10px 0; }
+        .explorer-nav-item { padding: 8px 15px; font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 10px; transition: 0.2s; }
+        .explorer-nav-item:hover, .explorer-nav-item.active { background: rgba(255,255,255,0.1); border-left: 3px solid var(--accent); }
+        .explorer-main { flex: 1; display: flex; flex-direction: column; }
+        .explorer-toolbar { padding: 10px; border-bottom: 1px solid var(--glass-border); display: flex; gap: 10px; }
+        .explorer-grid { padding: 15px; display: grid; grid-template-columns: repeat(auto-fill, 80px); gap: 15px; }
+
+        /* Browser */
+        .browser-toolbar { display: flex; gap: 10px; padding: 8px; background: rgba(0,0,0,0.3); border-bottom: 1px solid var(--glass-border); align-items: center; }
+        .browser-url { flex: 1; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.1); border-radius: 15px; padding: 6px 15px; color: white; outline: none; font-size: 13px; }
+        .browser-engine-select { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: white; padding: 6px; outline: none; font-size: 13px; cursor: pointer; }
+        .browser-engine-select option { background: var(--window-header); color: white; }
+        .browser-frame { flex: 1; border: none; background: white; }
+
+        /* Notes */
+        .notes-area { width: 100%; height: 100%; background: transparent; border: none; padding: 20px; color: var(--text-main); outline: none; resize: none; font-size: 15px; line-height: 1.5; font-family: 'Inter', sans-serif;}
+        
+        /* Calculator */
+        .calc-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; padding: 15px; width: 100%; height: 100%; }
+        .calc-display { grid-column: span 4; background: rgba(0,0,0,0.3); border-radius: var(--radius-sm); text-align: right; padding: 15px; font-size: 2rem; margin-bottom: 10px; word-break: break-all; }
+        .calc-btn { background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); border-radius: var(--radius-sm); color: var(--text-main); font-size: 1.2rem; cursor: pointer; transition: 0.1s; display: flex; justify-content: center; align-items: center;}
+        .calc-btn:hover { background: rgba(255,255,255,0.15); }
+        .calc-btn.op { background: rgba(59, 130, 246, 0.3); color: #93c5fd; }
+        .calc-btn.eq { background: var(--accent); color: white; }
+
+        /* Context Menus */
+        .os-context-menu {
+            position: absolute; background: var(--glass-bg); backdrop-filter: blur(25px);
+            border: 1px solid var(--glass-border); border-radius: var(--radius-sm);
+            padding: 5px 0; min-width: 200px; z-index: 15000; box-shadow: var(--glass-shadow);
+            display: none;
+        }
+        .context-item { padding: 8px 15px; font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 10px; }
+        .context-item:hover { background: var(--accent); color: white; }
+
+        /* Notifications */
+        #notifications { position: absolute; bottom: 65px; right: 15px; z-index: 20000; display: flex; flex-direction: column; gap: 10px; pointer-events: none; }
+        .toast { background: var(--glass-bg); backdrop-filter: blur(20px); border: 1px solid var(--glass-border); padding: 12px 20px; border-radius: var(--radius-md); box-shadow: var(--glass-shadow); color: var(--text-main); font-size: 13px; display: flex; align-items: center; gap: 12px; pointer-events: auto; animation: slideInRight 0.3s forwards; }
+        @keyframes slideInRight { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        @keyframes fadeOut { to { opacity: 0; transform: translateY(-10px); } }
+
+        /* VPN Panel */
+        #vpn-panel {
+            position: absolute; bottom: 65px; right: 10px; width: 300px;
+            background: var(--glass-bg); backdrop-filter: blur(25px);
+            border: 1px solid var(--glass-border); border-radius: var(--radius-lg);
+            padding: 20px; z-index: 9999; color: var(--text-main);
+            box-shadow: var(--glass-shadow);
+            transform: translateY(20px); opacity: 0; pointer-events: none;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        #vpn-panel.open { transform: translateY(0); opacity: 1; pointer-events: auto; }
+        .vpn-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .vpn-status-circle { border-radius: 50%; border: 3px solid var(--danger); transition: 0.3s; }
+        .vpn-status-circle.connected { border-color: #10b981; background: rgba(16, 185, 129, 0.1); }
+        .vpn-status-circle.connecting { border-top-color: transparent; border-right-color: transparent; animation: vpnSpin 1s linear infinite; }
+        @keyframes vpnSpin { 100% { transform: rotate(360deg); } }
+        .vpn-btn { width: 100%; padding: 12px; background: var(--accent); color: white; border: none; border-radius: var(--radius-sm); cursor: pointer; font-weight: 500; transition: 0.2s; font-size: 14px;}
+        .vpn-btn:hover { background: var(--accent-hover); }
+        .vpn-btn:disabled { opacity: 0.7; cursor: not-allowed; }
+        .vpn-btn.disconnect { background: rgba(255,255,255,0.1); color: var(--text-main); }
+        .vpn-select { width: 100%; background: rgba(0,0,0,0.2); border: 1px solid var(--glass-border); padding: 12px; color: white; border-radius: var(--radius-sm); outline: none; margin-bottom: 20px; font-size: 13px;}
+        .vpn-select option { background: var(--window-header); }
+
+        /* Author Credit footer */
+        .author-credit {
+            position: fixed; bottom: 65px; right: 20px; z-index: 9998;
+            background: rgba(0,0,0,0.5); backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.2); border-radius: 20px;
+            padding: 6px 16px; display: flex; align-items: center; gap: 8px;
+            text-decoration: none; color: white; font-size: 12px; font-weight: 500;
+            transition: all 0.3s; box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+        .author-credit:hover { background: rgba(59,130,246,0.6); border-color: rgba(255,255,255,0.4); transform: translateY(-2px); }
+        .author-credit svg { width: 14px; height: 14px; }
+
+        /* Utility */
+        button { outline: none; }
+    </style>
+</head>
+<body>
+
+    <!-- Desktop Area -->
+    <div id="desktop" class="context-area" data-context="desktop" ondragover="event.preventDefault()" ondrop="SanOS.UI.handleDesktopDrop(event)">
+        <!-- Desktop Icons generated by JS -->
+    </div>
+
+    <!-- Author Credit Requirement -->
+    <a href="https://sanstudio-hub.github.io/SanStudio-Hub/in" target="_blank" class="author-credit">
+        <i data-lucide="code-2"></i> Developed by SanStudio Developer Team
+    </a>
+
+    <!-- Windows Container -->
+    <div id="window-container"></div>
+
+    <!-- Start Menu -->
+    <div id="start-menu" class="glass">
+        <input type="text" class="search-box" placeholder="Type here to search apps, files...">
+        
+        <div>
+            <h4 style="font-size: 13px; color: var(--text-muted); margin-bottom: 10px;">Pinned Apps</h4>
+            <div class="pinned-apps" id="start-pinned-apps">
+                <!-- Apps generated here -->
+            </div>
+        </div>
+
+        <div class="sanstudio-panel">
+            <h3>SanStudio Team</h3>
+            <div class="team-list">
+                <div class="team-member"><div class="avatar" style="background:#ef4444;">S</div> Santhosh (Lead Architect)</div>
+                <div class="team-member"><div class="avatar" style="background:#3b82f6;">D</div> Deva (Core Developer)</div>
+                <div class="team-member"><div class="avatar" style="background:#10b981;">V</div> Vicky (UI/UX & Integration)</div>
+            </div>
+        </div>
+        
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px; border-top: 1px solid var(--glass-border); padding-top: 15px;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <div style="width: 32px; height: 32px; border-radius: 50%; background: var(--accent); display: flex; align-items: center; justify-content: center;"><i data-lucide="user" style="color:white; width:18px;"></i></div>
+                <span style="font-size: 14px; font-weight: 500;">Guest User</span>
+            </div>
+            <button class="tb-btn" onclick="location.reload()" title="Restart OS"><i data-lucide="power"></i></button>
+        </div>
+    </div>
+
+    <!-- Notifications Area -->
+    <div id="notifications"></div>
+
+    <!-- Desktop Context Menu -->
+    <div id="desktop-context-menu" class="os-context-menu">
+        <div class="context-item" onclick="SanOS.FS.createFile('desktop', 'New Text.txt', 'txt')"><i data-lucide="file-plus"></i> New Text File</div>
+        <div class="context-item" onclick="SanOS.FS.createFolder('desktop', 'New Folder')"><i data-lucide="folder-plus"></i> New Folder</div>
+        <div class="context-item" onclick="SanOS.FS.triggerAddLink('desktop')"><i data-lucide="link"></i> New Quick Link</div>
+        <div class="context-item" onclick="SanOS.FS.triggerUpload('desktop')"><i data-lucide="upload"></i> Upload Media & Web Apps</div>
+        <div style="height: 1px; background: var(--glass-border); margin: 5px 0;"></div>
+        <div class="context-item" onclick="SanOS.Apps.launch('settings')"><i data-lucide="monitor"></i> Personalize Desktop</div>
+        <div class="context-item" onclick="location.reload()"><i data-lucide="refresh-cw"></i> Refresh System</div>
+    </div>
+
+    <!-- Item Context Menu (For Apps and Files) -->
+    <div id="item-context-menu" class="os-context-menu">
+        <div class="context-item" onclick="SanOS.FS.triggerRename()"><i data-lucide="edit-2"></i> Rename</div>
+        <div class="context-item" onclick="SanOS.FS.triggerChangeIcon()"><i data-lucide="image"></i> Change Logo/Icon</div>
+        <div style="height: 1px; background: var(--glass-border); margin: 5px 0;"></div>
+        <div class="context-item" onclick="SanOS.FS.triggerDelete()" style="color: #ef4444;"><i data-lucide="trash-2"></i> Delete</div>
+    </div>
+
+    <!-- VPN Panel -->
+    <div id="vpn-panel" class="glass">
+        <div class="vpn-header">
+            <span style="font-weight:600; display:flex; align-items:center; gap:8px;"><i data-lucide="shield"></i> Secure VPN</span>
+        </div>
+        <div style="position:relative; width: 70px; height: 70px; margin: 0 auto 15px;">
+            <div id="vpn-circle" class="vpn-status-circle" style="position:absolute; width:100%; height:100%; top:0; left:0;"></div>
+            <div style="position:absolute; top:0; left:0; width:100%; height:100%; display:flex; justify-content:center; align-items:center;">
+                <i data-lucide="power" id="vpn-power-icon" style="width:24px; height:24px; color: var(--danger); transition: 0.3s;"></i>
+            </div>
+        </div>
+        <div style="text-align:center; margin-bottom:20px;">
+            <div id="vpn-status-text" style="font-size:16px; font-weight:600; margin-bottom:5px;">Disconnected</div>
+            <div id="vpn-ip-text" style="font-size:12px; color:var(--text-muted); font-family:monospace;">IP: 192.168.1.104 (Real)</div>
+        </div>
+        <select id="vpn-country" class="vpn-select">
+            <option value="us">🇺🇸 United States (New York)</option>
+            <option value="uk">🇬🇧 United Kingdom (London)</option>
+            <option value="jp">🇯🇵 Japan (Tokyo)</option>
+            <option value="sg">🇸🇬 Singapore</option>
+            <option value="de">🇩🇪 Germany (Frankfurt)</option>
+            <option value="in">🇮🇳 India (Mumbai)</option>
+            <option value="au">🇦🇺 Australia (Sydney)</option>
+        </select>
+        <button id="vpn-toggle-btn" class="vpn-btn" onclick="SanOS.Apps.toggleVPN()">Connect VPN</button>
+    </div>
+
+    <!-- Taskbar -->
+    <div id="taskbar" class="glass">
+        <div class="tb-section" id="taskbar-left">
+            <button id="start-btn" class="tb-btn" onclick="SanOS.UI.toggleStartMenu()">
+                <i data-lucide="layers"></i>
+            </button>
+            <div style="width: 1px; height: 24px; background: var(--glass-border); margin: 0 5px;"></div>
+            <!-- Open App Icons -->
+            <div id="taskbar-apps" class="tb-section"></div>
+        </div>
+        
+        <div class="tb-section">
+            <button class="tb-btn" onclick="SanOS.UI.toggleTheme()" title="Toggle Theme"><i data-lucide="sun-moon"></i></button>
+            <div id="vpn-tray-btn" class="tray" onclick="SanOS.UI.toggleVPNPanel()" title="Secure VPN" style="padding: 0 8px;">
+                <i data-lucide="shield" id="tb-vpn-icon" style="transition: 0.3s;"></i>
+            </div>
+            <div class="tray" onclick="SanOS.UI.toggleStartMenu()">
+                <div class="tray-icons">
+                    <i data-lucide="wifi"></i>
+                    <i data-lucide="battery-medium"></i>
+                </div>
+                <div style="text-align: right; line-height: 1.2;">
+                    <div id="tb-time" style="font-weight: 500;">00:00</div>
+                    <div id="tb-date" style="font-size: 10px; color: var(--text-muted);">00/00/0000</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        /**
+         * SanOS Core Engine
+         * Built as a single-file modular architecture.
+         */
+        const SanOS = {
+            version: '1.0.0',
+            state: {
+                zIndexCounter: 5000,
+                runningApps: {},
+                startMenuOpen: false,
+                contextMenuTarget: null,
+                vpnOpen: false,
+                vpnStatus: 'disconnected'
+            },
+
+            // 1. Storage Engine (IndexedDB + LocalStorage)
+            Storage: {
+                db: null,
+                init() {
+                    return new Promise((resolve, reject) => {
+                        const request = indexedDB.open('SanOS_FS', 1);
+                        request.onupgradeneeded = (e) => {
+                            const db = e.target.result;
+                            if(!db.objectStoreNames.contains('files')) {
+                                db.createObjectStore('files', { keyPath: 'id' });
+                            }
+                        };
+                        request.onsuccess = (e) => {
+                            this.db = e.target.result;
+                            this.seedDefaults().then(resolve);
+                        };
+                        request.onerror = reject;
+                    });
+                },
+                async seedDefaults() {
+                    const defaultFolders = ['desktop', 'documents', 'images', 'videos', 'downloads'];
+                    for(let folder of defaultFolders) {
+                        await this.save({ id: folder, name: folder.charAt(0).toUpperCase() + folder.slice(1), type: 'folder', parent: 'root' });
+                    }
+                    // Example file
+                    await this.save({ id: 'readme.txt', name: 'Welcome.txt', type: 'txt', parent: 'desktop', content: 'Welcome to SanOS!\n\nDeveloped by Santhosh A.\n\nEnjoy the multi-window environment!' });
+                },
+                save(data) {
+                    return new Promise((resolve) => {
+                        const tx = this.db.transaction('files', 'readwrite');
+                        tx.objectStore('files').put(data);
+                        tx.oncomplete = () => resolve(data);
+                    });
+                },
+                get(id) {
+                    return new Promise((resolve) => {
+                        const tx = this.db.transaction('files', 'readonly');
+                        const req = tx.objectStore('files').get(id);
+                        req.onsuccess = () => resolve(req.result);
+                    });
+                },
+                getAllByParent(parentId) {
+                    return new Promise((resolve) => {
+                        const tx = this.db.transaction('files', 'readonly');
+                        const req = tx.objectStore('files').getAll();
+                        req.onsuccess = () => {
+                            resolve(req.result.filter(f => f.parent === parentId));
+                        };
+                    });
+                },
+                remove(id) {
+                    return new Promise((resolve) => {
+                        const tx = this.db.transaction('files', 'readwrite');
+                        tx.objectStore('files').delete(id);
+                        tx.oncomplete = resolve;
+                    });
+                }
+            },
+
+            // 2. File System Abstraction
+            FS: {
+                async getDesktopFiles() {
+                    return await SanOS.Storage.getAllByParent('desktop');
+                },
+                async createFile(parent, name, type, content = "") {
+                    const id = 'file_' + Date.now();
+                    await SanOS.Storage.save({ id, name, type, parent, content });
+                    SanOS.UI.renderDesktop();
+                    SanOS.notify("File created", "Success");
+                    return id;
+                },
+                async createFolder(parent, name) {
+                    const id = 'folder_' + Date.now();
+                    await SanOS.Storage.save({ id, name, type: 'folder', parent });
+                    SanOS.UI.renderDesktop();
+                    return id;
+                },
+                triggerUpload(parent) {
+                    const input = document.createElement('input');
+                    input.type = 'file';
+                    input.multiple = true;
+                    // Accept general media, HTML, and PDF files
+                    input.accept = "image/*,video/*,audio/*,.txt,.html,.htm,.pdf"; 
+                    input.onchange = async (e) => {
+                        for (const file of e.target.files) {
+                            let type = 'file';
+                            if (file.type.startsWith('image/')) type = 'image';
+                            else if (file.type.startsWith('video/')) type = 'video';
+                            else if (file.type.startsWith('audio/')) type = 'audio';
+                            else if (file.type === 'text/html' || file.name.endsWith('.html') || file.name.endsWith('.htm')) type = 'html';
+                            else if (file.type === 'application/pdf' || file.name.endsWith('.pdf')) type = 'pdf';
+                            else if (file.type.startsWith('text/') || file.name.endsWith('.txt')) type = 'txt';
+
+                            const id = 'file_' + Date.now() + Math.floor(Math.random() * 1000);
+                            await SanOS.Storage.save({ id, name: file.name, type: type, parent: parent, blob: file });
+                        }
+                        SanOS.notify(e.target.files.length + " file(s) imported", "File Manager");
+                        if (window.currentExpPath === parent) {
+                            SanOS.Apps.Explorernavigate(parent);
+                        }
+                        SanOS.UI.renderDesktop(); // Update if uploaded to desktop
+                    };
+                    input.click();
+                },
+
+                triggerAddLink(parent) {
+                    SanOS.UI.showLinkModal(async (name, url) => {
+                        if(name && url) {
+                            const id = 'link_' + Date.now();
+                            await SanOS.Storage.save({ id, name, type: 'quicklink', parent, url });
+                            SanOS.UI.renderDesktop();
+                            if(window.currentExpPath === parent) SanOS.Apps.Explorernavigate(parent);
+                            SanOS.notify(`Quick Link '${name}' added`, "Desktop");
+                        }
+                    });
+                },
+                
+                // --- Desktop Item Action Handlers ---
+                triggerRename() {
+                    const file = SanOS.state.contextMenuTarget;
+                    if(!file) return;
+                    SanOS.UI.showModal('prompt', 'Rename App/File', file.name, async (newName) => {
+                        if(newName && newName.trim() !== "") {
+                            file.name = newName.trim();
+                            await SanOS.Storage.save(file);
+                            SanOS.UI.renderDesktop();
+                        }
+                    });
+                },
+                
+                triggerChangeIcon() {
+                    const file = SanOS.state.contextMenuTarget;
+                    if(!file) return;
+                    const input = document.createElement('input');
+                    input.type = 'file';
+                    input.accept = 'image/*';
+                    input.onchange = async (e) => {
+                        if(e.target.files.length > 0) {
+                            file.customIcon = e.target.files[0];
+                            await SanOS.Storage.save(file);
+                            SanOS.UI.renderDesktop();
+                            SanOS.notify("Logo/Icon updated successfully", "Desktop");
+                        }
+                    };
+                    input.click();
+                },
+                
+                triggerDelete() {
+                    const file = SanOS.state.contextMenuTarget;
+                    if(!file) return;
+                    SanOS.UI.showModal('confirm', `Delete '${file.name}'?`, '', async () => {
+                        await SanOS.Storage.remove(file.id);
+                        SanOS.UI.renderDesktop();
+                        SanOS.notify(`Deleted '${file.name}'`, "Desktop");
+                    });
+                }
+            },
+
+            // 3. Application Registry
+            Apps: {
+                registry: {
+                    explorer: { name: 'File Explorer', icon: 'folder', color: '#fbbf24', execute: () => SanOS.Apps.launchExplorer() },
+                    browser: { name: 'Web Browser', icon: 'globe', color: '#3b82f6', execute: (url) => SanOS.Apps.launchBrowser(url) },
+                    notes: { name: 'Notes', icon: 'file-text', color: '#10b981', execute: () => SanOS.Apps.launchNotes() },
+                    calculator: { name: 'Calculator', icon: 'calculator', color: '#8b5cf6', execute: () => SanOS.Apps.launchCalculator() },
+                    gallery: { name: 'Gallery', icon: 'image', color: '#ec4899', execute: () => SanOS.Apps.launchGallery() },
+                    videoplayer: { name: 'Video Player', icon: 'film', color: '#f97316', execute: () => SanOS.Apps.launchVideoPlayer() },
+                    audioplayer: { name: 'Music', icon: 'music', color: '#ef4444', execute: () => SanOS.Apps.launchAudioPlayer() },
+                    settings: { name: 'Settings', icon: 'settings', color: '#64748b', execute: () => SanOS.Apps.launchSettings() },
+                    terminal: { name: 'Terminal', icon: 'terminal', color: '#1f2937', execute: () => SanOS.Apps.launchTerminal() }
+                },
+
+                launch(appId, args = null) {
+                    SanOS.UI.closeStartMenu();
+                    
+                    // Check if already running
+                    if(SanOS.state.runningApps[appId]) {
+                        SanOS.WM.focus(appId);
+                        if(SanOS.state.runningApps[appId].minimized) SanOS.WM.restore(appId);
+                        
+                        // If browser is open and a URL is passed, navigate immediately
+                        if (appId === 'browser' && args) {
+                            const iframe = document.getElementById('os-iframe');
+                            const urlInput = document.getElementById('os-url');
+                            if (iframe && urlInput) {
+                                iframe.src = args;
+                                urlInput.value = args;
+                            }
+                        }
+                        return;
+                    }
+                    
+                    if(this.registry[appId]) {
+                        this.registry[appId].execute(args);
+                        SanOS.UI.updateTaskbar();
+                    }
+                },
+
+                // Specific App Implementations
+                launchExplorer() {
+                    const winId = 'explorer';
+                    const content = `
+                        <div class="explorer-layout">
+                            <div class="explorer-sidebar">
+                                <div class="explorer-nav-item active" onclick="SanOS.Apps.Explorernavigate('desktop')"><i data-lucide="monitor"></i> Desktop</div>
+                                <div class="explorer-nav-item" onclick="SanOS.Apps.Explorernavigate('documents')"><i data-lucide="file-text"></i> Documents</div>
+                                <div class="explorer-nav-item" onclick="SanOS.Apps.Explorernavigate('images')"><i data-lucide="image"></i> Images</div>
+                                <div class="explorer-nav-item" onclick="SanOS.Apps.Explorernavigate('videos')"><i data-lucide="film"></i> Videos</div>
+                            </div>
+                            <div class="explorer-main">
+                                <div class="explorer-toolbar">
+                                    <button class="tb-btn" title="New Folder" onclick="SanOS.FS.createFolder(window.currentExpPath, 'New Folder'); setTimeout(()=>SanOS.Apps.Explorernavigate(window.currentExpPath), 100);"><i data-lucide="folder-plus"></i></button>
+                                    <button class="tb-btn" title="New Text File" onclick="SanOS.FS.createFile(window.currentExpPath, 'New File.txt', 'txt'); setTimeout(()=>SanOS.Apps.Explorernavigate(window.currentExpPath), 100);"><i data-lucide="file-plus"></i></button>
+                                    <button class="tb-btn" title="New Quick Link" onclick="SanOS.FS.triggerAddLink(window.currentExpPath)"><i data-lucide="link"></i></button>
+                                    <div style="width: 1px; height: 20px; background: var(--glass-border); margin: 0 5px; align-self: center;"></div>
+                                    <button class="tb-btn" title="Upload Media" onclick="SanOS.FS.triggerUpload(window.currentExpPath)"><i data-lucide="upload"></i></button>
+                                </div>
+                                <div class="explorer-grid" id="explorer-view">Loading...</div>
+                            </div>
+                        </div>
+                    `;
+                    SanOS.WM.createWindow(winId, 'File Explorer', content, 700, 450, 'folder');
+                    window.currentExpPath = 'desktop';
+                    this.Explorernavigate('desktop');
+                },
+                async Explorernavigate(path) {
+                    window.currentExpPath = path;
+                    const items = await SanOS.Storage.getAllByParent(path);
+                    const view = document.getElementById('explorer-view');
+                    if(!view) return;
+                    view.innerHTML = '';
+                    if(items.length === 0) view.innerHTML = '<div style="grid-column: 1/-1; color: var(--text-muted); text-align:center; padding:20px;">Folder is empty. Click Upload to add media.</div>';
+                    
+                    items.forEach(item => {
+                        let icon = 'file';
+                        let color = '#94a3b8';
+                        if(item.type === 'folder') { icon = 'folder'; color = '#fbbf24'; }
+                        else if(item.type === 'txt') { icon = 'file-text'; color = '#3b82f6'; }
+                        else if(item.type === 'image') { icon = 'image'; color = '#ec4899'; }
+                        else if(item.type === 'video') { icon = 'film'; color = '#f97316'; }
+                        else if(item.type === 'audio') { icon = 'music'; color = '#ef4444'; }
+                        else if(item.type === 'html') { icon = 'layout'; color = '#14b8a6'; }
+                        else if(item.type === 'pdf') { icon = 'book-open'; color = '#ef4444'; }
+                        else if(item.type === 'quicklink') { icon = 'link'; color = '#3b82f6'; }
+
+                        let iconHtml = `<i data-lucide="${icon}" style="color:${color}; width:40px; height:40px;"></i>`;
+                        
+                        // Show Custom User Uploaded Icon FIRST if it exists
+                        if (item.customIcon) {
+                            try {
+                                const url = URL.createObjectURL(item.customIcon);
+                                iconHtml = `<img src="${url}" style="width:40px; height:40px; object-fit:cover; border-radius:8px; margin-bottom:8px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5)); border: 1px solid rgba(255,255,255,0.1);">`;
+                            } catch(e) {}
+                        } 
+                        // Generate rich thumbnails for images right inside the folder
+                        else if (item.type === 'image' && item.blob) {
+                            try {
+                                const url = URL.createObjectURL(item.blob);
+                                iconHtml = `<div style="width:40px; height:40px; margin-bottom:8px; border-radius:6px; background-image:url(${url}); background-size:cover; background-position:center; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));"></div>`;
+                            } catch(e) {}
+                        }
+                        // Automatically fetch Website Favicon for Quick Links
+                        else if (item.type === 'quicklink' && item.url) {
+                            try {
+                                const domain = new URL(item.url).hostname;
+                                iconHtml = `<img src="https://www.google.com/s2/favicons?domain=${domain}&sz=64" style="width:40px; height:40px; object-fit:contain; margin-bottom:8px; border-radius:4px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));">`;
+                            } catch(e) {}
+                        }
+
+                        const el = document.createElement('div');
+                        el.className = 'app-grid-item';
+                        el.innerHTML = `${iconHtml}<span style="text-align:center; word-break: break-all; font-size:11px;">${item.name}</span>`;
+                        
+                        el.oncontextmenu = (e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            SanOS.state.contextMenuTarget = item;
+                            document.getElementById('desktop-context-menu').style.display = 'none';
+                            const cm = document.getElementById('item-context-menu');
+                            cm.style.display = 'block';
+                            cm.style.left = e.clientX + 'px';
+                            cm.style.top = e.clientY + 'px';
+                        };
+
+                        el.onclick = () => {
+                            if(item.type === 'folder') this.Explorernavigate(item.id);
+                            else if(item.type === 'txt') SanOS.Apps.launchNotes(item);
+                            else if(item.type === 'image') SanOS.Apps.launchGallery(item);
+                            else if(item.type === 'video') SanOS.Apps.launchVideoPlayer(item);
+                            else if(item.type === 'audio') SanOS.Apps.launchAudioPlayer(item);
+                            else if(item.type === 'html') SanOS.Apps.launchHTMLViewer(item);
+                            else if(item.type === 'pdf') SanOS.Apps.launchPDFViewer(item);
+                            else if(item.type === 'quicklink') SanOS.Apps.launch('browser', item.url);
+                        };
+                        view.appendChild(el);
+                    });
+                    lucide.createIcons();
+                },
+
+                launchNotes(file = null) {
+                    const winId = 'notes';
+                    const fileId = file ? file.id : 'temp';
+                    const title = file ? `Notes - ${file.name}` : 'Notes - Untitled';
+                    const initialContent = file ? file.content : '';
+                    
+                    const content = `
+                        <div style="display:flex; flex-direction:column; width:100%; height:100%;">
+                            <div class="browser-toolbar">
+                                <button class="tb-btn" onclick="SanOS.Apps.saveNote('${fileId}')" title="Save"><i data-lucide="save"></i></button>
+                            </div>
+                            <textarea id="notes-textarea-${fileId}" class="notes-area" placeholder="Start typing...">${initialContent}</textarea>
+                        </div>
+                    `;
+                    SanOS.WM.createWindow(winId, title, content, 500, 400, 'file-text');
+                    SanOS.state.runningApps[winId].currentFile = file;
+                },
+                async saveNote(tempId) {
+                    const text = document.getElementById(`notes-textarea-${tempId}`).value;
+                    const appState = SanOS.state.runningApps['notes'];
+                    if(appState && appState.currentFile) {
+                        appState.currentFile.content = text;
+                        await SanOS.Storage.save(appState.currentFile);
+                        SanOS.notify("File saved successfully", "Notes");
+                    } else {
+                        // Create new
+                        await SanOS.FS.createFile('documents', `Note_${Date.now()}.txt`, 'txt', text);
+                        SanOS.notify("New file saved in Documents", "Notes");
+                    }
+                },
+
+                launchBrowser(startUrl = null) {
+                    const winId = 'browser';
+                    const initialUrl = startUrl || 'https://en.wikipedia.org';
+                    const content = `
+                        <div style="display:flex; flex-direction:column; width:100%; height:100%;">
+                            <div class="browser-toolbar">
+                                <button class="tb-btn" onclick="document.getElementById('os-iframe').src=document.getElementById('os-iframe').src" title="Reload"><i data-lucide="rotate-cw"></i></button>
+                                <select id="os-search-engine" class="browser-engine-select" title="Search Engine">
+                                    <option value="google">Google</option>
+                                    <option value="duckduckgo">DuckDuckGo</option>
+                                    <option value="brave">Brave</option>
+                                    <option value="bing">Bing</option>
+                                </select>
+                                <input type="text" class="browser-url" id="os-url" placeholder="Search or enter web address" value="${initialUrl}" onkeydown="if(event.key==='Enter') SanOS.Apps.browserNavigate()">
+                                <button class="tb-btn" onclick="SanOS.Apps.browserNavigate()"><i data-lucide="arrow-right"></i></button>
+                            </div>
+                            <iframe id="os-iframe" class="browser-frame" style="width:100%;" src="${initialUrl}" allowfullscreen></iframe>
+                        </div>
+                    `;
+                    SanOS.WM.createWindow(winId, 'Web Browser', content, 800, 500, 'globe');
+                },
+                
+                browserNavigate() {
+                    const input = document.getElementById('os-url').value.trim();
+                    const iframe = document.getElementById('os-iframe');
+                    const engine = document.getElementById('os-search-engine').value;
+                    if (!input) return;
+
+                    // Check if the input looks like a URL (contains a dot and no spaces, or starts with http)
+                    const isUrl = /^[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}(?:\/.*)?$/.test(input) || input.startsWith('http://') || input.startsWith('https://');
+
+                    if (isUrl) {
+                        iframe.src = input.startsWith('http') ? input : 'https://' + input;
+                    } else {
+                        const encodedQuery = encodeURIComponent(input);
+                        switch(engine) {
+                            case 'google':
+                                // ?igu=1 forces Google to allow iframe embedding
+                                iframe.src = `https://www.google.com/search?igu=1&q=${encodedQuery}`;
+                                break;
+                            case 'duckduckgo':
+                                iframe.src = `https://duckduckgo.com/?q=${encodedQuery}&kp=1`; 
+                                break;
+                            case 'brave':
+                                iframe.src = `https://search.brave.com/search?q=${encodedQuery}`;
+                                break;
+                            case 'bing':
+                                iframe.src = `https://www.bing.com/search?q=${encodedQuery}`;
+                                break;
+                        }
+                    }
+                },
+
+                launchCalculator() {
+                    const winId = 'calculator';
+                    const content = `
+                        <div class="calc-grid" onclick="SanOS.Apps.calcClick(event)">
+                            <div class="calc-display" id="calc-display">0</div>
+                            <button class="calc-btn op" data-val="C">C</button>
+                            <button class="calc-btn op" data-val="()">( )</button>
+                            <button class="calc-btn op" data-val="%">%</button>
+                            <button class="calc-btn op" data-val="/">÷</button>
+                            
+                            <button class="calc-btn" data-val="7">7</button>
+                            <button class="calc-btn" data-val="8">8</button>
+                            <button class="calc-btn" data-val="9">9</button>
+                            <button class="calc-btn op" data-val="*">×</button>
+                            
+                            <button class="calc-btn" data-val="4">4</button>
+                            <button class="calc-btn" data-val="5">5</button>
+                            <button class="calc-btn" data-val="6">6</button>
+                            <button class="calc-btn op" data-val="-">-</button>
+                            
+                            <button class="calc-btn" data-val="1">1</button>
+                            <button class="calc-btn" data-val="2">2</button>
+                            <button class="calc-btn" data-val="3">3</button>
+                            <button class="calc-btn op" data-val="+">+</button>
+                            
+                            <button class="calc-btn" data-val="0" style="grid-column: span 2;">0</button>
+                            <button class="calc-btn" data-val=".">.</button>
+                            <button class="calc-btn eq" data-val="=">=</button>
+                        </div>
+                    `;
+                    SanOS.WM.createWindow(winId, 'Calculator', content, 300, 400, 'calculator');
+                },
+                calcClick(e) {
+                    if(!e.target.dataset.val) return;
+                    const val = e.target.dataset.val;
+                    const disp = document.getElementById('calc-display');
+                    if(val === 'C') disp.innerText = '0';
+                    else if(val === '=') {
+                        try { disp.innerText = eval(disp.innerText.replace('×','*').replace('÷','/')) } catch(e){ disp.innerText = 'Error' }
+                    }
+                    else {
+                        if(disp.innerText === '0' || disp.innerText === 'Error') disp.innerText = val;
+                        else disp.innerText += val;
+                    }
+                },
+
+                launchSettings() {
+                    const winId = 'settings';
+                    const content = `
+                        <div style="padding: 20px;">
+                            <h2>System Personalization</h2>
+                            <p style="color:var(--text-muted); margin-bottom: 20px;">Customize your SanOS experience.</p>
+                            
+                            <div style="margin-bottom: 20px;">
+                                <h4>Theme Mode</h4>
+                                <div style="display:flex; gap:10px; margin-top:10px;">
+                                    <button class="tb-btn" style="width:auto; padding:0 15px;" onclick="document.body.classList.remove('light-mode'); localStorage.setItem('sanos_theme', 'dark');">Dark Glass</button>
+                                    <button class="tb-btn" style="width:auto; padding:0 15px;" onclick="document.body.classList.add('light-mode'); localStorage.setItem('sanos_theme', 'light');">Light Glass</button>
+                                </div>
+                            </div>
+
+                            <div style="margin-bottom: 20px;">
+                                <h4>Wallpaper</h4>
+                                <input type="text" id="wp-input" class="search-box" style="margin-top:10px;" placeholder="Image URL..." value="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564">
+                                <button class="tb-btn" style="width:auto; padding:0 15px; margin-top:10px;" onclick="document.documentElement.style.setProperty('--sys-bg', 'url(' + document.getElementById('wp-input').value + ')'); localStorage.setItem('sanos_wp', document.getElementById('wp-input').value);">Apply Wallpaper</button>
+                            </div>
+
+                            <div style="margin-bottom: 20px;">
+                                <h4>System Tour</h4>
+                                <button class="tb-btn" style="width:auto; padding:0 15px; margin-top:5px; background:rgba(255,255,255,0.05); border:1px solid var(--glass-border);" onclick="SanOS.UI.showWelcomeTour()">Replay Welcome Guide</button>
+                            </div>
+                            
+                            <hr style="border:none; border-top:1px solid var(--glass-border); margin:20px 0;">
+                            <p style="font-size:12px; color:var(--text-muted);">SanOS v1.0.0<br>Developed by SanStudio Developer Team.</p>
+                        </div>
+                    `;
+                    SanOS.WM.createWindow(winId, 'Settings', content, 500, 480, 'settings');
+                },
+
+                // Simulated VPN System
+                toggleVPN() {
+                    const circle = document.getElementById('vpn-circle');
+                    const text = document.getElementById('vpn-status-text');
+                    const ipText = document.getElementById('vpn-ip-text');
+                    const btn = document.getElementById('vpn-toggle-btn');
+                    const powerIcon = document.getElementById('vpn-power-icon');
+                    const trayIcon = document.getElementById('tb-vpn-icon');
+                    const selectBox = document.getElementById('vpn-country');
+                    
+                    if(SanOS.state.vpnStatus === 'disconnected') {
+                        // Start Connecting Sequence
+                        SanOS.state.vpnStatus = 'connecting';
+                        circle.className = 'vpn-status-circle connecting';
+                        text.innerText = 'Connecting...';
+                        text.style.color = 'var(--accent)';
+                        btn.disabled = true;
+                        btn.innerText = 'Please wait...';
+                        selectBox.disabled = true;
+                        powerIcon.style.color = 'var(--accent)';
+                        
+                        setTimeout(() => {
+                            SanOS.state.vpnStatus = 'connected';
+                            circle.className = 'vpn-status-circle connected';
+                            text.innerText = 'Secured';
+                            text.style.color = '#10b981';
+                            const fakeIP = `${Math.floor(Math.random()*150)+50}.${Math.floor(Math.random()*255)}.${Math.floor(Math.random()*255)}.${Math.floor(Math.random()*255)}`;
+                            ipText.innerText = `IP: ${fakeIP} (Masked)`;
+                            btn.disabled = false;
+                            btn.className = 'vpn-btn disconnect';
+                            btn.innerText = 'Disconnect';
+                            powerIcon.style.color = '#10b981';
+                            trayIcon.style.color = '#10b981';
+                            
+                            const countryName = selectBox.options[selectBox.selectedIndex].text;
+                            SanOS.notify(`Encrypted tunnel established to ${countryName}`, "VPN Connected");
+                        }, 1500);
+                        
+                    } else if(SanOS.state.vpnStatus === 'connected') {
+                        // Disconnect Sequence
+                        SanOS.state.vpnStatus = 'disconnected';
+                        circle.className = 'vpn-status-circle';
+                        text.innerText = 'Disconnected';
+                        text.style.color = 'var(--text-main)';
+                        ipText.innerText = 'IP: 192.168.1.104 (Real)';
+                        btn.className = 'vpn-btn';
+                        btn.innerText = 'Connect VPN';
+                        selectBox.disabled = false;
+                        powerIcon.style.color = 'var(--danger)';
+                        trayIcon.style.color = 'currentColor';
+                        SanOS.notify(`Your connection is no longer secure.`, "VPN Disconnected");
+                    }
+                },
+
+                launchTerminal() {
+                    const winId = 'terminal';
+                    const content = `
+                        <div style="background:#000; color:#0f0; font-family:monospace; padding:10px; width:100%; height:100%; overflow:auto;">
+                            <div>SanOS Terminal v1.0.0</div>
+                            <div>Type 'help' for commands.</div>
+                            <div style="display:flex; margin-top:10px;">
+                                <span>guest@sanos:~$ </span>
+                                <input type="text" style="background:transparent; border:none; color:#0f0; outline:none; font-family:monospace; flex:1; margin-left:5px;" onkeydown="if(event.key==='Enter') { let val=this.value; this.value=''; SanOS.notify('Command not found: '+val, 'Terminal'); }">
+                            </div>
+                        </div>
+                    `;
+                    SanOS.WM.createWindow(winId, 'Terminal', content, 600, 350, 'terminal');
+                },
+
+                // Developer HTML Viewer App
+                launchHTMLViewer(file) {
+                    if (!file || !file.blob) return;
+                    const winId = 'html_' + file.id;
+                    const url = URL.createObjectURL(file.blob);
+                    
+                    const content = `
+                        <div style="display:flex; flex-direction:column; width:100%; height:100%;">
+                            <div class="browser-toolbar">
+                                <button class="tb-btn" onclick="document.getElementById('iframe-${winId}').src=document.getElementById('iframe-${winId}').src" title="Reload Web App"><i data-lucide="rotate-cw"></i></button>
+                                <div style="flex:1; background:rgba(255,255,255,0.05); border-radius:15px; padding:6px 15px; color:var(--text-muted); font-size:12px; border:1px solid rgba(255,255,255,0.1); display:flex; align-items:center; gap:8px; overflow:hidden; white-space:nowrap; text-overflow:ellipsis;">
+                                    <i data-lucide="lock" style="width:12px; height:12px; color:#10b981;"></i> localhost / local / ${file.name}
+                                </div>
+                                <button class="tb-btn" onclick="window.open('${url}', '_blank')" title="Open in new external tab"><i data-lucide="external-link"></i></button>
+                            </div>
+                            <iframe id="iframe-${winId}" class="browser-frame" style="width:100%; height:100%; background:white; border:none;" src="${url}" sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals" allowfullscreen></iframe>
+                        </div>
+                    `;
+                    SanOS.WM.createWindow(winId, `Web Preview - ${file.name}`, content, 1000, 700, 'layout');
+                },
+
+                // PDF Reader App
+                launchPDFViewer(file) {
+                    if (!file || !file.blob) return;
+                    const winId = 'pdf_' + file.id;
+                    const url = URL.createObjectURL(file.blob);
+                    
+                    const content = `
+                        <div style="display:flex; flex-direction:column; width:100%; height:100%;">
+                            <div class="browser-toolbar">
+                                <div style="flex:1; background:rgba(255,255,255,0.05); border-radius:15px; padding:6px 15px; color:var(--text-muted); font-size:12px; border:1px solid rgba(255,255,255,0.1); display:flex; align-items:center; gap:8px; overflow:hidden; white-space:nowrap; text-overflow:ellipsis;">
+                                    <i data-lucide="book-open" style="width:12px; height:12px; color:#ef4444;"></i> Document / ${file.name}
+                                </div>
+                                <button class="tb-btn" onclick="window.open('${url}', '_blank')" title="Open in new external tab"><i data-lucide="external-link"></i></button>
+                            </div>
+                            <iframe id="iframe-${winId}" class="browser-frame" style="width:100%; height:100%; background:#333; border:none;" src="${url}" allowfullscreen></iframe>
+                        </div>
+                    `;
+                    SanOS.WM.createWindow(winId, `PDF Reader - ${file.name}`, content, 800, 600, 'book-open');
+                },
+
+                // --- Media Drag, Drop & Browse Handlers ---
+                triggerLocalMediaSelect(type, winId) {
+                    const input = document.createElement('input');
+                    input.type = 'file';
+                    input.accept = type + '/*';
+                    input.onchange = (e) => {
+                        if(e.target.files.length > 0) this.playMedia(e.target.files[0], type, winId);
+                    };
+                    input.click();
+                },
+
+                handleMediaDrop(e, type, winId) {
+                    e.preventDefault();
+                    if(e.dataTransfer.files.length > 0) {
+                        const file = e.dataTransfer.files[0];
+                        if(file.type.startsWith(type)) {
+                            this.playMedia(file, type, winId);
+                        } else {
+                            SanOS.notify(`Please drop a ${type} file format.`, "Format Error");
+                        }
+                    }
+                },
+
+                playMedia(fileBlob, type, winId) {
+                    const url = URL.createObjectURL(fileBlob);
+                    const winEl = document.getElementById('win-' + winId);
+                    if(!winEl) return;
+                    
+                    const contentEl = winEl.querySelector('.window-content');
+                    const titleEl = winEl.querySelector('.window-title');
+                    
+                    // Update Title
+                    let icon = type === 'image' ? 'image' : (type === 'audio' ? 'music' : 'film');
+                    titleEl.innerHTML = `<i data-lucide="${icon}" style="width:14px; color:var(--accent);"></i> ${fileBlob.name || 'Media Player'}`;
+
+                    // Update Content
+                    if(type === 'video') {
+                        contentEl.innerHTML = `<div style="display:flex; justify-content:center; align-items:center; width:100%; height:100%; background:#000;" ondragover="event.preventDefault();" ondrop="SanOS.Apps.handleMediaDrop(event, 'video', '${winId}')"><video src="${url}" controls autoplay style="width:100%; height:100%; outline:none;"></video></div>`;
+                    } else if(type === 'image') {
+                        contentEl.innerHTML = `<div style="display:flex; justify-content:center; align-items:center; width:100%; height:100%; background:rgba(0,0,0,0.8); overflow:hidden;" ondragover="event.preventDefault();" ondrop="SanOS.Apps.handleMediaDrop(event, 'image', '${winId}')"><img src="${url}" style="max-width:100%; max-height:100%; object-fit:contain;"></div>`;
+                    } else if(type === 'audio') {
+                        contentEl.innerHTML = `<div style="display:flex; flex-direction:column; justify-content:center; align-items:center; width:100%; height:100%; background:var(--window-bg); padding:20px;" ondragover="event.preventDefault();" ondrop="SanOS.Apps.handleMediaDrop(event, 'audio', '${winId}')"><div style="width:140px; height:140px; border-radius:50%; background:linear-gradient(135deg, #ef4444, #f97316); display:flex; justify-content:center; align-items:center; margin-bottom:30px; box-shadow: 0 10px 30px rgba(239, 68, 68, 0.4); border: 2px solid rgba(255,255,255,0.2);"><i data-lucide="music" style="color:white; width:64px; height:64px;"></i></div><h3 style="margin-bottom:30px; text-align:center; font-weight: 500; font-size:16px;">${fileBlob.name}</h3><audio src="${url}" controls autoplay style="width:100%; outline:none;"></audio></div>`;
+                    }
+                    
+                    lucide.createIcons({ root: winEl });
+
+                    // Auto-save external files to filesystem smoothly
+                    if (!fileBlob.id) {
+                        const targetFolder = type === 'image' ? 'images' : (type === 'video' ? 'videos' : 'downloads');
+                        const id = 'file_' + Date.now();
+                        SanOS.Storage.save({ id, name: fileBlob.name, type: type, parent: targetFolder, blob: fileBlob }).then(() => {
+                            if(window.currentExpPath === targetFolder) SanOS.Apps.Explorernavigate(targetFolder);
+                            SanOS.notify(`Saved to ${targetFolder} folder`, "File Added");
+                        });
+                    }
+                },
+
+                launchGallery(file = null) {
+                    const winId = 'gallery_' + (file ? file.id : Date.now());
+                    let title = file ? `Gallery - ${file.name}` : 'Photo Viewer';
+                    
+                    let content = `
+                        <div style="display:flex; flex-direction:column; justify-content:center; align-items:center; width:100%; height:100%; color:var(--text-muted); background:rgba(0,0,0,0.3); transition:0.2s;" 
+                             ondragover="event.preventDefault(); this.style.background='rgba(59, 130, 246, 0.2)';" 
+                             ondragleave="this.style.background='rgba(0,0,0,0.3)';" 
+                             ondrop="SanOS.Apps.handleMediaDrop(event, 'image', '${winId}')">
+                             <i data-lucide="image" style="width:48px; height:48px; margin-bottom:15px; opacity:0.5;"></i>
+                             <p style="margin-bottom:20px;">Drag and drop an image here</p>
+                             <button class="tb-btn" style="width:auto; padding:0 20px; border:1px solid var(--glass-border); background:rgba(255,255,255,0.05);" onclick="SanOS.Apps.triggerLocalMediaSelect('image', '${winId}')">Browse Files</button>
+                        </div>`;
+                    
+                    if (file && file.blob) {
+                        try {
+                            const url = URL.createObjectURL(file.blob);
+                            content = `<div style="display:flex; justify-content:center; align-items:center; width:100%; height:100%; background:rgba(0,0,0,0.8); overflow:hidden;" ondragover="event.preventDefault();" ondrop="SanOS.Apps.handleMediaDrop(event, 'image', '${winId}')">
+                                <img src="${url}" style="max-width:100%; max-height:100%; object-fit:contain;">
+                            </div>`;
+                        } catch(e) {}
+                    }
+                    SanOS.WM.createWindow(winId, title, content, 700, 500, 'image');
+                },
+
+                launchVideoPlayer(file = null) {
+                    const winId = 'videoplayer_' + (file ? file.id : Date.now());
+                    let title = file ? `Video - ${file.name}` : 'VLC Player Simulator';
+                    
+                    let content = `
+                        <div style="display:flex; flex-direction:column; justify-content:center; align-items:center; width:100%; height:100%; color:var(--text-muted); background:rgba(0,0,0,0.3); transition:0.2s;" 
+                             ondragover="event.preventDefault(); this.style.background='rgba(59, 130, 246, 0.2)';" 
+                             ondragleave="this.style.background='rgba(0,0,0,0.3)';" 
+                             ondrop="SanOS.Apps.handleMediaDrop(event, 'video', '${winId}')">
+                             <i data-lucide="film" style="width:48px; height:48px; margin-bottom:15px; opacity:0.5;"></i>
+                             <p style="margin-bottom:20px;">Drag and drop a video file here</p>
+                             <button class="tb-btn" style="width:auto; padding:0 20px; border:1px solid var(--glass-border); background:rgba(255,255,255,0.05);" onclick="SanOS.Apps.triggerLocalMediaSelect('video', '${winId}')">Browse Files</button>
+                        </div>`;
+                    
+                    if (file && file.blob) {
+                        try {
+                            const url = URL.createObjectURL(file.blob);
+                            content = `<div style="display:flex; justify-content:center; align-items:center; width:100%; height:100%; background:#000;" ondragover="event.preventDefault();" ondrop="SanOS.Apps.handleMediaDrop(event, 'video', '${winId}')">
+                                <video src="${url}" controls autoplay style="width:100%; height:100%; outline:none;"></video>
+                            </div>`;
+                        } catch(e) {}
+                    }
+                    SanOS.WM.createWindow(winId, title, content, 720, 480, 'film');
+                },
+
+                launchAudioPlayer(file = null) {
+                    const winId = 'audioplayer_' + (file ? file.id : Date.now());
+                    let title = file ? `Music - ${file.name}` : 'Music Player';
+                    
+                    let content = `
+                        <div style="display:flex; flex-direction:column; justify-content:center; align-items:center; width:100%; height:100%; color:var(--text-muted); background:rgba(0,0,0,0.1); transition:0.2s;" 
+                             ondragover="event.preventDefault(); this.style.background='rgba(59, 130, 246, 0.2)';" 
+                             ondragleave="this.style.background='rgba(0,0,0,0.1)';" 
+                             ondrop="SanOS.Apps.handleMediaDrop(event, 'audio', '${winId}')">
+                             <i data-lucide="music" style="width:48px; height:48px; margin-bottom:15px; opacity:0.5;"></i>
+                             <p style="margin-bottom:20px;">Drag and drop audio here</p>
+                             <button class="tb-btn" style="width:auto; padding:0 20px; border:1px solid var(--glass-border); background:rgba(255,255,255,0.05);" onclick="SanOS.Apps.triggerLocalMediaSelect('audio', '${winId}')">Browse Files</button>
+                        </div>`;
+                    
+                    if (file && file.blob) {
+                        try {
+                            const url = URL.createObjectURL(file.blob);
+                            content = `<div style="display:flex; flex-direction:column; justify-content:center; align-items:center; width:100%; height:100%; background:var(--window-bg); padding:20px;" ondragover="event.preventDefault();" ondrop="SanOS.Apps.handleMediaDrop(event, 'audio', '${winId}')">
+                                <div style="width:140px; height:140px; border-radius:50%; background:linear-gradient(135deg, #ef4444, #f97316); display:flex; justify-content:center; align-items:center; margin-bottom:30px; box-shadow: 0 10px 30px rgba(239, 68, 68, 0.4); border: 2px solid rgba(255,255,255,0.2);">
+                                    <i data-lucide="music" style="color:white; width:64px; height:64px;"></i>
+                                </div>
+                                <h3 style="margin-bottom:30px; text-align:center; font-weight: 500; font-size:16px;">${file.name}</h3>
+                                <audio src="${url}" controls autoplay style="width:100%; outline:none;"></audio>
+                            </div>`;
+                        } catch(e) {}
+                    }
+                    SanOS.WM.createWindow(winId, title, content, 400, 400, 'music');
+                }
+            },
+
+            // 4. Window Manager Engine
+            WM: {
+                createWindow(id, title, htmlContent, width, height, icon) {
+                    if (SanOS.state.runningApps[id]) {
+                        this.focus(id); return;
+                    }
+
+                    SanOS.state.zIndexCounter++;
+                    const win = document.createElement('div');
+                    win.className = 'os-window';
+                    win.id = 'win-' + id;
+                    win.style.width = width + 'px';
+                    win.style.height = height + 'px';
+                    win.style.zIndex = SanOS.state.zIndexCounter;
+                    
+                    // Center offset stagger
+                    const offset = Object.keys(SanOS.state.runningApps).length * 20;
+                    win.style.top = (100 + offset) + 'px';
+                    win.style.left = (150 + offset) + 'px';
+
+                    win.innerHTML = `
+                        <div class="window-header" onmousedown="SanOS.WM.focus('${id}')">
+                            <div class="window-title"><i data-lucide="${icon}" style="width:14px; color:var(--accent);"></i> ${title}</div>
+                            <div class="window-controls">
+                                <button class="win-ctrl ctrl-min" onclick="SanOS.WM.minimize('${id}')" title="Minimize"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="5" y1="12" x2="19" y2="12"></line></svg></button>
+                                <button class="win-ctrl ctrl-max" onclick="SanOS.WM.maximize('${id}')" title="Maximize"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="15 3 21 3 21 9"></polyline><polyline points="9 21 3 21 3 15"></polyline><line x1="21" y1="3" x2="14" y2="10"></line><line x1="3" y1="21" x2="10" y2="14"></line></svg></button>
+                                <button class="win-ctrl ctrl-close" onclick="SanOS.WM.close('${id}')" title="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+                            </div>
+                        </div>
+                        <div class="window-content" onmousedown="SanOS.WM.focus('${id}')">
+                            ${htmlContent}
+                        </div>
+                        <div class="window-resize-handle"></div>
+                    `;
+
+                    document.getElementById('window-container').appendChild(win);
+                    lucide.createIcons({ root: win });
+
+                    SanOS.state.runningApps[id] = { el: win, icon, title, maximized: false, minimized: false };
+                    
+                    this.makeDraggable(win.querySelector('.window-header'), win);
+                    this.makeResizable(win);
+                    this.focus(id);
+                    SanOS.UI.updateTaskbar();
+                },
+
+                focus(id) {
+                    Object.values(SanOS.state.runningApps).forEach(app => app.el.classList.remove('focus'));
+                    const win = SanOS.state.runningApps[id].el;
+                    SanOS.state.zIndexCounter++;
+                    win.style.zIndex = SanOS.state.zIndexCounter;
+                    win.classList.add('focus');
+                },
+
+                close(id) {
+                    const win = SanOS.state.runningApps[id].el;
+                    win.style.animation = 'fadeOut 0.2s forwards';
+                    setTimeout(() => {
+                        win.remove();
+                        delete SanOS.state.runningApps[id];
+                        SanOS.UI.updateTaskbar();
+                    }, 200);
+                },
+
+                minimize(id) {
+                    SanOS.state.runningApps[id].minimized = true;
+                    SanOS.state.runningApps[id].el.classList.add('minimized');
+                    SanOS.UI.updateTaskbar();
+                },
+
+                restore(id) {
+                    SanOS.state.runningApps[id].minimized = false;
+                    SanOS.state.runningApps[id].el.classList.remove('minimized');
+                    this.focus(id);
+                    SanOS.UI.updateTaskbar();
+                },
+
+                maximize(id) {
+                    const app = SanOS.state.runningApps[id];
+                    app.maximized = !app.maximized;
+                    if(app.maximized) app.el.classList.add('maximized');
+                    else app.el.classList.remove('maximized');
+                },
+
+                makeDraggable(header, win) {
+                    let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+                    header.onmousedown = dragMouseDown;
+                    header.ontouchstart = (e) => { e.preventDefault(); dragMouseDown(e.touches[0]); };
+
+                    function dragMouseDown(e) {
+                        e.preventDefault();
+                        if(win.classList.contains('maximized')) return;
+                        pos3 = e.clientX; pos4 = e.clientY;
+                        document.onmouseup = closeDragElement;
+                        document.onmousemove = elementDrag;
+                        document.ontouchend = closeDragElement;
+                        document.ontouchmove = (ev) => elementDrag(ev.touches[0]);
+                    }
+
+                    function elementDrag(e) {
+                        e.preventDefault();
+                        pos1 = pos3 - e.clientX; pos2 = pos4 - e.clientY;
+                        pos3 = e.clientX; pos4 = e.clientY;
+                        win.style.top = Math.max(0, (win.offsetTop - pos2)) + "px";
+                        win.style.left = (win.offsetLeft - pos1) + "px";
+                    }
+
+                    function closeDragElement() {
+                        document.onmouseup = null; document.onmousemove = null;
+                        document.ontouchend = null; document.ontouchmove = null;
+                    }
+                },
+
+                makeResizable(win) {
+                    const handle = win.querySelector('.window-resize-handle');
+                    let startX, startY, startW, startH;
+
+                    handle.onmousedown = (e) => {
+                        e.preventDefault();
+                        startX = e.clientX; startY = e.clientY;
+                        startW = parseInt(document.defaultView.getComputedStyle(win).width, 10);
+                        startH = parseInt(document.defaultView.getComputedStyle(win).height, 10);
+                        document.onmouseup = () => { document.onmousemove = null; document.onmouseup = null; };
+                        document.onmousemove = (ev) => {
+                            win.style.width = (startW + ev.clientX - startX) + 'px';
+                            win.style.height = (startH + ev.clientY - startY) + 'px';
+                        };
+                    };
+                }
+            },
+
+            // 5. UI Engine (Taskbar, Desktop, Start Menu)
+            UI: {
+                init() {
+                    // Populate Start Menu
+                    const startApps = document.getElementById('start-pinned-apps');
+                    Object.entries(SanOS.Apps.registry).forEach(([id, app]) => {
+                        startApps.innerHTML += `
+                            <div class="app-grid-item" draggable="true" ondragstart="event.dataTransfer.setData('application/x-sanos-app', '${id}')" onclick="SanOS.Apps.launch('${id}')">
+                                <i data-lucide="${app.icon}" style="color:${app.color}"></i>
+                                <span>${app.name}</span>
+                            </div>
+                        `;
+                    });
+
+                    // Global Context Menu Setup
+                    document.addEventListener('contextmenu', (e) => {
+                        // Desktop Context Menu
+                        if(e.target.id === 'desktop') {
+                            e.preventDefault();
+                            document.getElementById('item-context-menu').style.display = 'none';
+                            const cm = document.getElementById('desktop-context-menu');
+                            cm.style.display = 'block';
+                            cm.style.left = e.clientX + 'px';
+                            cm.style.top = e.clientY + 'px';
+                        }
+                    });
+                    
+                    document.addEventListener('click', (event) => {
+                        document.getElementById('desktop-context-menu').style.display = 'none';
+                        document.getElementById('item-context-menu').style.display = 'none';
+                        if(SanOS.state.startMenuOpen && !event.target.closest('#start-menu') && !event.target.closest('#start-btn')) {
+                            this.closeStartMenu();
+                        }
+                        if(SanOS.state.vpnOpen && !event.target.closest('#vpn-panel') && !event.target.closest('#vpn-tray-btn')) {
+                            this.closeVPNPanel();
+                        }
+                    });
+
+                    // Load preferences
+                    if(localStorage.getItem('sanos_theme') === 'light') document.body.classList.add('light-mode');
+                    const savedWp = localStorage.getItem('sanos_wp');
+                    if(savedWp) document.documentElement.style.setProperty('--sys-bg', `url(${savedWp})`);
+
+                    this.updateTime();
+                    setInterval(this.updateTime, 1000);
+                    this.renderDesktop();
+                },
+
+                updateTime() {
+                    const now = new Date();
+                    const timeStr = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                    const dateStr = now.toLocaleDateString();
+                    document.getElementById('tb-time').innerText = timeStr;
+                    document.getElementById('tb-date').innerText = dateStr;
+                },
+
+                // Custom Modal UI (Prompt & Confirm & Link)
+                showLinkModal(callback) {
+                    const modal = document.createElement('div');
+                    modal.style.cssText = "position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:99999; display:flex; justify-content:center; align-items:center; backdrop-filter: blur(4px);";
+                    
+                    modal.innerHTML = `
+                        <div class="glass" style="padding:20px; border-radius:16px; width:320px; display:flex; flex-direction:column; gap:15px; box-shadow: 0 20px 40px rgba(0,0,0,0.5);">
+                            <h4 style="margin:0; font-weight:500; font-size:15px;">Add Quick Link</h4>
+                            <input type="text" id="link-name" placeholder="Website Name (e.g., Google)" class="search-box" style="width:100%; font-size:14px;">
+                            <input type="text" id="link-url" placeholder="URL (e.g., https://google.com)" class="search-box" style="width:100%; font-size:14px;">
+                            <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:5px;">
+                                <button id="modal-cancel" class="tb-btn" style="width:auto; padding:0 15px; background:rgba(255,255,255,0.1); font-size:13px;">Cancel</button>
+                                <button id="modal-confirm" class="tb-btn" style="width:auto; padding:0 15px; background:var(--accent); color:white; font-size:13px;">Add Link</button>
+                            </div>
+                        </div>
+                    `;
+                    document.body.appendChild(modal);
+                    
+                    const nameInput = modal.querySelector('#link-name');
+                    const urlInput = modal.querySelector('#link-url');
+                    nameInput.focus();
+                    
+                    const close = () => modal.remove();
+                    const confirmAction = () => {
+                        let url = urlInput.value.trim();
+                        if(url && !url.startsWith('http')) url = 'https://' + url;
+                        callback(nameInput.value.trim(), url);
+                        close();
+                    };
+                    
+                    modal.querySelector('#modal-cancel').onclick = close;
+                    modal.querySelector('#modal-confirm').onclick = confirmAction;
+                    urlInput.onkeydown = (e) => { if(e.key === 'Enter') confirmAction(); };
+                },
+
+                showModal(type, title, defaultValue, callback) {
+                    const modal = document.createElement('div');
+                    modal.style.cssText = "position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:99999; display:flex; justify-content:center; align-items:center; backdrop-filter: blur(4px);";
+                    
+                    let content = '';
+                    if(type === 'prompt') {
+                        content = `<input type="text" id="modal-input" value="${defaultValue}" class="search-box" style="width:100%; font-size:14px;">`;
+                    }
+                    
+                    modal.innerHTML = `
+                        <div class="glass" style="padding:20px; border-radius:16px; width:320px; display:flex; flex-direction:column; gap:15px; box-shadow: 0 20px 40px rgba(0,0,0,0.5);">
+                            <h4 style="margin:0; font-weight:500; font-size:15px;">${title}</h4>
+                            ${content}
+                            <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:5px;">
+                                <button id="modal-cancel" class="tb-btn" style="width:auto; padding:0 15px; background:rgba(255,255,255,0.1); font-size:13px;">Cancel</button>
+                                <button id="modal-confirm" class="tb-btn" style="width:auto; padding:0 15px; background:${type==='confirm' ? 'var(--danger)' : 'var(--accent)'}; color:white; font-size:13px;">${type==='confirm' ? 'Delete' : 'Save'}</button>
+                            </div>
+                        </div>
+                    `;
+                    
+                    document.body.appendChild(modal);
+                    
+                    const input = modal.querySelector('#modal-input');
+                    if(input) {
+                        input.focus();
+                        input.select();
+                        input.onkeydown = (e) => { if(e.key === 'Enter') confirmAction(); }
+                    }
+                    
+                    const close = () => modal.remove();
+                    const confirmAction = () => {
+                        if(type === 'prompt') callback(input.value);
+                        else callback();
+                        close();
+                    };
+                    
+                    modal.querySelector('#modal-cancel').onclick = close;
+                    modal.querySelector('#modal-confirm').onclick = confirmAction;
+                },
+
+                showWelcomeTour() {
+                    const modal = document.createElement('div');
+                    modal.style.cssText = "position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); z-index:999999; display:flex; justify-content:center; align-items:center; backdrop-filter: blur(8px); opacity: 0; transition: opacity 0.4s ease;";
+                    
+                    modal.innerHTML = `
+                        <div class="glass" style="padding:35px; border-radius:24px; width:90%; max-width:550px; max-height: 85vh; overflow-y: auto; display:flex; flex-direction:column; gap:25px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); transform: translateY(20px); transition: transform 0.4s ease;">
+                            <div style="text-align:center;">
+                                <div style="width:64px; height:64px; background:var(--accent); border-radius:50%; display:flex; justify-content:center; align-items:center; margin: 0 auto 15px; box-shadow: 0 10px 25px rgba(59, 130, 246, 0.5);">
+                                    <i data-lucide="rocket" style="color:white; width:32px; height:32px;"></i>
+                                </div>
+                                <h2 style="font-size: 24px; margin-bottom: 8px;">Welcome to SanOS 1.0</h2>
+                                <p style="color:var(--text-muted); font-size: 14px; line-height: 1.5;">Your advanced, persistent browser-based operating system. Here is a quick guide to what you can do.</p>
+                            </div>
+                            
+                            <div style="display:flex; flex-direction:column; gap:18px;">
+                                <div style="display:flex; gap:15px; align-items:center;">
+                                    <div style="padding:12px; background:rgba(59,130,246,0.1); border-radius:12px; color:var(--accent);"><i data-lucide="hard-drive"></i></div>
+                                    <div><h4 style="margin-bottom:2px; font-size:14px;">Persistent Local Storage</h4><p style="font-size:12px; color:var(--text-muted); line-height:1.4;">Files, apps, and settings you create are saved locally in your browser automatically.</p></div>
+                                </div>
+                                <div style="display:flex; gap:15px; align-items:center;">
+                                    <div style="padding:12px; background:rgba(16,185,129,0.1); border-radius:12px; color:#10b981;"><i data-lucide="layout"></i></div>
+                                    <div><h4 style="margin-bottom:2px; font-size:14px;">Install HTML Web Apps</h4><p style="font-size:12px; color:var(--text-muted); line-height:1.4;">Drag & drop any <b>.html</b> file directly to the desktop to install it as a standalone app.</p></div>
+                                </div>
+                                <div style="display:flex; gap:15px; align-items:center;">
+                                    <div style="padding:12px; background:rgba(236,72,153,0.1); border-radius:12px; color:#ec4899;"><i data-lucide="image"></i></div>
+                                    <div><h4 style="margin-bottom:2px; font-size:14px;">Media & Documents</h4><p style="font-size:12px; color:var(--text-muted); line-height:1.4;">Drag & drop images, videos, PDFs, and audio to the desktop to view them instantly.</p></div>
+                                </div>
+                                <div style="display:flex; gap:15px; align-items:center;">
+                                    <div style="padding:12px; background:rgba(245,158,11,0.1); border-radius:12px; color:#f59e0b;"><i data-lucide="mouse-pointer-click"></i></div>
+                                    <div><h4 style="margin-bottom:2px; font-size:14px;">Right-Click Customization</h4><p style="font-size:12px; color:var(--text-muted); line-height:1.4;">Right-click the desktop to add Quick Links, or right-click files to rename & upload custom icons!</p></div>
+                                </div>
+                            </div>
+                            
+                            <button id="welcome-start-btn" class="tb-btn" style="width:100%; padding:14px; background:var(--accent); color:white; font-size:15px; font-weight:600; border-radius:12px; margin-top: 5px;">Let's Go!</button>
+                        </div>
+                    `;
+                    document.body.appendChild(modal);
+                    lucide.createIcons({ root: modal });
+                    
+                    // Animate in
+                    requestAnimationFrame(() => {
+                        modal.style.opacity = '1';
+                        modal.querySelector('.glass').style.transform = 'translateY(0)';
+                    });
+
+                    modal.querySelector('#welcome-start-btn').onclick = () => {
+                        localStorage.setItem('sanos_welcomed', 'true');
+                        modal.style.opacity = '0';
+                        modal.querySelector('.glass').style.transform = 'translateY(20px)';
+                        setTimeout(() => modal.remove(), 400);
+                        SanOS.notify("Tour completed. Enjoy SanOS!", "System Ready");
+                    };
+                },
+
+                async handleDesktopDrop(e) {
+                    e.preventDefault();
+                    
+                    // 1. Support dropping external files (like HTML documents) directly onto the OS Desktop
+                    if(e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+                        for(const file of e.dataTransfer.files) {
+                            let type = 'file';
+                            if(file.type.startsWith('image/')) type = 'image';
+                            else if(file.type.startsWith('video/')) type = 'video';
+                            else if(file.type.startsWith('audio/')) type = 'audio';
+                            else if(file.type === 'text/html' || file.name.endsWith('.html') || file.name.endsWith('.htm')) type = 'html';
+                            else if(file.type === 'application/pdf' || file.name.endsWith('.pdf')) type = 'pdf';
+                            else if(file.type.startsWith('text/') || file.name.endsWith('.txt')) type = 'txt';
+
+                            const id = 'file_' + Date.now() + Math.floor(Math.random() * 1000);
+                            await SanOS.Storage.save({ id, name: file.name, type: type, parent: 'desktop', blob: file });
+                        }
+                        SanOS.notify(e.dataTransfer.files.length + " file(s) installed on Desktop", "File System");
+                        this.renderDesktop();
+                        return; // Done handling external files
+                    }
+
+                    // 2. Fallback to existing logic: dragging app shortcuts from Start Menu
+                    const appId = e.dataTransfer.getData('application/x-sanos-app');
+                    if(appId && SanOS.Apps.registry[appId]) {
+                        const app = SanOS.Apps.registry[appId];
+                        const id = 'shortcut_' + appId + '_' + Date.now();
+                        
+                        // Save the shortcut to IndexedDB so it persists between reloads
+                        await SanOS.Storage.save({
+                            id: id,
+                            name: app.name,
+                            type: 'app_shortcut',
+                            parent: 'desktop',
+                            appId: appId
+                        });
+                        
+                        this.renderDesktop();
+                        SanOS.notify(`Shortcut for ${app.name} created`, "Desktop");
+                    }
+                },
+
+                async renderDesktop() {
+                    const desktop = document.getElementById('desktop');
+                    desktop.innerHTML = '';
+                    const files = await SanOS.FS.getDesktopFiles();
+                    
+                    files.forEach(file => {
+                        const el = document.createElement('div');
+                        el.className = 'desktop-icon';
+                        
+                        let iconHtml = `<i data-lucide="file-text" style="color:#f1f5f9; width:40px;height:40px;"></i>`;
+                        if(file.type === 'folder') iconHtml = `<i data-lucide="folder" style="color:#fbbf24; width:40px;height:40px;"></i>`;
+                        else if(file.type === 'image') iconHtml = `<i data-lucide="image" style="color:#ec4899; width:40px;height:40px;"></i>`;
+                        else if(file.type === 'video') iconHtml = `<i data-lucide="film" style="color:#f97316; width:40px;height:40px;"></i>`;
+                        else if(file.type === 'audio') iconHtml = `<i data-lucide="music" style="color:#ef4444; width:40px;height:40px;"></i>`;
+                        else if(file.type === 'html') iconHtml = `<i data-lucide="layout" style="color:#14b8a6; width:40px;height:40px;"></i>`;
+                        else if(file.type === 'pdf') iconHtml = `<i data-lucide="book-open" style="color:#ef4444; width:40px;height:40px;"></i>`;
+                        else if(file.type === 'quicklink') iconHtml = `<i data-lucide="link" style="color:#3b82f6; width:40px;height:40px;"></i>`;
+                        else if(file.type === 'app_shortcut') {
+                            const appInfo = SanOS.Apps.registry[file.appId];
+                            if(appInfo) iconHtml = `<i data-lucide="${appInfo.icon}" style="color:${appInfo.color}; width:40px;height:40px;"></i>`;
+                        }
+                        
+                        // Show Custom User Uploaded Icon / Logo FIRST
+                        if (file.customIcon) {
+                            try {
+                                const url = URL.createObjectURL(file.customIcon);
+                                iconHtml = `<img src="${url}" style="width:40px; height:40px; object-fit:cover; border-radius:8px; margin-bottom:8px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5)); border: 1px solid rgba(255,255,255,0.1);">`;
+                            } catch(e) {}
+                        } 
+                        // Automatically fetch Website Favicon for Quick Links
+                        else if (file.type === 'quicklink' && file.url) {
+                            try {
+                                const domain = new URL(file.url).hostname;
+                                iconHtml = `<img src="https://www.google.com/s2/favicons?domain=${domain}&sz=64" style="width:40px; height:40px; object-fit:contain; margin-bottom:8px; border-radius:4px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));">`;
+                            } catch(e) {}
+                        }
+                        // Fallback to media thumbnails
+                        else if (file.type === 'image' && file.blob) {
+                            try {
+                                const url = URL.createObjectURL(file.blob);
+                                iconHtml = `<img src="${url}" style="width:40px; height:40px; object-fit:cover; border-radius:6px; margin-bottom:8px; border: 1px solid rgba(255,255,255,0.2); filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));">`;
+                            } catch(e) {}
+                        }
+
+                        el.innerHTML = `${iconHtml}<span>${file.name}</span>`;
+                        
+                        // Add right click logic to specifically target this app/file
+                        el.oncontextmenu = (e) => {
+                            e.preventDefault();
+                            e.stopPropagation(); // Stop desktop menu from triggering
+                            SanOS.state.contextMenuTarget = file;
+                            document.getElementById('desktop-context-menu').style.display = 'none';
+                            const cm = document.getElementById('item-context-menu');
+                            cm.style.display = 'block';
+                            cm.style.left = e.clientX + 'px';
+                            cm.style.top = e.clientY + 'px';
+                        };
+
+                        el.ondblclick = () => {
+                            if(file.type === 'folder') { window.currentExpPath = file.id; SanOS.Apps.launch('explorer'); }
+                            else if(file.type === 'txt') SanOS.Apps.launchNotes(file);
+                            else if(file.type === 'image') SanOS.Apps.launchGallery(file);
+                            else if(file.type === 'video') SanOS.Apps.launchVideoPlayer(file);
+                            else if(file.type === 'audio') SanOS.Apps.launchAudioPlayer(file);
+                            else if(file.type === 'html') SanOS.Apps.launchHTMLViewer(file);
+                            else if(file.type === 'pdf') SanOS.Apps.launchPDFViewer(file);
+                            else if(file.type === 'quicklink') SanOS.Apps.launch('browser', file.url);
+                            else if(file.type === 'app_shortcut') SanOS.Apps.launch(file.appId);
+                        };
+                        desktop.appendChild(el);
+                    });
+                    lucide.createIcons();
+                },
+
+                toggleStartMenu() {
+                    SanOS.UI.closeVPNPanel();
+                    SanOS.state.startMenuOpen = !SanOS.state.startMenuOpen;
+                    document.getElementById('start-menu').classList.toggle('open');
+                },
+                closeStartMenu() {
+                    SanOS.state.startMenuOpen = false;
+                    document.getElementById('start-menu').classList.remove('open');
+                },
+
+                toggleVPNPanel() {
+                    SanOS.UI.closeStartMenu();
+                    SanOS.state.vpnOpen = !SanOS.state.vpnOpen;
+                    document.getElementById('vpn-panel').classList.toggle('open');
+                },
+                closeVPNPanel() {
+                    SanOS.state.vpnOpen = false;
+                    document.getElementById('vpn-panel').classList.remove('open');
+                },
+
+                updateTaskbar() {
+                    const tbApps = document.getElementById('taskbar-apps');
+                    tbApps.innerHTML = '';
+                    Object.entries(SanOS.state.runningApps).forEach(([id, app]) => {
+                        const btn = document.createElement('button');
+                        btn.className = `tb-btn ${!app.minimized ? 'active' : ''}`;
+                        btn.innerHTML = `<i data-lucide="${app.icon}"></i>`;
+                        btn.onclick = () => {
+                            if(app.minimized) SanOS.WM.restore(id);
+                            else SanOS.WM.minimize(id);
+                        };
+                        tbApps.appendChild(btn);
+                    });
+                    lucide.createIcons();
+                },
+                
+                toggleTheme() {
+                    document.body.classList.toggle('light-mode');
+                    localStorage.setItem('sanos_theme', document.body.classList.contains('light-mode') ? 'light' : 'dark');
+                }
+            },
+
+            // 6. Utility Systems
+            notify(message, title = "Notification") {
+                const container = document.getElementById('notifications');
+                const toast = document.createElement('div');
+                toast.className = 'toast';
+                toast.innerHTML = `<div style="background:var(--accent); width:8px; height:8px; border-radius:50%;"></div> <div><strong>${title}</strong><br><span style="color:var(--text-muted)">${message}</span></div>`;
+                container.appendChild(toast);
+                setTimeout(() => {
+                    toast.style.animation = 'fadeOut 0.3s forwards';
+                    setTimeout(() => toast.remove(), 300);
+                }, 4000);
+            },
+            
+            setupShortcuts() {
+                document.addEventListener('keydown', (e) => {
+                    if(e.ctrlKey && e.key === 'e') { e.preventDefault(); SanOS.Apps.launch('explorer'); }
+                    if(e.ctrlKey && e.key === 'b') { e.preventDefault(); SanOS.Apps.launch('browser'); }
+                    if(e.ctrlKey && e.key === 'n') { e.preventDefault(); SanOS.Apps.launch('notes'); }
+                });
+            },
+
+            async boot() {
+                await this.Storage.init();
+                this.UI.init();
+                this.setupShortcuts();
+                lucide.createIcons();
+                setTimeout(() => this.notify("Welcome to SanOS Platform.", "System Ready"), 1000);
+                
+                // Show Welcome Tour for new users
+                if (!localStorage.getItem('sanos_welcomed')) {
+                    setTimeout(() => this.UI.showWelcomeTour(), 1500);
+                }
+                
+                // Note: Service Workers cannot be registered via blob: URLs due to strict browser security policies.
+                // For full offline PWA support, this app needs to be deployed with a standard 'sw.js' file.
+                console.log("SanOS booted successfully. To enable full offline PWA capabilities, deploy with a separate sw.js file.");
+            }
+        };
+
+        // Initialize OS on load
+        window.onload = () => SanOS.boot();
+
+    </script>
+</body>
+</html>
