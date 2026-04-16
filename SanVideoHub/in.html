@@ -13,6 +13,10 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!--Logo-->
+    <link rel="icon" type="image/png" href="https://sanstudio2026.neocities.org/San.png">
+    
     <script>
         tailwind.config = {
             darkMode: 'class',
@@ -431,7 +435,7 @@
                 <!-- Iframe injected here -->
             </div>
             
-            <!-- Series Sidebar (Hidden for Single Videos) -->
+            <!-- Series Sidebar -->
             <div id="seriesSidebar" class="hidden flex-1 w-full md:w-80 lg:w-[400px] md:flex-none md:h-full bg-surface md:rounded-[32px] border-t md:border border-glassBorder flex-col overflow-hidden">
                 <div class="p-4 md:p-5 border-b border-glassBorder bg-darkBg/50 flex items-center justify-between flex-shrink-0">
                     <h4 class="font-bold text-base md:text-lg text-white flex items-center gap-2"><i class="ph-fill ph-list-numbers text-primary"></i> Course Episodes</h4>
@@ -440,6 +444,152 @@
                 <div id="seriesEpisodesList" class="flex-1 overflow-y-auto hide-scroll flex flex-col pb-6 md:pb-0">
                     <!-- Episodes injected here -->
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3. Study Planner Modal -->
+    <div id="plannerModal" class="fixed inset-0 bg-black/80 backdrop-blur-xl z-50 hidden flex items-end md:items-center justify-center transition-opacity duration-300">
+        <div class="bg-darkBg md:glass-effect w-full max-w-7xl h-[95vh] md:h-[90vh] md:rounded-[32px] border-t md:border border-glassBorder shadow-2xl flex flex-col transform bottom-sheet-up md:scale-100 transition-transform duration-300 overflow-hidden relative">
+            <!-- Header -->
+            <div class="flex justify-between items-center p-5 md:p-6 border-b border-glassBorder bg-surface/50">
+                <h3 class="text-2xl font-bold tracking-tight flex items-center gap-3">
+                    <i class="ph-duotone ph-calendar-check text-primary text-3xl"></i> 
+                    Advanced Study Planner
+                </h3>
+                <button onclick="closePlannerModal()" class="text-gray-400 hover:text-white bg-white/5 hover:bg-white/10 p-2.5 rounded-full transition-colors active:scale-90">
+                    <i class="ph ph-x text-xl"></i>
+                </button>
+            </div>
+
+            <!-- Body Grid -->
+            <div class="flex-1 overflow-y-auto hide-scroll p-4 md:p-6">
+                <div class="grid grid-cols-1 xl:grid-cols-12 gap-6">
+                    <!-- Left Panel: Inputs -->
+                    <div class="xl:col-span-5 space-y-6">
+                        <div class="glass-effect rounded-[24px] p-5 border border-glassBorder">
+                            <h4 class="text-lg font-bold mb-4 text-gray-200">1. Skills to Learn</h4>
+                            <div id="dynamicSkillsList" class="space-y-3 mb-4"></div>
+                            <button onclick="addPlannerSkillRow()" class="w-full bg-white/5 hover:bg-white/10 border border-glassBorder py-3 rounded-[16px] text-sm font-bold transition-colors active:scale-95 flex justify-center items-center gap-2 text-gray-300">
+                                <i class="ph ph-plus"></i> Add Skill
+                            </button>
+                        </div>
+
+                        <div class="glass-effect rounded-[24px] p-5 border border-glassBorder">
+                            <h4 class="text-lg font-bold mb-4 text-gray-200">2. Plan Scope</h4>
+                            <div class="flex items-center gap-6 mb-4">
+                                <label class="flex items-center gap-2 cursor-pointer">
+                                    <input type="radio" name="planType" value="daily" checked class="form-radio text-primary bg-darkBg border-gray-600 focus:ring-primary">
+                                    <span class="text-sm font-bold text-gray-300">Daily</span>
+                                </label>
+                                <label class="flex items-center gap-2 cursor-pointer opacity-50">
+                                    <input type="radio" name="planType" value="monthly" disabled class="form-radio text-primary bg-darkBg border-gray-600 focus:ring-primary">
+                                    <span class="text-sm font-bold text-gray-300">Monthly</span>
+                                </label>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-gray-400 mb-2 pl-1">Available Hours per Day</label>
+                                <input type="number" id="planAvailHours" value="4" min="1" max="24" class="w-full bg-darkBg border border-glassBorder rounded-[16px] py-3 px-4 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 text-sm shadow-inner transition-all">
+                            </div>
+                        </div>
+
+                        <div class="glass-effect rounded-[24px] p-5 border border-glassBorder">
+                            <h4 class="text-lg font-bold mb-4 text-gray-200">3. Daily Schedule</h4>
+                            <div class="mb-4">
+                                <label class="block text-xs font-bold text-gray-400 mb-2 pl-1">Working Window</label>
+                                <div class="flex items-center gap-3">
+                                    <div class="relative flex-1">
+                                        <input type="time" id="planStart" value="09:00" class="w-full bg-darkBg border border-glassBorder rounded-[16px] py-3 px-4 focus:outline-none focus:border-primary text-sm shadow-inner appearance-none">
+                                    </div>
+                                    <span class="text-gray-500 font-bold text-sm">to</span>
+                                    <div class="relative flex-1">
+                                        <input type="time" id="planEnd" value="17:00" class="w-full bg-darkBg border border-glassBorder rounded-[16px] py-3 px-4 focus:outline-none focus:border-primary text-sm shadow-inner appearance-none">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mb-5">
+                                <label class="block text-xs font-bold text-gray-400 mb-2 pl-1">Break Pattern (Pomodoro-style)</label>
+                                <div class="flex items-center gap-3">
+                                    <div class="flex-1 flex items-center bg-darkBg border border-glassBorder rounded-[16px] pr-4">
+                                        <input type="number" id="planPomoWork" value="50" class="w-full bg-transparent py-3 px-4 focus:outline-none text-sm text-right">
+                                        <span class="text-xs text-gray-500 font-bold ml-2">min work</span>
+                                    </div>
+                                    <span class="text-gray-600 font-bold">/</span>
+                                    <div class="flex-1 flex items-center bg-darkBg border border-glassBorder rounded-[16px] pr-4">
+                                        <input type="number" id="planPomoBreak" value="10" class="w-full bg-transparent py-3 px-4 focus:outline-none text-sm text-right">
+                                        <span class="text-xs text-gray-500 font-bold ml-2">min break</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <button onclick="generateDetailedSchedule()" class="w-full bg-primary hover:bg-blue-500 text-white py-4 rounded-[20px] font-bold transition-all active:scale-95 shadow-[0_4px_20px_rgb(59,130,246,0.3)] flex justify-center items-center gap-2">
+                                <i class="ph-fill ph-rocket-launch text-xl"></i> Generate Schedule
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Right Panel: Outputs -->
+                    <div class="xl:col-span-7 flex flex-col gap-6" id="plannerRightPanel">
+                        <div class="glass-effect rounded-[20px] p-3 border border-glassBorder flex flex-wrap gap-2 no-print">
+                            <button onclick="openSaveTemplateModal()" class="bg-darkBg hover:bg-white/5 border border-glassBorder text-gray-300 px-4 py-2 rounded-[12px] text-sm font-bold transition-colors flex items-center gap-2 active:scale-95">
+                                <i class="ph-fill ph-floppy-disk text-purple-400"></i> Save
+                            </button>
+                            <button onclick="openLoadTemplateModal()" class="bg-darkBg hover:bg-white/5 border border-glassBorder text-gray-300 px-4 py-2 rounded-[12px] text-sm font-bold transition-colors flex items-center gap-2 active:scale-95">
+                                <i class="ph-bold ph-folder-open text-yellow-400"></i> Load Template
+                            </button>
+                            <button onclick="document.getElementById('dynamicSkillsList').innerHTML=''; addPlannerSkillRow(); document.getElementById('reportContainer').innerHTML='';" class="bg-darkBg hover:bg-white/5 border border-glassBorder text-gray-300 px-4 py-2 rounded-[12px] text-sm font-bold transition-colors flex items-center gap-2 active:scale-95">
+                                <i class="ph-bold ph-arrows-counter-clockwise text-blue-400"></i> Reset
+                            </button>
+                            <button onclick="exportToPDF()" class="bg-darkBg hover:bg-white/5 border border-glassBorder text-gray-300 px-4 py-2 rounded-[12px] text-sm font-bold transition-colors flex items-center gap-2 active:scale-95">
+                                <i class="ph-fill ph-file-pdf text-red-400"></i> Download PDF
+                            </button>
+                            <button onclick="exportToJSON()" class="bg-darkBg hover:bg-white/5 border border-glassBorder text-gray-300 px-4 py-2 rounded-[12px] text-sm font-bold transition-colors flex items-center gap-2 active:scale-95">
+                                <i class="ph-bold ph-copy text-green-400"></i> Copy JSON
+                            </button>
+                        </div>
+                        <div id="reportContainer" class="flex-1 flex flex-col gap-6">
+                            <div class="flex-1 flex flex-col items-center justify-center text-gray-500 border-2 border-dashed border-glassBorder rounded-[24px] p-10 text-center">
+                                <i class="ph-duotone ph-chart-line-up text-6xl mb-4 text-primary/40"></i>
+                                <p class="text-lg font-bold text-gray-400">No schedule generated yet.</p>
+                                <p class="text-sm">Add skills and click Generate Schedule to see your plan.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Save Template Modal -->
+    <div id="saveTemplateModal" class="fixed inset-0 bg-black/80 backdrop-blur-xl z-[70] hidden flex items-center justify-center p-4 transition-opacity duration-300">
+        <div class="bg-surface md:glass-effect w-full max-w-sm rounded-[32px] border border-glassBorder shadow-2xl overflow-hidden transform scale-95 transition-transform duration-300" id="saveTemplateModalContent">
+            <div class="p-6 border-b border-glassBorder flex justify-between items-center">
+                <h3 class="text-xl font-bold tracking-tight text-white">Save Template</h3>
+                <button onclick="closeSaveTemplateModal()" class="text-gray-400 hover:text-white transition-colors"><i class="ph ph-x text-xl"></i></button>
+            </div>
+            <div class="p-6 space-y-4">
+                <div>
+                    <label class="block text-sm font-bold text-gray-400 mb-2">Template Name</label>
+                    <input type="text" id="templateNameInput" placeholder="e.g. My Study Routine" class="w-full bg-darkBg border border-glassBorder rounded-[16px] py-3 px-4 focus:outline-none focus:border-primary text-sm shadow-inner transition-all text-white">
+                </div>
+            </div>
+            <div class="p-6 pt-0 flex gap-3">
+                <button onclick="closeSaveTemplateModal()" class="flex-1 px-4 py-3 bg-white/5 hover:bg-white/10 rounded-[16px] font-bold text-gray-300 transition-colors active:scale-95">Cancel</button>
+                <button onclick="saveScheduleTemplate()" class="flex-1 px-4 py-3 bg-primary hover:bg-blue-500 rounded-[16px] font-bold text-white transition-colors active:scale-95">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Load Template Modal -->
+    <div id="loadTemplateModal" class="fixed inset-0 bg-black/80 backdrop-blur-xl z-[70] hidden flex items-center justify-center p-4 transition-opacity duration-300">
+        <div class="bg-surface md:glass-effect w-full max-w-md rounded-[32px] border border-glassBorder shadow-2xl overflow-hidden transform scale-95 transition-transform duration-300" id="loadTemplateModalContent">
+            <div class="p-6 border-b border-glassBorder flex justify-between items-center">
+                <h3 class="text-xl font-bold tracking-tight text-white">Load Template</h3>
+                <button onclick="closeLoadTemplateModal()" class="text-gray-400 hover:text-white transition-colors"><i class="ph ph-x text-xl"></i></button>
+            </div>
+            <div class="p-6 max-h-[50vh] overflow-y-auto hide-scroll space-y-3" id="templateListContainer">
+                <!-- Templates injected here -->
             </div>
         </div>
     </div>
@@ -1146,6 +1296,195 @@
             playerModal.classList.remove('hidden');
             playerModal.classList.add('flex');
             document.body.style.overflow = 'hidden'; 
+        }
+
+        // --- Planner Modals & Logic ---
+        window.openPlannerModal = () => { const modal = document.getElementById('plannerModal'); const skillsList = document.getElementById('dynamicSkillsList'); if (skillsList.children.length === 0) window.addPlannerSkillRow(); modal.classList.remove('hidden'); setTimeout(() => modal.querySelector('div').classList.remove('translate-y-full', 'scale-95'), 10); }
+        window.closePlannerModal = () => { const modal = document.getElementById('plannerModal'); modal.querySelector('div').classList.add('translate-y-full'); setTimeout(() => modal.classList.add('hidden'), 300); }
+        
+        window.addPlannerSkillRow = (preFolderId = null, prePriority = 'Medium') => {
+            const eduFolders = folders.filter(f => f.category === 'Education');
+            if (eduFolders.length === 0) return showToast("Create some education folders first!", "error");
+            const container = document.getElementById('dynamicSkillsList');
+            const rowId = 'skill_row_' + Date.now();
+            const row = document.createElement('div');
+            row.id = rowId;
+            row.className = "flex items-center gap-3 bg-darkBg border border-glassBorder p-2 rounded-[16px]";
+            let optionsHTML = eduFolders.map(f => `<option value="${f.id}" ${f.id === preFolderId ? 'selected' : ''} class="bg-surface text-white">${f.name}</option>`).join('');
+            row.innerHTML = `<select class="skill-select flex-1 bg-transparent border-none text-sm text-gray-200 focus:ring-0 cursor-pointer font-bold pl-2 outline-none">${optionsHTML}</select><div class="h-6 w-[1px] bg-glassBorder"></div><select class="priority-select w-28 bg-transparent border-none text-sm text-gray-300 focus:ring-0 cursor-pointer font-bold outline-none"><option value="High" ${prePriority === 'High' ? 'selected' : ''} class="bg-surface text-white">High</option><option value="Medium" ${prePriority === 'Medium' ? 'selected' : ''} class="bg-surface text-white">Medium</option><option value="Low" ${prePriority === 'Low' ? 'selected' : ''} class="bg-surface text-white">Low</option></select><button onclick="document.getElementById('${rowId}').remove()" class="p-2 text-red-400 hover:bg-red-500/10 rounded-xl transition-colors"><i class="ph-fill ph-x-circle text-lg"></i></button>`;
+            container.appendChild(row);
+        }
+
+        window.navigateToSkill = (id) => { currentCategory = 'Education'; currentFolderId = id; renderNavigation(); renderMainContent(); window.closePlannerModal(); }
+
+        window.generateDetailedSchedule = () => {
+            const rows = document.querySelectorAll('#dynamicSkillsList > div');
+            if (rows.length === 0) return showToast("Please add at least one skill", "error");
+            const selectedSkills = [];
+            rows.forEach(row => {
+                const folderId = row.querySelector('.skill-select').value;
+                const priority = row.querySelector('.priority-select').value;
+                const name = folders.find(f => f.id === folderId)?.name || 'Unknown';
+                let weight = priority === 'High' ? 3 : priority === 'Medium' ? 2 : 1;
+                selectedSkills.push({ folderId, name, priority, weight });
+            });
+
+            const availHours = parseFloat(document.getElementById('planAvailHours').value) || 4;
+            const targetWorkMins = availHours * 60;
+            const parseTime = str => { const [h, m] = str.split(':').map(Number); return (h * 60) + m; };
+            const formatTime = mins => `${Math.floor(mins/60).toString().padStart(2, '0')}:${(mins%60).toString().padStart(2, '0')}`;
+            
+            let currentTime = parseTime(document.getElementById('planStart').value || "09:00");
+            const absoluteEndTime = parseTime(document.getElementById('planEnd').value || "17:00");
+            const pomoWork = parseInt(document.getElementById('planPomoWork').value) || 50;
+            const pomoBreak = parseInt(document.getElementById('planPomoBreak').value) || 10;
+
+            const totalWeight = selectedSkills.reduce((sum, s) => sum + s.weight, 0);
+            let allocatedSoFar = 0;
+            selectedSkills.forEach((s, idx) => {
+                s.allocatedMins = idx === selectedSkills.length - 1 ? targetWorkMins - allocatedSoFar : Math.round((s.weight / totalWeight) * targetWorkMins);
+                allocatedSoFar += s.allocatedMins;
+                s.remainingMins = s.allocatedMins;
+                s.percent = ((s.allocatedMins / targetWorkMins) * 100).toFixed(1);
+            });
+
+            const timeline = [];
+            for (let i = 0; i < selectedSkills.length; i++) {
+                let skill = selectedSkills[i];
+                while (skill.remainingMins > 0) {
+                    let chunk = Math.min(skill.remainingMins, pomoWork);
+                    if (currentTime + chunk > absoluteEndTime) chunk = Math.max(0, absoluteEndTime - currentTime);
+                    if (chunk <= 0) break;
+                    timeline.push({ type: 'work', folderId: skill.folderId, name: skill.name, startMin: currentTime, endMin: currentTime + chunk, duration: chunk });
+                    currentTime += chunk;
+                    skill.remainingMins -= chunk;
+                    if (!(i === selectedSkills.length - 1 && skill.remainingMins <= 0) && currentTime < absoluteEndTime) {
+                        let brk = currentTime + pomoBreak > absoluteEndTime ? absoluteEndTime - currentTime : pomoBreak;
+                        timeline.push({ type: 'break', name: 'Break', startMin: currentTime, endMin: currentTime + brk, duration: brk });
+                        currentTime += brk;
+                    }
+                }
+            }
+
+            if (currentTime < absoluteEndTime) timeline.push({ type: 'buffer', name: 'Buffer / Review', startMin: currentTime, endMin: absoluteEndTime, duration: absoluteEndTime - currentTime });
+
+            activeScheduleData = { dateGenerated: new Date().toISOString(), skillsSummary: selectedSkills.map(s => ({ name: s.name, totalMinutes: s.allocatedMins, percent: s.percent })), timeline: timeline.map(t => ({ time: `${formatTime(t.startMin)} - ${formatTime(t.endMin)}`, activity: t.name, duration: `${t.duration} min`, type: t.type })) };
+            studyPlan = { skills: selectedSkills.map(s => s.folderId), days: 30, hoursPerDay: availHours, breakMinutes: pomoBreak, dailyMinutesPerSkill: Math.round(targetWorkMins / selectedSkills.length) };
+
+            const c = document.getElementById('reportContainer');
+            let sRows = selectedSkills.map(s => `<div class="flex justify-between items-center py-3 border-b border-glassBorder last:border-0"><span class="text-gray-200 font-bold text-sm w-1/3">${s.name}</span><span class="text-gray-400 font-medium text-sm w-1/3 text-center">${s.allocatedMins}</span><span class="text-primary font-bold text-sm w-1/3 text-right">${s.percent}%</span></div>`).join('');
+            let tRows = timeline.map(t => {
+                let isW = t.type === 'work', isB = t.type === 'break';
+                return `<div ${isW ? `onclick="navigateToSkill('${t.folderId}')"` : ''} class="flex items-center justify-between p-3.5 mb-2 rounded-r-xl ${isW ? 'bg-primary/20 border-l-4 border-primary cursor-pointer hover:bg-primary/30 active:scale-[0.99]' : isB ? 'bg-green-900/20 border-l-4 border-green-500' : 'bg-surface/50 border-l-4 border-gray-600'}"><div class="w-1/4 text-sm font-bold text-gray-400 font-mono">${formatTime(t.startMin)} - ${formatTime(t.endMin)}</div><div class="w-2/4 ${isW ? 'text-white font-bold' : isB ? 'text-green-400 italic text-sm' : 'text-gray-400 italic text-sm'} flex items-center">${isW ? '<i class="ph-fill ph-code-block mr-2 text-primary"></i>' : isB ? '<i class="ph-fill ph-coffee mr-2"></i>' : ''} ${t.name}</div><div class="w-1/4 text-right text-xs font-bold text-gray-500">${t.duration} min</div></div>`;
+            }).join('');
+            
+            c.innerHTML = `<div class="glass-effect rounded-[24px] p-5 md:p-6 border border-glassBorder"><h4 class="text-lg font-bold mb-4 text-white">Summary</h4><div class="flex justify-between items-center py-2 border-b-2 border-glassBorder/80 mb-2"><span class="text-xs text-gray-500 font-bold uppercase tracking-wider w-1/3">Skill</span><span class="text-xs text-gray-500 font-bold uppercase tracking-wider w-1/3 text-center">Total Minutes</span><span class="text-xs text-gray-500 font-bold uppercase tracking-wider w-1/3 text-right">% Allocation</span></div>${sRows}</div><div class="glass-effect rounded-[24px] p-5 md:p-6 border border-glassBorder flex-1 overflow-y-auto hide-scroll"><h4 class="text-lg font-bold mb-4 text-white border-b border-glassBorder pb-3">${new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</h4><div class="mt-4">${tRows}</div></div>`;
+            
+            renderMainContent();
+            showToast("Schedule Generated!", "success");
+        }
+
+        window.exportToJSON = () => {
+            if (!activeScheduleData) return showToast("Generate first!", "error");
+            navigator.clipboard.writeText(JSON.stringify(activeScheduleData, null, 2))
+                .then(() => showToast("JSON copied to clipboard!", "success"));
+        };
+
+        window.exportToPDF = () => {
+            if (!activeScheduleData) return showToast("Generate first!", "error");
+            showToast("Generating PDF Document...", "info");
+            const opt = {
+                margin: [0.4, 0.4, 0.4, 0.4],
+                filename: 'Study_Planner_Report.pdf',
+                image: { type: 'jpeg', quality: 1 },
+                html2canvas: {
+                    scale: 2,
+                    useCORS: true,
+                    backgroundColor: '#ffffff',
+                    onclone: function(cDoc) {
+                        const cCont = cDoc.getElementById('reportContainer');
+                        cCont.style.backgroundColor = '#ffffff';
+                        cCont.style.width = '800px';
+                        cCont.style.padding = '10px';
+                        const h = cDoc.createElement('div');
+                        h.innerHTML = `<div style="margin-bottom: 24px; padding-bottom: 16px; border-bottom: 2px solid #e5e7eb;"><h2 style="font-size: 26px; font-weight: 800; color: #111827; margin-bottom: 4px; font-family: sans-serif;">Study Planner Report</h2><p style="font-size: 14px; color: #6b7280; font-family: sans-serif;">${new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p></div>`;
+                        cCont.insertBefore(h, cCont.firstChild);
+                        cCont.querySelectorAll('.glass-effect').forEach(el => {
+                            el.classList.remove('glass-effect');
+                            el.style.backgroundColor = '#f9fafb';
+                            el.style.borderColor = '#d1d5db';
+                            el.style.borderWidth = '1px';
+                            el.style.borderStyle = 'solid';
+                            el.style.boxShadow = 'none';
+                        });
+                        cCont.querySelectorAll('.text-gray-200, .text-gray-400, .text-white, .text-gray-500, .text-green-400').forEach(t => {
+                            if(!t.classList.contains('text-primary') && !t.classList.contains('text-green-400')) {
+                                t.style.color = '#374151';
+                            } else if (t.classList.contains('text-green-400')) {
+                                t.style.color = '#16a34a';
+                            }
+                        });
+                        cCont.querySelectorAll('.flex.items-center.justify-between').forEach(row => {
+                            row.style.pageBreakInside = 'avoid';
+                            row.style.breakInside = 'avoid';
+                            row.style.backgroundColor = '#ffffff';
+                            row.style.borderColor = '#e5e7eb';
+                            row.style.borderWidth = '1px';
+                            row.style.borderStyle = 'solid';
+                            row.classList.remove('bg-primary/20', 'bg-green-900/20', 'bg-surface/50', 'border-l-4');
+                        });
+                    }
+                },
+                jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' },
+                pagebreak: { mode: ['css', 'legacy'] }
+            };
+            html2pdf().set(opt).from(document.getElementById('reportContainer')).save().then(() => showToast("PDF Downloaded!", "success"));
+        };
+
+        window.openSaveTemplateModal = () => { const rows = document.querySelectorAll('#dynamicSkillsList > div'); if (rows.length === 0) return showToast("Add skills first!", "error"); const m = document.getElementById('saveTemplateModal'); const c = document.getElementById('saveTemplateModalContent'); document.getElementById('templateNameInput').value = ''; m.classList.remove('hidden'); setTimeout(() => c.classList.remove('scale-95'), 10); }
+        window.closeSaveTemplateModal = () => { const m = document.getElementById('saveTemplateModal'); const c = document.getElementById('saveTemplateModalContent'); c.classList.add('scale-95'); setTimeout(() => m.classList.add('hidden'), 300); }
+        
+        window.saveScheduleTemplate = async function() {
+            const name = document.getElementById('templateNameInput').value.trim() || 'My Template ' + (savedTemplates.length + 1);
+            const rows = document.querySelectorAll('#dynamicSkillsList > div');
+            
+            const skills = [];
+            rows.forEach(row => {
+                skills.push({ folderId: row.querySelector('.skill-select').value, priority: row.querySelector('.priority-select').value });
+            });
+
+            const template = {
+                id: 'tpl_' + Date.now(),
+                name: name,
+                availHours: document.getElementById('planAvailHours').value,
+                start: document.getElementById('planStart').value,
+                end: document.getElementById('planEnd').value,
+                pomoWork: document.getElementById('planPomoWork').value,
+                pomoBreak: document.getElementById('planPomoBreak').value,
+                skills: skills
+            };
+
+            savedTemplates.push(template);
+            saveLocalData();
+            window.closeSaveTemplateModal();
+            showToast("Template saved locally!", "success");
+        }
+
+        window.openLoadTemplateModal = () => { if (savedTemplates.length === 0) return showToast("No templates found.", "info"); const m = document.getElementById('loadTemplateModal'); const c = document.getElementById('loadTemplateModalContent'); document.getElementById('templateListContainer').innerHTML = savedTemplates.map(tpl => `<div class="flex items-center justify-between bg-darkBg border border-glassBorder p-4 rounded-[16px]"><div><h4 class="font-bold text-white">${tpl.name}</h4><p class="text-xs text-gray-500 mt-1">${tpl.skills.length} skills • ${tpl.availHours}h/day</p></div><button onclick="loadScheduleTemplate('${tpl.id}')" class="bg-primary/20 hover:bg-primary/40 text-primary px-4 py-2 rounded-xl text-sm font-bold transition-colors active:scale-95">Load</button></div>`).join(''); m.classList.remove('hidden'); setTimeout(() => c.classList.remove('scale-95'), 10); }
+        window.closeLoadTemplateModal = () => { const m = document.getElementById('loadTemplateModal'); const c = document.getElementById('loadTemplateModalContent'); c.classList.add('scale-95'); setTimeout(() => m.classList.add('hidden'), 300); }
+        
+        window.loadScheduleTemplate = (id) => {
+            const tpl = savedTemplates.find(t => t.id === id);
+            if (!tpl) return;
+            document.getElementById('planAvailHours').value = tpl.availHours;
+            document.getElementById('planStart').value = tpl.start;
+            document.getElementById('planEnd').value = tpl.end;
+            document.getElementById('planPomoWork').value = tpl.pomoWork;
+            document.getElementById('planPomoBreak').value = tpl.pomoBreak;
+            document.getElementById('dynamicSkillsList').innerHTML = '';
+            tpl.skills.forEach(skill => window.addPlannerSkillRow(skill.folderId, skill.priority));
+            window.closeLoadTemplateModal();
+            showToast("Template loaded!", "success");
         }
 
         // Data Export Methods
