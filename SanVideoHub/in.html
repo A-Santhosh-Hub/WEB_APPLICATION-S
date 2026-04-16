@@ -1,0 +1,1185 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SanVideoHub - Your Personal Video Collection</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Phosphor Icons for UI elements -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <!-- html2pdf for True PDF Generation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <!-- Origin OS / Android 16 Style Font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                fontFamily: {
+                    sans: ['Outfit', 'sans-serif'],
+                },
+                extend: {
+                    colors: {
+                        primary: '#3b82f6', // Vibrant Android/Origin OS Blue
+                        darkBg: '#000000', // Deep OLED Black
+                        surface: '#111111', // Elevated surface
+                        glass: 'rgba(255, 255, 255, 0.05)',
+                        glassBorder: 'rgba(255, 255, 255, 0.1)',
+                    },
+                    borderRadius: {
+                        '4xl': '2rem',
+                        '5xl': '2.5rem',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Custom scrollbar for a sleek look */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #000000; }
+        ::-webkit-scrollbar-thumb { background: #222222; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #333333; }
+        .hide-scroll { -ms-overflow-style: none; scrollbar-width: none; }
+        .hide-scroll::-webkit-scrollbar { display: none; }
+        
+        /* Animations */
+        @keyframes slideInUp { from { transform: translateY(100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        .toast-animate { animation: slideInUp 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }
+        .bottom-sheet-up { animation: sheetUp 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }
+        @keyframes sheetUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+        
+        /* Glass Effect */
+        .glass-effect { background: rgba(15, 15, 15, 0.6); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px); }
+        
+        /* Print Styles */
+        @media print {
+            body * { visibility: hidden; }
+            #plannerRightPanel, #plannerRightPanel * { visibility: visible; }
+            #plannerRightPanel { position: absolute; left: 0; top: 0; width: 100%; background: white !important; color: black !important; }
+            .no-print { display: none !important; }
+            #plannerRightPanel .glass-effect, #plannerRightPanel .bg-surface { background: white !important; border: 1px solid #ccc !important; box-shadow: none !important; color: black !important; }
+            #plannerRightPanel [class*="text-gray-"], #plannerRightPanel [class*="text-white"] { color: black !important; }
+            #plannerRightPanel [class*="bg-primary"], #plannerRightPanel [class*="bg-purple-"], #plannerRightPanel [class*="bg-green-"] { background-color: #f0f0f0 !important; color: black !important; border: 1px solid #999; }
+        }
+    </style>
+</head>
+<body class="bg-darkBg text-gray-100 font-sans h-screen flex overflow-hidden selection:bg-primary/30">
+
+    <!-- Sidebar (Desktop) -->
+    <aside class="hidden md:flex flex-col w-72 bg-darkBg h-full z-10 p-4 pr-2">
+        <div class="glass-effect rounded-[32px] h-full border border-glassBorder flex flex-col overflow-hidden shadow-2xl">
+            <div class="p-8 flex items-center gap-4">
+                <div class="bg-primary/20 p-3 rounded-2xl">
+                    <i class="ph-fill ph-play-circle text-3xl text-primary drop-shadow-lg"></i>
+                </div>
+                <h1 class="text-2xl font-bold tracking-tight">SanVideoHub</h1>
+            </div>
+
+            <div class="px-6 py-2">
+                <button onclick="openAddModal()" class="w-full bg-primary hover:bg-blue-500 text-white font-bold py-4 px-4 rounded-3xl transition-all duration-300 flex items-center justify-center gap-2 shadow-[0_8px_30px_rgb(59,130,246,0.3)] hover:shadow-[0_8px_40px_rgb(59,130,246,0.4)] active:scale-95">
+                    <i class="ph ph-plus text-2xl"></i>
+                    New Link
+                </button>
+            </div>
+
+            <nav class="flex-1 overflow-y-auto mt-6 px-4 space-y-2 hide-scroll" id="desktop-nav">
+                <!-- Categories injected here by JS -->
+            </nav>
+            
+            <div class="p-6 mt-auto flex flex-col gap-4">
+                <button onclick="openDataModal()" class="w-full bg-surface hover:bg-white/10 border border-glassBorder text-gray-300 font-bold py-4 px-4 rounded-3xl transition-all duration-300 flex items-center justify-center gap-2 shadow-lg active:scale-95">
+                    <i class="ph-bold ph-database text-xl text-green-400"></i>
+                    Backup Data
+                </button>
+                
+                <!-- Developer Credit -->
+                <a href="https://sanstudio-hub.github.io/SanStudio-Hub/in" target="_blank" class="group relative flex items-center justify-center gap-1.5 w-full bg-darkBg border border-glassBorder hover:border-primary/50 text-gray-500 hover:text-gray-200 py-3 rounded-full transition-all text-xs font-bold shadow-[0_0_15px_rgba(59,130,246,0.1)] overflow-hidden active:scale-95">
+                    <div class="absolute inset-0 bg-primary/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                    Developed by <span class="text-primary flex items-center gap-1"><i class="ph-fill ph-fire text-orange-500 animate-pulse text-sm"></i> San Studio Team</span>
+                </a>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 flex flex-col h-full relative w-full md:py-4 md:pr-4 md:pl-2">
+        <div class="md:glass-effect md:border border-glassBorder md:rounded-[32px] flex-1 flex flex-col h-full relative overflow-hidden shadow-2xl bg-darkBg md:bg-transparent">
+            
+            <!-- Mobile Header -->
+            <header class="md:hidden flex items-center justify-between p-5 glass-effect z-20 border-b border-glassBorder sticky top-0">
+                <div class="flex items-center gap-3">
+                    <div class="bg-primary/20 p-2.5 rounded-2xl">
+                        <i class="ph-fill ph-play-circle text-2xl text-primary"></i>
+                    </div>
+                    <h1 class="text-xl font-bold tracking-tight">SanVideoHub</h1>
+                </div>
+                <div class="flex items-center gap-3">
+                    <button onclick="openDataModal()" class="w-11 h-11 rounded-full bg-surface border border-glassBorder flex items-center justify-center text-gray-300 hover:text-white transition-colors active:scale-95 shadow-lg">
+                        <i class="ph-bold ph-database text-lg text-green-400"></i>
+                    </button>
+                    <div class="w-11 h-11 rounded-full bg-gradient-to-tr from-indigo-500 to-primary flex items-center justify-center font-bold text-sm shadow-lg border border-white/10">
+                        ME
+                    </div>
+                </div>
+            </header>
+
+            <!-- Mobile Categories (Horizontal Scroll) -->
+            <div class="md:hidden w-full glass-effect z-10 sticky top-[77px] shadow-sm">
+                <nav class="flex overflow-x-auto hide-scroll p-4 gap-3" id="mobile-nav">
+                    <!-- Categories injected here by JS -->
+                </nav>
+            </div>
+
+            <!-- Top Bar (Desktop) -->
+            <header class="hidden md:flex items-center justify-between p-8 pb-4">
+                <div class="relative w-[400px]">
+                    <i class="ph ph-magnifying-glass absolute left-5 top-1/2 -translate-y-1/2 text-gray-400 text-xl"></i>
+                    <input type="text" id="searchInput" placeholder="Search saved videos..." class="w-full bg-surface border border-glassBorder rounded-full py-4 pl-14 pr-6 focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/20 transition-all text-base font-medium placeholder-gray-500 shadow-inner">
+                </div>
+                <div class="flex items-center gap-4">
+                    <button onclick="openDataModal()" class="h-14 px-6 rounded-full bg-surface border border-glassBorder flex items-center justify-center gap-2 text-gray-300 hover:text-white hover:bg-white/5 transition-colors active:scale-95 shadow-lg font-bold">
+                        <i class="ph-bold ph-database text-xl text-green-400"></i> Backup Center
+                    </button>
+                    <div class="w-14 h-14 rounded-full bg-gradient-to-tr from-indigo-500 to-primary flex items-center justify-center font-bold text-lg shadow-[0_4px_20px_rgb(59,130,246,0.3)] border border-white/20 cursor-pointer hover:scale-105 transition-transform active:scale-95">
+                        ME
+                    </div>
+                </div>
+            </header>
+
+            <!-- Mobile Search -->
+            <div class="md:hidden px-4 pt-4 pb-1 z-10 relative">
+                <div class="relative w-full shadow-lg rounded-full">
+                    <i class="ph ph-magnifying-glass absolute left-5 top-1/2 -translate-y-1/2 text-gray-400 text-lg"></i>
+                    <input type="text" id="mobileSearchInput" placeholder="Search..." class="w-full bg-surface border border-glassBorder rounded-full py-4 pl-14 pr-5 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/30 text-base font-medium shadow-inner transition-all">
+                </div>
+            </div>
+
+            <!-- Main Content Area (Videos, Planner, or Private Links) -->
+            <div class="flex-1 overflow-y-auto p-4 md:p-8 hide-scroll" id="mainContentArea">
+                <div class="mb-8 flex justify-between items-end px-2" id="gridTitleHeader">
+                    <div class="flex items-center gap-3">
+                        <button id="backButton" onclick="goBack()" class="hidden p-2 md:p-2.5 bg-surface border border-glassBorder rounded-full hover:bg-white/10 transition-colors active:scale-95 shadow-md flex-shrink-0">
+                            <i class="ph-bold ph-arrow-left text-xl text-white"></i>
+                        </button>
+                        <h2 id="currentCategoryTitle" class="text-2xl md:text-3xl font-bold tracking-tight">All Videos</h2>
+                    </div>
+                    <span id="videoCount" class="text-gray-400 font-semibold bg-surface px-4 py-1.5 rounded-full border border-glassBorder shadow-sm">0 items</span>
+                </div>
+
+                <!-- Empty State -->
+                <div id="emptyState" class="hidden flex-col items-center justify-center h-72 text-center mt-10">
+                    <div class="bg-surface p-7 rounded-full border border-glassBorder mb-6 shadow-2xl">
+                        <i class="ph-duotone ph-video-camera-slash text-6xl text-primary/80"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold text-gray-100 tracking-tight" id="emptyStateTitle">No items found</h3>
+                    <p class="text-gray-500 mt-3 max-w-sm font-medium" id="emptyStateDesc">Your collection is empty. Add your first item to see it appear here.</p>
+                    <button id="emptyStateBtn" onclick="openAddModal()" class="mt-6 bg-primary/20 hover:bg-primary/30 text-primary border border-primary/30 px-6 py-3 rounded-full font-bold transition-colors active:scale-95 flex items-center gap-2 shadow-sm">
+                        <i class="ph-bold ph-plus"></i> Add New Link
+                    </button>
+                </div>
+
+                <!-- Grid -->
+                <div id="videoGrid" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6 md:gap-8 pb-8">
+                    <!-- Items injected here by JS -->
+                </div>
+
+                <!-- Mobile Developer Credit -->
+                <div class="md:hidden flex justify-center pb-32 pt-8 mt-auto">
+                    <a href="https://sanstudio-hub.github.io/SanStudio-Hub/in" target="_blank" class="group relative flex items-center justify-center gap-1.5 bg-darkBg border border-glassBorder hover:border-primary/50 text-gray-500 hover:text-gray-200 py-3 px-6 rounded-full transition-all text-xs font-bold shadow-[0_0_20px_rgba(59,130,246,0.15)] overflow-hidden active:scale-95">
+                        <div class="absolute inset-0 bg-primary/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                        Developed by <span class="text-primary flex items-center gap-1"><i class="ph-fill ph-fire text-orange-500 animate-pulse text-sm"></i> San Studio Team</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Mobile FAB -->
+        <button onclick="openAddModal()" class="md:hidden fixed bottom-6 right-6 w-16 h-16 bg-primary text-white rounded-[24px] shadow-[0_8px_30px_rgb(59,130,246,0.4)] flex items-center justify-center z-40 active:scale-90 transition-transform duration-200 border border-white/20">
+            <i class="ph ph-plus text-3xl"></i>
+        </button>
+    </main>
+
+    <!-- ================== MODALS ================== -->
+
+    <!-- 1. Public Add / Edit Video Modal -->
+    <div id="addModal" class="fixed inset-0 bg-black/70 backdrop-blur-md z-50 hidden flex items-end md:items-center justify-center md:p-4 transition-opacity duration-300">
+        <div class="bg-surface md:glass-effect w-full max-w-lg rounded-t-[32px] md:rounded-[32px] border-t md:border border-glassBorder shadow-[0_-10px_50px_rgba(0,0,0,0.5)] md:shadow-2xl overflow-hidden transform bottom-sheet-up md:scale-100 transition-transform duration-300 flex flex-col max-h-[90vh]" id="addModalContent">
+            <div class="md:hidden w-full flex justify-center pt-4 pb-1 flex-shrink-0"><div class="w-12 h-1.5 bg-gray-600 rounded-full"></div></div>
+            <div class="flex justify-between items-center p-6 md:p-8 pb-4 flex-shrink-0">
+                <h3 id="modalTitle" class="text-2xl font-bold tracking-tight">Save New Link</h3>
+                <button onclick="closeAddModal()" class="text-gray-400 hover:text-white bg-white/5 hover:bg-white/10 p-2.5 rounded-full transition-colors active:scale-90"><i class="ph ph-x text-xl"></i></button>
+            </div>
+            <!-- Scrollable Body -->
+            <div class="p-6 md:p-8 pt-0 space-y-5 overflow-y-auto hide-scroll flex-1">
+                <!-- Type Toggle -->
+                <div class="flex bg-darkBg border border-glassBorder rounded-[20px] p-1">
+                    <button id="tabSingle" onclick="switchAddMode('single')" class="flex-1 py-3 rounded-[16px] bg-primary text-white font-bold text-sm transition-all shadow-md">Single Link</button>
+                    <button id="tabSeries" onclick="switchAddMode('series')" class="flex-1 py-3 rounded-[16px] text-gray-400 hover:text-white font-bold text-sm transition-all">Series / Playlist</button>
+                </div>
+                <!-- Global Categorization -->
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-bold text-gray-400 mb-2 pl-1">Category</label>
+                        <div class="relative">
+                            <select id="videoCategoryInput" onchange="updateFolderDropdown()" class="w-full bg-darkBg border border-glassBorder rounded-[20px] py-4 px-5 focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/20 text-base appearance-none shadow-inner transition-all cursor-pointer font-medium">
+                                <option value="Education" class="bg-surface text-white">Education</option>
+                                <option value="Software" class="bg-surface text-white">Software</option>
+                                <option value="Movies" class="bg-surface text-white">Movies</option>
+                                <option value="Funny" class="bg-surface text-white">Funny</option>
+                                <option value="Music" class="bg-surface text-white">Music</option>
+                                <option value="Tech" class="bg-surface text-white">Tech</option>
+                                <option value="Vlogs" class="bg-surface text-white">Vlogs</option>
+                            </select>
+                            <i class="ph ph-caret-down absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 text-lg pointer-events-none"></i>
+                        </div>
+                    </div>
+                    <div id="folderSelectionDiv" class="hidden">
+                        <label class="block text-sm font-bold text-gray-400 mb-2 pl-1">Folder (Optional)</label>
+                        <div class="relative">
+                            <select id="videoFolderInput" class="w-full bg-darkBg border border-glassBorder rounded-[20px] py-4 px-5 focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/20 text-base appearance-none shadow-inner transition-all cursor-pointer font-medium">
+                                <option value="" class="bg-surface text-white">None (Loose)</option>
+                            </select>
+                            <i class="ph ph-caret-down absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 text-lg pointer-events-none"></i>
+                        </div>
+                    </div>
+                </div>
+                <!-- Mode: Single Inputs -->
+                <div id="singleVideoInputs" class="space-y-5 block">
+                    <div>
+                        <label class="block text-sm font-bold text-gray-400 mb-2 pl-1">Video or Web URL</label>
+                        <input type="text" id="videoUrlInput" placeholder="Paste YouTube, Instagram, or website link..." class="w-full bg-darkBg border border-glassBorder rounded-[20px] py-4 px-5 focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/20 text-base shadow-inner transition-all">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-gray-400 mb-2 pl-1">Title (Optional)</label>
+                        <input type="text" id="videoTitleInput" placeholder="Auto-generate if empty" class="w-full bg-darkBg border border-glassBorder rounded-[20px] py-4 px-5 focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/20 text-base shadow-inner transition-all">
+                    </div>
+                </div>
+                <!-- Mode: Series Inputs -->
+                <div id="seriesVideoInputs" class="space-y-5 hidden">
+                    <div>
+                        <label class="block text-sm font-bold text-gray-400 mb-2 pl-1">Series Title</label>
+                        <input type="text" id="seriesMainTitleInput" placeholder="e.g. Java Full Course Masterclass" class="w-full bg-darkBg border border-glassBorder rounded-[20px] py-4 px-5 focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/20 text-base shadow-inner transition-all">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-gray-400 mb-2 pl-1">Episodes / Parts</label>
+                        <div id="seriesEpisodesContainer" class="space-y-3 bg-darkBg border border-glassBorder rounded-[20px] p-4"></div>
+                        <button onclick="addEpisodeInputRow()" class="mt-3 w-full bg-white/5 hover:bg-white/10 border border-glassBorder py-3 rounded-[16px] text-sm font-bold transition-colors active:scale-95 flex justify-center items-center gap-2 text-gray-300">
+                            <i class="ph ph-plus"></i> Add Another Part
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="p-6 md:p-8 border-t border-glassBorder bg-darkBg/40 flex justify-end gap-4 flex-shrink-0">
+                <button onclick="closeAddModal()" class="px-6 py-4 rounded-[20px] font-bold text-gray-400 hover:text-white hover:bg-white/5 transition-all active:scale-95">Cancel</button>
+                <button id="modalSaveBtn" onclick="saveVideoData()" class="px-8 py-4 bg-primary hover:bg-blue-500 text-white rounded-[20px] font-bold transition-all active:scale-95 shadow-[0_4px_20px_rgb(59,130,246,0.3)]">Save Link</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 1.b Add / Edit Private Link Modal -->
+    <div id="privateAddModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 hidden flex items-end md:items-center justify-center md:p-4 transition-opacity duration-300">
+        <div class="bg-surface md:glass-effect w-full max-w-md rounded-t-[32px] md:rounded-[32px] border border-purple-500/30 shadow-[0_0_50px_rgba(168,85,247,0.15)] overflow-hidden transform bottom-sheet-up md:scale-100 transition-transform duration-300" id="privateAddModalContent">
+            <div class="p-6 border-b border-glassBorder flex justify-between items-center bg-purple-900/10">
+                <h3 id="privateModalTitle" class="text-xl font-bold tracking-tight text-white flex items-center gap-2"><i class="ph-duotone ph-mask-happy text-purple-400 text-2xl"></i> Save Private Link</h3>
+                <button onclick="closePrivateAddModal()" class="text-gray-400 hover:text-white transition-colors"><i class="ph ph-x text-xl"></i></button>
+            </div>
+            <div class="p-6 space-y-4">
+                <div>
+                    <label class="block text-sm font-bold text-purple-200/70 mb-2 pl-1">Name / Title</label>
+                    <input type="text" id="privateTitleInput" placeholder="e.g. Secret Drive Folder" class="w-full bg-darkBg border border-purple-500/20 rounded-[16px] py-3 px-4 focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 text-sm shadow-inner transition-all text-white">
+                </div>
+                <div>
+                    <label class="block text-sm font-bold text-purple-200/70 mb-2 pl-1">URL / Link</label>
+                    <input type="text" id="privateUrlInput" placeholder="https://..." class="w-full bg-darkBg border border-purple-500/20 rounded-[16px] py-3 px-4 focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 text-sm shadow-inner transition-all text-white">
+                </div>
+            </div>
+            <div class="p-6 pt-0 flex gap-3">
+                <button onclick="closePrivateAddModal()" class="flex-1 px-4 py-3 bg-white/5 hover:bg-white/10 rounded-[16px] font-bold text-gray-300 transition-colors active:scale-95">Cancel</button>
+                <button onclick="savePrivateData()" class="flex-1 px-4 py-3 bg-purple-600 hover:bg-purple-500 rounded-[16px] font-bold text-white transition-colors active:scale-95 shadow-[0_4px_15px_rgba(168,85,247,0.4)]">Save Securely</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Modal (Shared) -->
+    <div id="deleteConfirmModal" class="fixed inset-0 bg-black/80 backdrop-blur-xl z-[80] hidden flex items-center justify-center p-4 transition-opacity duration-300">
+        <div class="bg-surface md:glass-effect w-full max-w-sm rounded-[32px] border border-glassBorder shadow-2xl overflow-hidden transform scale-95 transition-transform duration-300" id="deleteConfirmModalContent">
+            <div class="p-6 border-b border-glassBorder flex justify-between items-center bg-red-900/20">
+                <h3 class="text-xl font-bold tracking-tight text-white flex items-center gap-2"><i class="ph-bold ph-warning-circle text-red-500"></i> Confirm Delete</h3>
+                <button onclick="closeDeleteConfirmModal()" class="text-gray-400 hover:text-white transition-colors"><i class="ph ph-x text-xl"></i></button>
+            </div>
+            <div class="p-6">
+                <p class="text-gray-300 font-medium">Are you sure you want to delete this item? This action cannot be undone.</p>
+            </div>
+            <div class="p-6 pt-0 flex gap-3">
+                <button onclick="closeDeleteConfirmModal()" class="flex-1 px-4 py-3 bg-white/5 hover:bg-white/10 rounded-[16px] font-bold text-gray-300 transition-colors active:scale-95">Cancel</button>
+                <button onclick="confirmDelete()" class="flex-1 px-4 py-3 bg-red-500 hover:bg-red-600 rounded-[16px] font-bold text-white transition-colors active:scale-95">Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Password Setup Modal -->
+    <div id="setupPasswordModal" class="fixed inset-0 bg-black/80 backdrop-blur-xl z-[80] hidden flex items-center justify-center p-4 transition-opacity duration-300">
+        <div class="bg-surface md:glass-effect w-full max-w-sm rounded-[32px] border border-purple-500/30 shadow-[0_0_50px_rgba(168,85,247,0.15)] overflow-hidden transform scale-95 transition-transform duration-300" id="setupPasswordModalContent">
+            <div class="p-8 text-center border-b border-glassBorder">
+                <div class="w-16 h-16 bg-purple-500/20 rounded-full flex items-center justify-center mx-auto mb-4 border border-purple-500/30">
+                    <i class="ph-duotone ph-lock-key text-3xl text-purple-400"></i>
+                </div>
+                <h3 class="text-xl font-bold tracking-tight text-white">Setup Private Vault</h3>
+                <p class="text-xs text-gray-400 mt-2">Create a master password to encrypt and hide your private links.</p>
+            </div>
+            <div class="p-6">
+                <input type="password" id="newPasswordInput" placeholder="Enter new password" class="w-full bg-darkBg border border-glassBorder rounded-[16px] py-3 px-4 focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 text-center font-bold tracking-[0.2em] shadow-inner transition-all text-white mb-4">
+                <button onclick="saveNewPassword()" class="w-full px-4 py-3 bg-purple-600 hover:bg-purple-500 rounded-[16px] font-bold text-white transition-colors active:scale-95 shadow-[0_4px_15px_rgba(168,85,247,0.4)]">Set Password</button>
+                <button onclick="cancelPasswordModal()" class="w-full px-4 py-3 text-gray-500 hover:text-white font-bold text-sm mt-2 transition-colors">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Password Enter Modal -->
+    <div id="enterPasswordModal" class="fixed inset-0 bg-black/80 backdrop-blur-xl z-[80] hidden flex items-center justify-center p-4 transition-opacity duration-300">
+        <div class="bg-surface md:glass-effect w-full max-w-sm rounded-[32px] border border-glassBorder shadow-2xl overflow-hidden transform scale-95 transition-transform duration-300" id="enterPasswordModalContent">
+            <div class="p-8 text-center border-b border-glassBorder">
+                <div class="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-4 border border-white/10">
+                    <i class="ph-duotone ph-mask-happy text-3xl text-white"></i>
+                </div>
+                <h3 class="text-xl font-bold tracking-tight text-white">Vault Locked</h3>
+                <p class="text-xs text-gray-400 mt-2">Enter your master password to access your private items.</p>
+            </div>
+            <div class="p-6">
+                <input type="password" id="authPasswordInput" placeholder="••••••••" class="w-full bg-darkBg border border-glassBorder rounded-[16px] py-3 px-4 focus:outline-none focus:border-white focus:ring-2 focus:ring-white/20 text-center font-bold tracking-[0.2em] shadow-inner transition-all text-white mb-4">
+                <button onclick="verifyPassword()" class="w-full px-4 py-3 bg-white text-black hover:bg-gray-200 rounded-[16px] font-bold transition-colors active:scale-95 shadow-[0_4px_15px_rgba(255,255,255,0.2)]">Unlock Vault</button>
+                <button onclick="cancelPasswordModal()" class="w-full px-4 py-3 text-gray-500 hover:text-white font-bold text-sm mt-2 transition-colors">Go Back</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create Folder Modal -->
+    <div id="folderModal" class="fixed inset-0 bg-black/70 backdrop-blur-md z-50 hidden flex items-end md:items-center justify-center md:p-4 transition-opacity duration-300">
+        <div class="bg-surface md:glass-effect w-full max-w-md rounded-t-[32px] md:rounded-[32px] border-t md:border border-glassBorder shadow-[0_-10px_50px_rgba(0,0,0,0.5)] md:shadow-2xl overflow-hidden transform bottom-sheet-up md:scale-100 transition-transform duration-300" id="folderModalContent">
+            <div class="md:hidden w-full flex justify-center pt-4 pb-1"><div class="w-12 h-1.5 bg-gray-600 rounded-full"></div></div>
+            <div class="flex justify-between items-center p-6 md:p-8 pb-4">
+                <h3 class="text-2xl font-bold tracking-tight">New Folder</h3>
+                <button onclick="closeFolderModal()" class="text-gray-400 hover:text-white bg-white/5 hover:bg-white/10 p-2.5 rounded-full transition-colors active:scale-90"><i class="ph ph-x text-xl"></i></button>
+            </div>
+            <div class="p-6 md:p-8 pt-0 space-y-5">
+                <div>
+                    <label class="block text-sm font-bold text-gray-400 mb-2 pl-1">Folder Name</label>
+                    <input type="text" id="folderNameInput" placeholder="Enter folder name..." class="w-full bg-darkBg border border-glassBorder rounded-[20px] py-4 px-5 focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/20 text-base shadow-inner transition-all">
+                </div>
+            </div>
+            <div class="p-6 md:p-8 border-t border-glassBorder bg-darkBg/40 flex justify-end gap-4">
+                <button onclick="closeFolderModal()" class="px-6 py-4 rounded-[20px] font-bold text-gray-400 hover:text-white hover:bg-white/5 transition-all active:scale-95">Cancel</button>
+                <button onclick="saveFolder()" class="px-8 py-4 bg-primary hover:bg-blue-500 text-white rounded-[20px] font-bold transition-all active:scale-95 shadow-[0_4px_20px_rgb(59,130,246,0.3)]">Create</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Data Management (Backup/Restore) Modal -->
+    <div id="dataModal" class="fixed inset-0 bg-black/80 backdrop-blur-xl z-[70] hidden flex items-center justify-center p-4 transition-opacity duration-300">
+        <div class="bg-surface md:glass-effect w-full max-w-md rounded-[32px] border border-glassBorder shadow-2xl overflow-hidden transform scale-95 transition-transform duration-300" id="dataModalContent">
+            <div class="p-6 border-b border-glassBorder flex justify-between items-center bg-darkBg/50">
+                <h3 class="text-xl font-bold tracking-tight text-white flex items-center gap-2"><i class="ph-bold ph-database text-green-400"></i> Data Center</h3>
+                <button onclick="closeDataModal()" class="text-gray-400 hover:text-white transition-colors"><i class="ph ph-x text-xl"></i></button>
+            </div>
+            <div class="p-6 space-y-6">
+                <div>
+                    <h4 class="text-sm font-bold text-gray-400 uppercase tracking-wider mb-3">Export Your Data</h4>
+                    <div class="flex gap-3">
+                        <button onclick="exportAllJSON()" class="flex-1 bg-darkBg border border-glassBorder hover:border-green-400/50 hover:bg-green-400/5 text-white py-3 px-4 rounded-[16px] font-bold transition-all active:scale-95 flex flex-col items-center gap-1 shadow-sm">
+                            <i class="ph-bold ph-braces text-2xl text-green-400"></i><span class="text-xs">Full JSON</span>
+                        </button>
+                        <button onclick="exportAllCSV()" class="flex-1 bg-darkBg border border-glassBorder hover:border-blue-400/50 hover:bg-blue-400/5 text-white py-3 px-4 rounded-[16px] font-bold transition-all active:scale-95 flex flex-col items-center gap-1 shadow-sm">
+                            <i class="ph-bold ph-microsoft-excel-logo text-2xl text-blue-400"></i><span class="text-xs">Excel (CSV)</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="border-t border-glassBorder pt-6">
+                    <h4 class="text-sm font-bold text-gray-400 uppercase tracking-wider mb-3">Import Data</h4>
+                    <div class="bg-red-900/10 border border-red-500/20 rounded-[16px] p-4 text-center">
+                        <p class="text-xs text-red-300 font-medium mb-3">Warning: Importing a JSON backup will overwrite your current library and folders.</p>
+                        <input type="file" id="importJsonInput" accept=".json" class="hidden" onchange="importJSON(event)">
+                        <button onclick="document.getElementById('importJsonInput').click()" class="w-full bg-red-500/20 hover:bg-red-500/30 text-red-300 border border-red-500/30 py-3 rounded-[12px] font-bold transition-colors flex justify-center items-center gap-2">
+                            <i class="ph-bold ph-upload-simple"></i> Select JSON File
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 4. Video Player Modal (Upgraded for Series Layout & External Fallback) -->
+    <div id="playerModal" class="fixed inset-0 bg-black/95 backdrop-blur-2xl z-[60] hidden flex-col transition-opacity">
+        <div class="p-4 md:p-8 flex justify-between items-center z-50 bg-gradient-to-b from-black/80 to-transparent absolute top-0 w-full h-24 pointer-events-none">
+            <h3 id="playerTitle" class="text-xl md:text-2xl font-bold tracking-tight truncate pr-4 drop-shadow-md pl-2 md:pl-4 pointer-events-auto">Playing Video</h3>
+            <div class="flex items-center gap-3 pointer-events-auto">
+                <a id="playerExternalLink" href="#" target="_blank" class="text-white hover:text-primary transition-all active:scale-90 bg-white/10 hover:bg-white/20 p-3 rounded-full backdrop-blur-md border border-white/10 flex-shrink-0" title="Open Externally (Fix for restricted videos)">
+                    <i class="ph ph-arrow-square-out text-2xl"></i>
+                </a>
+                <button onclick="closePlayerModal()" class="text-white hover:text-red-400 transition-all active:scale-90 bg-white/10 hover:bg-white/20 p-3 rounded-full backdrop-blur-md border border-white/10 flex-shrink-0">
+                    <i class="ph ph-x text-2xl"></i>
+                </button>
+            </div>
+        </div>
+        
+        <!-- Player Content Layout -->
+        <div class="flex-1 w-full h-full flex flex-col md:flex-row p-0 md:p-8 pt-20 md:pt-24 gap-4 md:gap-6 overflow-hidden max-w-[1600px] mx-auto relative z-10">
+            <!-- Main Video -->
+            <div class="w-full aspect-video md:aspect-auto md:h-full md:flex-1 bg-black md:rounded-[32px] overflow-hidden shadow-[0_0_80px_rgba(0,0,0,0.8)] border-b md:border border-white/10 relative flex-shrink-0" id="iframeContainer">
+                <!-- Iframe injected here -->
+            </div>
+            
+            <!-- Series Sidebar (Hidden for Single Videos) -->
+            <div id="seriesSidebar" class="hidden flex-1 w-full md:w-80 lg:w-[400px] md:flex-none md:h-full bg-surface md:rounded-[32px] border-t md:border border-glassBorder flex-col overflow-hidden">
+                <div class="p-4 md:p-5 border-b border-glassBorder bg-darkBg/50 flex items-center justify-between flex-shrink-0">
+                    <h4 class="font-bold text-base md:text-lg text-white flex items-center gap-2"><i class="ph-fill ph-list-numbers text-primary"></i> Course Episodes</h4>
+                    <span id="seriesCountBadge" class="text-xs font-bold text-gray-400 bg-white/5 px-3 py-1 rounded-full">0 Parts</span>
+                </div>
+                <div id="seriesEpisodesList" class="flex-1 overflow-y-auto hide-scroll flex flex-col pb-6 md:pb-0">
+                    <!-- Episodes injected here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom Toast Container -->
+    <div id="toastContainer" class="fixed bottom-6 right-6 md:bottom-10 md:right-10 z-[70] flex flex-col gap-4 pointer-events-none"></div>
+
+    <script>
+        // --- State Management ---
+        const LOCAL_STORAGE_KEY = 'myvideohub_local_data_v5'; 
+        
+        const categories = [
+            { id: 'All', icon: 'ph-squares-four' },
+            { id: 'Education', icon: 'ph-student' },
+            { id: 'Software', icon: 'ph-app-window' },
+            { id: 'Movies', icon: 'ph-film-strip' },
+            { id: 'Funny', icon: 'ph-smiley' },
+            { id: 'Music', icon: 'ph-music-notes' },
+            { id: 'Tech', icon: 'ph-cpu' },
+            { id: 'Vlogs', icon: 'ph-video-camera' },
+            { id: 'Private', icon: 'ph-mask-happy' }
+        ];
+
+        let currentCategory = 'All';
+        let previousCategory = 'All'; 
+        let searchQuery = '';
+        let currentFolderId = null; 
+        
+        let folders = [];
+        let savedTemplates = [];
+        let videos = [];
+        let privateLinks = [];
+        let privatePassword = null;
+        let isPrivateUnlocked = false; 
+        
+        let studyPlan = null; 
+        let activeScheduleData = null;
+
+        // Editing & Deleting State
+        let editingVideoId = null;
+        let itemToDeleteId = null;
+        let itemToDeleteType = null; 
+        let addMode = 'single'; 
+
+        // --- DOM Elements ---
+        const desktopNav = document.getElementById('desktop-nav');
+        const mobileNav = document.getElementById('mobile-nav');
+        const videoGrid = document.getElementById('videoGrid');
+        const emptyState = document.getElementById('emptyState');
+        const gridTitleHeader = document.getElementById('gridTitleHeader');
+        const searchInput = document.getElementById('searchInput');
+        const mobileSearchInput = document.getElementById('mobileSearchInput');
+        const categoryInput = document.getElementById('videoCategoryInput');
+
+        // --- Initialization & Local Storage Sync ---
+        function init() {
+            renderNavigation();
+            
+            searchInput.addEventListener('input', (e) => { searchQuery = e.target.value.toLowerCase(); mobileSearchInput.value = e.target.value; renderMainContent(); });
+            mobileSearchInput.addEventListener('input', (e) => { searchQuery = e.target.value.toLowerCase(); searchInput.value = e.target.value; renderMainContent(); });
+
+            loadLocalData();
+        }
+
+        function loadLocalData() {
+            const savedData = localStorage.getItem(LOCAL_STORAGE_KEY);
+            if (savedData) {
+                try {
+                    const parsed = JSON.parse(savedData);
+                    videos = parsed.videos || [];
+                    folders = parsed.folders || [];
+                    savedTemplates = parsed.templates || [];
+                    privateLinks = parsed.privateLinks || [];
+                    privatePassword = parsed.privatePassword || null;
+                } catch(e) {
+                    console.error("Local Storage parsing error:", e);
+                    initDefaultData();
+                }
+            } else {
+                initDefaultData();
+            }
+            if(window.updateFolderDropdown) window.updateFolderDropdown();
+            renderMainContent();
+        }
+
+        function saveLocalData() {
+            const dataToSave = { videos, folders, templates: savedTemplates, privateLinks, privatePassword };
+            localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(dataToSave));
+        }
+
+        function initDefaultData() {
+            folders = [
+                { id: 'f_edu1', name: 'Web Development', category: 'Education' },
+                { id: 'f_edu2', name: 'Computer Science', category: 'Education' },
+                { id: 'f_edu3', name: 'Agriculture & Nature', category: 'Education' },
+                { id: 'f_edu4', name: 'Medical & Health', category: 'Education' },
+                { id: 'f_edu5', name: 'Military & Defense', category: 'Education' },
+                { id: 'f_soft1', name: 'Creative (Adobe)', category: 'Software' },
+                { id: 'f_soft2', name: 'Development Tools', category: 'Software' },
+                { id: 'f_soft3', name: 'Utilities (ZIP, etc)', category: 'Software' },
+                { id: 'f_mov1', name: 'Sci-Fi Masterpieces', category: 'Movies' },
+                { id: 'f_mov2', name: 'Short Films', category: 'Movies' },
+                { id: 'f_fun1', name: 'Internet Classics', category: 'Funny' },
+                { id: 'f_mus1', name: 'Electronic Hits', category: 'Music' },
+                { id: 'f_mus2', name: 'Lofi & Chill', category: 'Music' },
+                { id: 'f_tech1', name: 'AI & Future', category: 'Tech' },
+                { id: 'f_tech2', name: 'Gadget Reviews', category: 'Tech' },
+                { id: 'f_vlog1', name: 'Cinematic Vlogs', category: 'Vlogs' }
+            ];
+
+            videos = [
+                {
+                    id: 'v_edu1', type: 'series', title: 'Web Development Bootcamp Series',
+                    url: 'https://www.youtube.com/watch?v=1Rs2ND1ryYc', embedUrl: 'https://www.youtube.com/embed/1Rs2ND1ryYc?autoplay=1',
+                    thumbnail: 'https://img.youtube.com/vi/1Rs2ND1ryYc/hqdefault.jpg', category: 'Education', folderId: 'f_edu1', platform: 'youtube', dateAdded: Date.now(),
+                    episodes: [
+                        { title: 'CSS Tutorial - Zero to Hero', url: 'https://www.youtube.com/watch?v=1Rs2ND1ryYc', embedUrl: 'https://www.youtube.com/embed/1Rs2ND1ryYc?autoplay=1', thumbnail: 'https://img.youtube.com/vi/1Rs2ND1ryYc/hqdefault.jpg' },
+                        { title: 'React Tutorial for Beginners', url: 'https://www.youtube.com/watch?v=SqcY0GlETPk', embedUrl: 'https://www.youtube.com/embed/SqcY0GlETPk?autoplay=1', thumbnail: 'https://img.youtube.com/vi/SqcY0GlETPk/hqdefault.jpg' }
+                    ]
+                },
+                { id: 'v_edu2', type: 'single', title: 'Harvard CS50 2023 - Lecture 0 - Scratch', url: 'https://www.youtube.com/watch?v=h2qNW2R84oE', embedUrl: 'https://www.youtube.com/embed/h2qNW2R84oE?autoplay=1', thumbnail: 'https://img.youtube.com/vi/h2qNW2R84oE/hqdefault.jpg', category: 'Education', folderId: 'f_edu2', platform: 'youtube', dateAdded: Date.now() - 10000 },
+                { id: 'v_edu3', type: 'single', title: 'Modern Agriculture Technology', url: 'https://www.youtube.com/watch?v=xZ-NqZ9f-v0', embedUrl: 'https://www.youtube.com/embed/xZ-NqZ9f-v0?autoplay=1', thumbnail: 'https://img.youtube.com/vi/xZ-NqZ9f-v0/hqdefault.jpg', category: 'Education', folderId: 'f_edu3', platform: 'youtube', dateAdded: Date.now() - 20000 },
+                { id: 'v_edu4', type: 'single', title: 'Basic First Aid Training', url: 'https://www.youtube.com/watch?v=dz1E7bZz0zE', embedUrl: 'https://www.youtube.com/embed/dz1E7bZz0zE?autoplay=1', thumbnail: 'https://img.youtube.com/vi/dz1E7bZz0zE/hqdefault.jpg', category: 'Education', folderId: 'f_edu4', platform: 'youtube', dateAdded: Date.now() - 30000 },
+                { id: 'v_edu5', type: 'single', title: 'History of the US Army', url: 'https://www.youtube.com/watch?v=LqAHz4uP_nQ', embedUrl: 'https://www.youtube.com/embed/LqAHz4uP_nQ?autoplay=1', thumbnail: 'https://img.youtube.com/vi/LqAHz4uP_nQ/hqdefault.jpg', category: 'Education', folderId: 'f_edu5', platform: 'youtube', dateAdded: Date.now() - 40000 },
+                { id: 'v_soft1', type: 'single', title: 'Adobe Creative Cloud', url: 'https://www.adobe.com/creativecloud.html', embedUrl: 'https://www.adobe.com/creativecloud.html', thumbnail: 'https://images.unsplash.com/photo-1626785774573-4b799315345d?q=80&w=800&auto=format&fit=crop', category: 'Software', folderId: 'f_soft1', platform: 'link', dateAdded: Date.now() - 50000 },
+                { id: 'v_soft2', type: 'single', title: 'Download VS Code', url: 'https://code.visualstudio.com/Download', embedUrl: 'https://code.visualstudio.com/Download', thumbnail: 'https://images.unsplash.com/photo-1542831371-29b0f74f9713?q=80&w=800&auto=format&fit=crop', category: 'Software', folderId: 'f_soft2', platform: 'link', dateAdded: Date.now() - 60000 },
+                { id: 'v_soft3', type: 'single', title: 'Download Python', url: 'https://www.python.org/downloads/', embedUrl: 'https://www.python.org/downloads/', thumbnail: 'https://images.unsplash.com/photo-1526379095098-d400fd0bfce8?q=80&w=800&auto=format&fit=crop', category: 'Software', folderId: 'f_soft2', platform: 'link', dateAdded: Date.now() - 70000 },
+                { id: 'v_soft4', type: 'single', title: 'Java JDK Downloads', url: 'https://www.oracle.com/java/technologies/downloads/', embedUrl: 'https://www.oracle.com/java/technologies/downloads/', thumbnail: 'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?q=80&w=800&auto=format&fit=crop', category: 'Software', folderId: 'f_soft2', platform: 'link', dateAdded: Date.now() - 80000 },
+                { id: 'v_soft5', type: 'single', title: '7-Zip Download', url: 'https://www.7-zip.org/', embedUrl: 'https://www.7-zip.org/', thumbnail: 'https://images.unsplash.com/photo-1587202372634-32705e3bf49c?q=80&w=800&auto=format&fit=crop', category: 'Software', folderId: 'f_soft3', platform: 'link', dateAdded: Date.now() - 90000 },
+                { id: 'v_mov1', type: 'single', title: 'DUNE - Official Trailer', url: 'https://www.youtube.com/watch?v=n9xhKvBWxl4', embedUrl: 'https://www.youtube.com/embed/n9xhKvBWxl4?autoplay=1', thumbnail: 'https://img.youtube.com/vi/n9xhKvBWxl4/maxresdefault.jpg', category: 'Movies', folderId: 'f_mov1', platform: 'youtube', dateAdded: Date.now() - 100000 },
+                { id: 'v_mov2', type: 'single', title: 'Big Buck Bunny 60fps 4K', url: 'https://www.youtube.com/watch?v=aqz-KE-bpKQ', embedUrl: 'https://www.youtube.com/embed/aqz-KE-bpKQ?autoplay=1', thumbnail: 'https://img.youtube.com/vi/aqz-KE-bpKQ/maxresdefault.jpg', category: 'Movies', folderId: 'f_mov2', platform: 'youtube', dateAdded: Date.now() - 110000 },
+                { id: 'v_fun1', type: 'single', title: 'Crazy Frog - Axel F', url: 'https://www.youtube.com/watch?v=k85mRPqvMbE', embedUrl: 'https://www.youtube.com/embed/k85mRPqvMbE?autoplay=1', thumbnail: 'https://img.youtube.com/vi/k85mRPqvMbE/maxresdefault.jpg', category: 'Funny', folderId: 'f_fun1', platform: 'youtube', dateAdded: Date.now() - 120000 },
+                { id: 'v_fun2', type: 'single', title: 'Mr. Bean - At the Hospital', url: 'https://www.youtube.com/watch?v=KzE1o1YyvD0', embedUrl: 'https://www.youtube.com/embed/KzE1o1YyvD0?autoplay=1', thumbnail: 'https://img.youtube.com/vi/KzE1o1YyvD0/maxresdefault.jpg', category: 'Funny', folderId: 'f_fun1', platform: 'youtube', dateAdded: Date.now() - 130000 },
+                { id: 'v_fun3', type: 'single', title: 'Charlie bit my finger - again !', url: 'https://www.youtube.com/watch?v=_OBlgSz8sSM', embedUrl: 'https://www.youtube.com/embed/_OBlgSz8sSM?autoplay=1', thumbnail: 'https://img.youtube.com/vi/_OBlgSz8sSM/hqdefault.jpg', category: 'Funny', folderId: 'f_fun1', platform: 'youtube', dateAdded: Date.now() - 140000 },
+                { id: 'v_mus1', type: 'single', title: 'Alan Walker - Faded', url: 'https://www.youtube.com/watch?v=60ItHLz5WEA', embedUrl: 'https://www.youtube.com/embed/60ItHLz5WEA?autoplay=1', thumbnail: 'https://img.youtube.com/vi/60ItHLz5WEA/maxresdefault.jpg', category: 'Music', folderId: 'f_mus1', platform: 'youtube', dateAdded: Date.now() - 150000 },
+                { id: 'v_mus2', type: 'single', title: 'Rick Astley - Never Gonna Give You Up', url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', embedUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=1', thumbnail: 'https://img.youtube.com/vi/dQw4w9WgXcQ/hqdefault.jpg', category: 'Music', folderId: null, platform: 'youtube', dateAdded: Date.now() - 160000 },
+                { id: 'v_mus3', type: 'single', title: 'Lofi Hip Hop Radio - Relax/Study', url: 'https://www.youtube.com/watch?v=jfKfPfyJRdk', embedUrl: 'https://www.youtube.com/embed/jfKfPfyJRdk?autoplay=1', thumbnail: 'https://img.youtube.com/vi/jfKfPfyJRdk/maxresdefault.jpg', category: 'Music', folderId: 'f_mus2', platform: 'youtube', dateAdded: Date.now() - 170000 },
+                { id: 'v_tech1', type: 'single', title: 'OpenAI GPT-4o Update Explained!', url: 'https://www.youtube.com/watch?v=DjdOEzXN6bU', embedUrl: 'https://www.youtube.com/embed/DjdOEzXN6bU?autoplay=1', thumbnail: 'https://img.youtube.com/vi/DjdOEzXN6bU/maxresdefault.jpg', category: 'Tech', folderId: 'f_tech1', platform: 'youtube', dateAdded: Date.now() - 180000 },
+                { id: 'v_tech2', type: 'single', title: 'MKBHD - Smartphone Awards 2023!', url: 'https://www.youtube.com/watch?v=8I1rL50pLqE', embedUrl: 'https://www.youtube.com/embed/8I1rL50pLqE?autoplay=1', thumbnail: 'https://img.youtube.com/vi/8I1rL50pLqE/maxresdefault.jpg', category: 'Tech', folderId: 'f_tech2', platform: 'youtube', dateAdded: Date.now() - 190000 },
+                { id: 'v_vlog1', type: 'single', title: 'Casey Neistat - Do What You Can\'t', url: 'https://www.youtube.com/watch?v=jG7dSXcfVqE', embedUrl: 'https://www.youtube.com/embed/jG7dSXcfVqE?autoplay=1', thumbnail: 'https://img.youtube.com/vi/jG7dSXcfVqE/maxresdefault.jpg', category: 'Vlogs', folderId: 'f_vlog1', platform: 'youtube', dateAdded: Date.now() - 200000 }
+            ];
+            savedTemplates = [];
+            privateLinks = [];
+            privatePassword = null;
+            saveLocalData();
+        }
+
+        // --- Rendering Logic ---
+        function renderNavigation() {
+            desktopNav.innerHTML = '';
+            mobileNav.innerHTML = '';
+
+            categories.forEach(cat => {
+                const isActive = currentCategory === cat.id;
+                const isPrivate = cat.id === 'Private';
+                const styleClasses = isActive 
+                    ? (isPrivate ? 'bg-purple-600/20 border-purple-500/50 text-purple-400' : 'bg-primary text-white shadow-[0_4px_20px_rgb(59,130,246,0.3)]')
+                    : (isPrivate ? 'text-purple-400/50 hover:bg-purple-500/10' : 'text-gray-400 hover:bg-white/5 hover:text-gray-100');
+                
+                const mobileStyleClasses = isActive
+                    ? (isPrivate ? 'bg-purple-600 border-purple-500 text-white' : 'bg-primary border-primary text-white')
+                    : (isPrivate ? 'bg-surface border-purple-500/30 text-purple-300 hover:bg-purple-500/20' : 'bg-surface border-glassBorder text-gray-300 hover:bg-white/10');
+
+                const desktopItem = document.createElement('button');
+                desktopItem.className = `w-full flex items-center gap-4 px-5 py-4 rounded-[24px] transition-all duration-300 text-left font-bold active:scale-[0.97] border border-transparent ${styleClasses}`;
+                desktopItem.onclick = () => window.setCategory(cat.id);
+                desktopItem.innerHTML = `<i class="ph ${cat.icon} text-2xl ${isActive ? 'drop-shadow text-white' : ''}"></i> ${cat.id}`;
+                desktopNav.appendChild(desktopItem);
+
+                const mobileItem = document.createElement('button');
+                mobileItem.className = `whitespace-nowrap px-6 py-3.5 rounded-full text-sm font-bold transition-all active:scale-90 border ${mobileStyleClasses}`;
+                mobileItem.onclick = () => window.setCategory(cat.id);
+                mobileItem.innerText = cat.id;
+                mobileNav.appendChild(mobileItem);
+            });
+        }
+
+        window.setCategory = function(category) {
+            // Private Vault Authentication Intercept
+            if (category === 'Private' && !isPrivateUnlocked) {
+                previousCategory = currentCategory;
+                if (!privatePassword) {
+                    document.getElementById('setupPasswordModal').classList.remove('hidden');
+                    setTimeout(() => document.getElementById('setupPasswordModalContent').classList.remove('scale-95'), 10);
+                    document.getElementById('newPasswordInput').focus();
+                } else {
+                    document.getElementById('enterPasswordModal').classList.remove('hidden');
+                    setTimeout(() => document.getElementById('enterPasswordModalContent').classList.remove('scale-95'), 10);
+                    document.getElementById('authPasswordInput').focus();
+                }
+                return; // Do not switch tab yet
+            }
+
+            // Auto-lock vault when navigating away
+            if (currentCategory === 'Private' && category !== 'Private') {
+                isPrivateUnlocked = false;
+                showToast("Vault Locked automatically.", "info");
+            }
+
+            currentCategory = category;
+            currentFolderId = null;
+            renderNavigation();
+            renderMainContent();
+            if(window.updateFolderDropdown) window.updateFolderDropdown();
+        }
+
+        window.goBack = function() {
+            currentFolderId = null;
+            renderNavigation();
+            renderMainContent();
+            if(window.updateFolderDropdown) window.updateFolderDropdown();
+        }
+
+        function renderMainContent() {
+            if (currentCategory === 'Private') {
+                renderPrivateLinks();
+            } else {
+                renderPublicVideos();
+            }
+        }
+
+        // --- Private Vault Logic ---
+        function saveNewPassword() {
+            const pw = document.getElementById('newPasswordInput').value.trim();
+            if (pw.length < 4) return showToast("Password must be at least 4 characters", "error");
+            privatePassword = pw;
+            saveLocalData();
+            isPrivateUnlocked = true;
+            document.getElementById('setupPasswordModalContent').classList.add('scale-95');
+            setTimeout(() => document.getElementById('setupPasswordModal').classList.add('hidden'), 300);
+            document.getElementById('newPasswordInput').value = '';
+            showToast("Private Vault secured!", "success");
+            window.setCategory('Private');
+        }
+
+        function verifyPassword() {
+            const input = document.getElementById('authPasswordInput').value;
+            if (input === privatePassword) {
+                isPrivateUnlocked = true;
+                document.getElementById('enterPasswordModalContent').classList.add('scale-95');
+                setTimeout(() => document.getElementById('enterPasswordModal').classList.add('hidden'), 300);
+                document.getElementById('authPasswordInput').value = '';
+                showToast("Vault Unlocked", "success");
+                window.setCategory('Private');
+            } else {
+                showToast("Incorrect Password", "error");
+            }
+        }
+
+        function cancelPasswordModal() {
+            document.getElementById('setupPasswordModalContent').classList.add('scale-95');
+            document.getElementById('enterPasswordModalContent').classList.add('scale-95');
+            setTimeout(() => {
+                document.getElementById('setupPasswordModal').classList.add('hidden');
+                document.getElementById('enterPasswordModal').classList.add('hidden');
+            }, 300);
+            currentCategory = previousCategory;
+            renderNavigation();
+        }
+
+        window.lockPrivateVault = function() {
+            isPrivateUnlocked = false;
+            showToast("Vault Locked securely.", "info");
+            window.setCategory('All');
+        }
+
+        function renderPrivateLinks() {
+            videoGrid.innerHTML = '';
+            gridTitleHeader.classList.remove('hidden');
+            
+            const filtered = privateLinks.filter(l => l.title.toLowerCase().includes(searchQuery) || l.url.toLowerCase().includes(searchQuery));
+            filtered.sort((a,b) => b.dateAdded - a.dateAdded);
+            
+            // Re-establish private header securely
+            gridTitleHeader.innerHTML = `
+                <div class="flex items-center gap-3">
+                    <button id="backButton" onclick="goBack()" class="hidden p-2 md:p-2.5 bg-surface border border-glassBorder rounded-full hover:bg-white/10 transition-colors active:scale-95 shadow-md flex-shrink-0">
+                        <i class="ph-bold ph-arrow-left text-xl text-white"></i>
+                    </button>
+                    <div class="bg-purple-500/20 p-2.5 rounded-2xl border border-purple-500/30 shadow-[0_0_15px_rgba(168,85,247,0.2)]">
+                        <i class="ph-duotone ph-mask-happy text-2xl text-purple-400"></i>
+                    </div>
+                    <h2 id="currentCategoryTitle" class="text-2xl md:text-3xl font-bold tracking-tight text-white">Private Vault</h2>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span id="videoCount" class="text-gray-400 font-semibold bg-surface px-4 py-1.5 rounded-full border border-glassBorder shadow-sm hidden md:block">${filtered.length} securely saved</span>
+                    <button onclick="lockPrivateVault()" class="text-red-400 font-bold bg-red-500/10 hover:bg-red-500/20 px-4 py-1.5 rounded-full border border-red-500/20 shadow-sm flex items-center gap-2 transition-colors active:scale-95">
+                        <i class="ph-bold ph-lock-key"></i> Lock
+                    </button>
+                </div>
+            `;
+
+            if (filtered.length === 0 && !searchQuery) {
+                document.getElementById('emptyStateTitle').innerText = "Vault is empty";
+                document.getElementById('emptyStateDesc').innerText = "Add your secret links, drive folders, or personal sites here. They are encrypted and hidden from the main feed.";
+                document.getElementById('emptyStateBtn').className = "mt-6 bg-purple-500/20 hover:bg-purple-500/30 text-purple-400 border border-purple-500/30 px-6 py-3 rounded-full font-bold transition-colors active:scale-95 flex items-center gap-2 shadow-sm";
+                document.getElementById('emptyStateBtn').innerHTML = `<i class="ph-bold ph-plus"></i> Add Private Link`;
+                videoGrid.classList.add('hidden');
+                emptyState.classList.remove('hidden');
+            } else {
+                emptyState.classList.add('hidden');
+                videoGrid.classList.remove('hidden');
+                
+                // Add Private Link Card directly to Grid
+                const addCard = document.createElement('div');
+                addCard.className = 'bg-surface/20 border-2 border-dashed border-glassBorder rounded-[24px] flex flex-col items-center justify-center min-h-[180px] cursor-pointer hover:border-purple-500/50 hover:bg-purple-500/5 transition-all duration-300 group shadow-sm hover:shadow-lg active:scale-95';
+                addCard.onclick = () => window.openAddModal();
+                addCard.innerHTML = `
+                    <div class="bg-darkBg border border-glassBorder p-3 rounded-full mb-3 group-hover:scale-110 group-hover:border-purple-500/50 transition-all duration-300 shadow-md">
+                        <i class="ph-bold ph-plus text-xl text-purple-400"></i>
+                    </div>
+                    <h3 class="font-bold text-gray-200 text-sm group-hover:text-purple-400 transition-colors">Add Private Link</h3>
+                `;
+                videoGrid.appendChild(addCard);
+                
+                filtered.forEach(link => {
+                    const card = document.createElement('div');
+                    card.className = 'bg-surface border border-purple-500/20 rounded-[24px] p-5 flex flex-col gap-4 shadow-lg hover:border-purple-500/50 hover:-translate-y-1 transition-all duration-300';
+                    card.innerHTML = `
+                        <div class="flex justify-between items-start gap-3">
+                            <h3 class="text-white font-bold text-lg leading-snug break-words flex-1">${link.title}</h3>
+                            <div class="bg-purple-500/20 p-2 rounded-xl text-purple-400 flex-shrink-0 border border-purple-500/30"><i class="ph-bold ph-link text-lg"></i></div>
+                        </div>
+                        <div class="text-gray-400 text-xs font-mono truncate bg-darkBg px-3 py-2.5 rounded-[12px] border border-glassBorder select-all cursor-text">${link.url}</div>
+                        <div class="flex justify-between items-center mt-auto pt-4 border-t border-glassBorder">
+                            <button onclick="window.open('${link.url}', '_blank')" class="text-purple-400 text-sm font-bold flex items-center gap-1.5 hover:text-purple-300 transition-colors bg-purple-500/10 px-3 py-1.5 rounded-lg active:scale-95">
+                                <i class="ph-bold ph-arrow-square-out"></i> Open Site
+                            </button>
+                            <div class="flex gap-1">
+                                <button onclick="copyToClipboard('${link.url}')" class="text-gray-500 hover:text-green-400 p-2 rounded-full hover:bg-white/5 transition-colors active:scale-90" title="Copy"><i class="ph-bold ph-copy text-lg"></i></button>
+                                <button onclick="openPrivateEditModal('${link.id}')" class="text-gray-500 hover:text-blue-400 p-2 rounded-full hover:bg-white/5 transition-colors active:scale-90" title="Edit"><i class="ph-bold ph-pencil-simple text-lg"></i></button>
+                                <button onclick="requestDelete('${link.id}', 'private')" class="text-gray-500 hover:text-red-400 p-2 rounded-full hover:bg-white/5 transition-colors active:scale-90" title="Delete"><i class="ph-bold ph-trash text-lg"></i></button>
+                            </div>
+                        </div>
+                    `;
+                    videoGrid.appendChild(card);
+                });
+            }
+        }
+
+        // --- Core Public Logic ---
+        function renderPublicVideos() {
+            videoGrid.innerHTML = '';
+            
+            // Restore default public header layout to prevent rendering bugs when switching from Private
+            gridTitleHeader.innerHTML = `
+                <div class="flex items-center gap-3">
+                    <button id="backButton" onclick="goBack()" class="hidden p-2 md:p-2.5 bg-surface border border-glassBorder rounded-full hover:bg-white/10 transition-colors active:scale-95 shadow-md flex-shrink-0">
+                        <i class="ph-bold ph-arrow-left text-xl text-white"></i>
+                    </button>
+                    <h2 id="currentCategoryTitle" class="text-2xl md:text-3xl font-bold tracking-tight">All Videos</h2>
+                </div>
+                <span id="videoCount" class="text-gray-400 font-semibold bg-surface px-4 py-1.5 rounded-full border border-glassBorder shadow-sm">0 items</span>
+            `;
+            
+            const isRootEducation = currentCategory === 'Education' && currentFolderId === null && !searchQuery;
+            const isHome = currentCategory === 'All' && !searchQuery;
+            
+            if (isHome || isRootEducation) {
+                gridTitleHeader.classList.add('hidden'); 
+            } else {
+                gridTitleHeader.classList.remove('hidden');
+                document.getElementById('currentCategoryTitle').innerText = currentFolderId ? folders.find(f=>f.id===currentFolderId)?.name || 'Folder' : `${currentCategory} Videos`;
+                const backBtn = document.getElementById('backButton');
+                if (currentFolderId) backBtn.classList.remove('hidden');
+                else backBtn.classList.add('hidden');
+            }
+
+            let filtered = videos.filter(v => {
+                if (currentCategory === 'All' && v.category === 'Software') return false;
+                const matchesCategory = currentCategory === 'All' || v.category === currentCategory;
+                const matchesSearch = v.title.toLowerCase().includes(searchQuery) || v.category.toLowerCase().includes(searchQuery);
+                const matchesFolder = !currentFolderId || v.folderId === currentFolderId; 
+                return matchesCategory && matchesSearch && matchesFolder;
+            });
+
+            filtered.sort((a, b) => b.dateAdded - a.dateAdded);
+            document.getElementById('videoCount').innerText = `${filtered.length} items`;
+
+            if (isHome && filtered.length > 0) {
+                const homeHeader = document.createElement('div');
+                homeHeader.className = 'col-span-full w-full mb-2 flex flex-col gap-6';
+                const featured = filtered[0]; 
+                const seriesBadgeHTML = featured.type === 'series' ? `<span class="bg-purple-500 text-white px-3.5 py-1.5 rounded-full text-xs font-bold shadow-sm flex items-center gap-1.5"><i class="ph-bold ph-list-numbers"></i> Course Series (${featured.episodes.length} Parts)</span>` : '';
+                homeHeader.innerHTML = `<div class="bg-gradient-to-r from-indigo-900/60 to-purple-900/40 border border-indigo-500/30 rounded-[24px] p-5 md:p-6 flex flex-col md:flex-row items-start md:items-center justify-between shadow-lg gap-4 relative overflow-hidden"><div class="absolute -right-10 -top-10 w-32 h-32 bg-indigo-500/20 blur-[40px] rounded-full pointer-events-none"></div><div class="flex items-center gap-4 z-10"><div class="bg-indigo-500/20 p-3.5 rounded-[16px] border border-indigo-500/30"><i class="ph-duotone ph-calendar-star text-3xl text-indigo-400"></i></div><div><h3 class="text-white font-bold text-lg md:text-xl tracking-tight">Supercharge Your Learning!</h3><p class="text-indigo-200 text-sm md:text-base font-medium">Use the new <span class="text-white font-bold">Study Planner</span> to schedule your educational videos efficiently.</p></div></div><button onclick="setCategory('Education')" class="z-10 bg-indigo-500 hover:bg-indigo-400 text-white px-6 py-3 rounded-[16px] font-bold text-sm transition-all shadow-[0_4px_15px_rgba(99,102,241,0.4)] active:scale-95 flex-shrink-0 flex items-center gap-2">Try Planner <i class="ph-bold ph-arrow-right"></i></button></div><div class="relative rounded-[32px] overflow-hidden aspect-[16/9] md:aspect-[21/8] group cursor-pointer border border-glassBorder shadow-2xl mt-2" onclick="playVideo('${featured.id}')"><img src="${featured.thumbnail}" class="absolute inset-0 w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-[10s] ease-out"><div class="absolute inset-0 bg-gradient-to-t from-darkBg via-darkBg/60 to-transparent opacity-90"></div><div class="absolute inset-0 bg-gradient-to-r from-darkBg via-darkBg/40 to-transparent"></div><div class="absolute bottom-0 left-0 p-6 md:p-12 w-full md:w-3/4 z-10 flex flex-col justify-end h-full"><div class="flex gap-2 mb-4 translate-y-2 group-hover:translate-y-0 transition-transform duration-500"><span class="bg-primary/20 text-primary border border-primary/30 px-3.5 py-1.5 rounded-full text-xs font-bold backdrop-blur-md flex items-center gap-1.5 shadow-sm"><i class="ph-fill ph-fire"></i> Featured</span><span class="bg-white/10 text-white border border-white/10 px-3.5 py-1.5 rounded-full text-xs font-bold backdrop-blur-md shadow-sm">${featured.category}</span>${seriesBadgeHTML}</div><h1 class="text-3xl md:text-5xl lg:text-6xl font-extrabold text-white mb-4 md:mb-6 leading-tight drop-shadow-2xl translate-y-2 group-hover:translate-y-0 transition-transform duration-500 delay-75">${featured.title}</h1><div class="flex items-center gap-4 translate-y-2 group-hover:translate-y-0 transition-transform duration-500 delay-100"><button class="bg-white hover:bg-gray-200 text-black px-8 py-3.5 rounded-[20px] font-bold transition-all flex items-center gap-2 shadow-[0_0_30px_rgba(255,255,255,0.4)] active:scale-95 text-lg"><i class="ph-fill ph-play text-2xl"></i> ${featured.type === 'series' ? 'Watch Course' : 'Watch Now'}</button></div></div></div><h3 class="text-2xl font-bold tracking-tight text-white mt-4 px-2">Recently Added</h3>`;
+                videoGrid.appendChild(homeHeader);
+                filtered = filtered.slice(1);
+            }
+
+            if (isRootEducation) {
+                const headerDiv = document.createElement('div');
+                headerDiv.className = 'col-span-full w-full mb-6 flex flex-col gap-6';
+                let plannerHTML = `<div class="bg-gradient-to-br from-blue-900/40 to-surface border border-primary/30 rounded-[32px] p-6 md:p-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-6 shadow-[0_10px_40px_rgba(59,130,246,0.15)] relative overflow-hidden group"><div class="absolute -right-10 -top-10 w-40 h-40 bg-primary/20 blur-[50px] rounded-full pointer-events-none"></div><div class="flex-1 z-10"><h3 class="text-2xl font-bold tracking-tight flex items-center gap-3 mb-2"><i class="ph-duotone ph-calendar-check text-primary text-3xl"></i> Study Planner</h3><p class="text-gray-400 font-medium text-sm md:text-base mb-5 max-w-xl">${studyPlan ? 'Your active learning schedule.' : 'Plan your skill-learning schedule.'}</p></div><button onclick="openPlannerModal()" class="z-10 bg-white text-black hover:bg-gray-200 font-bold py-3.5 px-6 rounded-[20px] transition-all duration-300 shadow-[0_4px_20px_rgba(255,255,255,0.2)] active:scale-95 flex-shrink-0">${studyPlan ? 'Edit Schedule' : 'Create Schedule'}</button></div>`;
+                const categoryFolders = folders.filter(f => f.category === 'Education');
+                let foldersHTML = `<div class="flex justify-between items-end mt-4 mb-2 px-2"><h3 class="text-xl font-bold tracking-tight text-gray-200">Your Folders</h3><button onclick="openFolderModal()" class="text-primary font-bold hover:text-blue-400 transition-colors text-sm flex items-center gap-1 bg-primary/10 hover:bg-primary/20 px-4 py-2 rounded-full active:scale-95"><i class="ph ph-plus-circle text-lg"></i> New Folder</button></div><div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">${categoryFolders.map(folder => `<div onclick="currentFolderId = '${folder.id}'; renderMainContent();" class="bg-surface border border-glassBorder rounded-[24px] p-5 cursor-pointer hover:border-primary/50 hover:bg-white/5 transition-all duration-300 group shadow-md active:scale-95 flex items-center gap-4"><div class="bg-primary/10 p-3 rounded-[16px] text-primary group-hover:bg-primary group-hover:text-white transition-colors shadow-sm"><i class="ph-fill ph-folder text-2xl"></i></div><div class="flex-1 overflow-hidden"><h4 class="font-bold text-gray-100 truncate">${folder.name}</h4><p class="text-xs text-gray-500 font-medium mt-0.5">${videos.filter(v => v.folderId === folder.id).length} items</p></div></div>`).join('')}</div>${videos.filter(v => v.category === 'Education' && !v.folderId).length > 0 ? `<h3 class="text-xl font-bold tracking-tight text-gray-200 mt-6 border-t border-glassBorder pt-6 px-2">Uncategorized Learning</h3>` : ''}`;
+                headerDiv.innerHTML = plannerHTML + foldersHTML;
+                videoGrid.appendChild(headerDiv);
+                filtered = filtered.filter(v => !v.folderId);
+            }
+
+            if (filtered.length === 0 && !isRootEducation && !(isHome && videos.filter(v=>v.category!=='Software').length > 0)) {
+                videoGrid.classList.add('hidden');
+                document.getElementById('emptyStateTitle').innerText = "No items found";
+                document.getElementById('emptyStateDesc').innerText = "Your collection is empty. Add your first item to see it appear here.";
+                document.getElementById('emptyStateBtn').className = "mt-6 bg-primary/20 hover:bg-primary/30 text-primary border border-primary/30 px-6 py-3 rounded-full font-bold transition-colors active:scale-95 flex items-center gap-2 shadow-sm";
+                document.getElementById('emptyStateBtn').innerHTML = `<i class="ph-bold ph-plus"></i> Add New Link`;
+                emptyState.classList.remove('hidden');
+            } else {
+                emptyState.classList.add('hidden');
+                videoGrid.classList.remove('hidden');
+                
+                // --- Add Link Card in Grid ---
+                if (!isRootEducation) {
+                    const addCard = document.createElement('div');
+                    addCard.className = 'bg-surface/30 border-2 border-dashed border-glassBorder rounded-[32px] flex flex-col items-center justify-center min-h-[250px] cursor-pointer hover:border-primary/50 hover:bg-primary/5 transition-all duration-300 group active:scale-95 shadow-sm hover:shadow-lg';
+                    addCard.onclick = () => window.openAddModal();
+                    addCard.innerHTML = `
+                        <div class="bg-darkBg border border-glassBorder p-4 rounded-full mb-3 group-hover:scale-110 group-hover:border-primary/50 transition-all duration-300 shadow-md">
+                            <i class="ph-bold ph-plus text-2xl text-primary"></i>
+                        </div>
+                        <h3 class="font-bold text-gray-200 text-lg group-hover:text-primary transition-colors">Add New Link</h3>
+                        <p class="text-gray-500 text-xs mt-1 font-medium px-4 text-center">Save to ${currentFolderId ? folders.find(f=>f.id===currentFolderId)?.name || 'Folder' : currentCategory === 'All' ? 'Library' : currentCategory}</p>
+                    `;
+                    videoGrid.appendChild(addCard);
+                }
+
+                filtered.forEach(video => {
+                    const card = document.createElement('div');
+                    card.className = 'bg-surface rounded-[32px] p-2 flex flex-col h-full border border-glassBorder hover:border-white/20 transition-all duration-300 group shadow-lg hover:shadow-2xl hover:-translate-y-1.5 cursor-pointer';
+                    card.onclick = () => window.playVideo(video.id);
+                    const platformIcon = video.platform === 'youtube' ? '<i class="ph-fill ph-youtube-logo text-[#ff0000] text-lg"></i>' : video.platform === 'instagram' ? '<i class="ph-fill ph-instagram-logo text-[#E1306C] text-lg"></i>' : '<i class="ph-bold ph-link text-blue-400 text-lg"></i>';
+                    let folderBadge = '';
+                    if (video.folderId && !currentFolderId) {
+                        const f = folders.find(f => f.id === video.folderId);
+                        if (f) folderBadge = `<div class="bg-primary/20 text-primary border border-primary/30 px-3.5 py-1.5 rounded-full text-xs font-bold flex items-center gap-1"><i class="ph-fill ph-folder"></i> ${f.name}</div>`;
+                    }
+                    const overlayIcon = (video.type === 'single' && video.platform === 'link') ? 'ph-arrow-up-right' : 'ph-play';
+                    const seriesOverlay = video.type === 'series' ? `<div class="absolute bottom-3 right-3 bg-black/80 text-white px-3 py-1 rounded-lg text-xs font-bold backdrop-blur-md flex items-center gap-1 border border-white/20"><i class="ph-bold ph-list-numbers"></i> ${video.episodes.length} Parts</div>` : '';
+                    card.innerHTML = `<div class="relative aspect-video overflow-hidden rounded-[24px] bg-darkBg"><img src="${video.thumbnail}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-out opacity-90 group-hover:opacity-100"><div class="absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 group-hover:opacity-100 transition-all duration-300 backdrop-blur-[2px]"><div class="bg-white/20 backdrop-blur-md border border-white/30 text-white rounded-full p-4 transform scale-50 group-hover:scale-100 transition-transform duration-300 shadow-[0_0_30px_rgba(255,255,255,0.2)]"><i class="ph-fill ${overlayIcon} text-3xl ml-1"></i></div></div><div class="absolute top-3 left-3 bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-full text-xs font-bold flex items-center gap-1.5 border border-white/10 shadow-sm">${platformIcon} ${video.type === 'series' ? 'Playlist' : video.platform === 'youtube' ? 'YouTube' : video.platform === 'instagram' ? 'Instagram' : 'Web Link'}</div>${seriesOverlay}</div><div class="p-4 px-5 flex flex-col flex-1"><h3 class="font-bold text-gray-100 text-lg line-clamp-2 leading-snug mb-4 mt-1 group-hover:text-primary transition-colors">${video.title}</h3><div class="flex justify-between items-center mt-auto pt-4 border-t border-glassBorder"><div class="flex gap-2"><div class="bg-darkBg border border-glassBorder px-3.5 py-1.5 rounded-full text-xs font-bold text-gray-400">${video.category}</div>${folderBadge}</div><div class="flex gap-1"><button onclick="openEditModal('${video.id}', event)" class="text-gray-500 hover:text-blue-400 bg-white/5 hover:bg-blue-400/10 p-2.5 rounded-full transition-all active:scale-90" title="Edit"><i class="ph-fill ph-pencil-simple text-lg"></i></button><button onclick="requestDelete('${video.id}', 'video', event)" class="text-gray-500 hover:text-red-400 bg-white/5 hover:bg-red-400/10 p-2.5 rounded-full transition-all active:scale-90" title="Delete"><i class="ph-fill ph-trash text-lg"></i></button></div></div></div>`;
+                    videoGrid.appendChild(card);
+                });
+            }
+        }
+
+        // --- Modals, Adding, & Editing Logic ---
+        window.openAddModal = () => { 
+            if (currentCategory === 'Private') {
+                editingVideoId = null;
+                document.getElementById('privateModalTitle').innerHTML = '<i class="ph-duotone ph-mask-happy text-purple-400 text-2xl"></i> Save Private Link';
+                document.getElementById('privateTitleInput').value = '';
+                document.getElementById('privateUrlInput').value = '';
+                const m = document.getElementById('privateAddModal');
+                const c = document.getElementById('privateAddModalContent');
+                m.classList.remove('hidden');
+                setTimeout(() => c.classList.remove('scale-95'), 10);
+                document.getElementById('privateTitleInput').focus();
+                return;
+            }
+
+            editingVideoId = null; 
+            document.getElementById('modalTitle').innerText = "Save New Link";
+            document.getElementById('modalSaveBtn').innerText = "Save Link";
+            document.getElementById('videoUrlInput').value = '';
+            document.getElementById('videoTitleInput').value = '';
+            if(document.getElementById('seriesMainTitleInput')) document.getElementById('seriesMainTitleInput').value = '';
+            if(document.getElementById('seriesEpisodesContainer')) document.getElementById('seriesEpisodesContainer').innerHTML = '';
+            if(window.switchAddMode) window.switchAddMode('single');
+            categoryInput.value = currentCategory === 'All' ? 'Education' : currentCategory;
+            
+            if(window.updateFolderDropdown) window.updateFolderDropdown();
+            
+            // Auto-select folder context
+            if (currentFolderId && document.getElementById('videoFolderInput')) {
+                document.getElementById('videoFolderInput').value = currentFolderId;
+            }
+
+            addModal.classList.remove('hidden'); 
+            setTimeout(() => addModalContent.classList.remove('scale-95'), 10); 
+        }
+
+        window.openPrivateEditModal = (id) => {
+            editingVideoId = id;
+            const link = privateLinks.find(l => l.id === id);
+            if(!link) return;
+            document.getElementById('privateModalTitle').innerHTML = '<i class="ph-duotone ph-pencil-simple text-purple-400 text-2xl"></i> Edit Private Link';
+            document.getElementById('privateTitleInput').value = link.title;
+            document.getElementById('privateUrlInput').value = link.url;
+            const m = document.getElementById('privateAddModal');
+            const c = document.getElementById('privateAddModalContent');
+            m.classList.remove('hidden');
+            setTimeout(() => c.classList.remove('scale-95'), 10);
+        }
+
+        window.savePrivateData = () => {
+            const title = document.getElementById('privateTitleInput').value.trim();
+            const url = document.getElementById('privateUrlInput').value.trim();
+            if (!title || !url) return showToast("Both fields are required", "error");
+
+            if (editingVideoId) {
+                const idx = privateLinks.findIndex(l => l.id === editingVideoId);
+                privateLinks[idx].title = title;
+                privateLinks[idx].url = url;
+                showToast("Private link updated!", "success");
+            } else {
+                privateLinks.push({ id: 'priv_' + Date.now(), title, url, dateAdded: Date.now() });
+                showToast("Secured in vault!", "success");
+            }
+            
+            saveLocalData();
+            renderMainContent();
+            closePrivateAddModal();
+        }
+
+        window.closePrivateAddModal = () => {
+            document.getElementById('privateAddModalContent').classList.add('scale-95');
+            setTimeout(() => document.getElementById('privateAddModal').classList.add('hidden'), 150);
+        }
+
+        // Unified Delete System
+        window.requestDelete = function(id, type, event) { 
+            if(event) event.stopPropagation(); 
+            itemToDeleteId = id; 
+            itemToDeleteType = type;
+            const m = document.getElementById('deleteConfirmModal'); 
+            const c = document.getElementById('deleteConfirmModalContent'); 
+            m.classList.remove('hidden'); 
+            setTimeout(() => c.classList.remove('scale-95'), 10); 
+        }
+        
+        window.closeDeleteConfirmModal = function() { 
+            const m = document.getElementById('deleteConfirmModal'); 
+            const c = document.getElementById('deleteConfirmModalContent'); 
+            c.classList.add('scale-95'); 
+            setTimeout(() => { m.classList.add('hidden'); itemToDeleteId = null; itemToDeleteType = null; }, 300); 
+        }
+
+        window.confirmDelete = async function() { 
+            if (itemToDeleteId) { 
+                if (itemToDeleteType === 'private') {
+                    privateLinks = privateLinks.filter(l => l.id !== itemToDeleteId);
+                } else {
+                    videos = videos.filter(v => v.id !== itemToDeleteId);
+                }
+                saveLocalData(); 
+                renderMainContent(); 
+                showToast("Item deleted", "info"); 
+                window.closeDeleteConfirmModal(); 
+            } 
+        }
+
+        window.copyToClipboard = (text) => {
+            navigator.clipboard.writeText(text).then(() => showToast("Link copied!", "success")).catch(()=>showToast("Failed to copy", "error"));
+        }
+
+        // Include Public Saving logic & Utils (Keeping exact same existing logic)
+        window.switchAddMode = function(mode) {
+            addMode = mode;
+            const btnSingle = document.getElementById('tabSingle');
+            const btnSeries = document.getElementById('tabSeries');
+            const singleDiv = document.getElementById('singleVideoInputs');
+            const seriesDiv = document.getElementById('seriesVideoInputs');
+            if (mode === 'single') {
+                btnSingle.className = "flex-1 py-3 rounded-[16px] bg-primary text-white font-bold text-sm transition-all shadow-md";
+                btnSeries.className = "flex-1 py-3 rounded-[16px] text-gray-400 hover:text-white font-bold text-sm transition-all";
+                singleDiv.classList.replace('hidden', 'block');
+                seriesDiv.classList.replace('block', 'hidden');
+            } else {
+                btnSeries.className = "flex-1 py-3 rounded-[16px] bg-primary text-white font-bold text-sm transition-all shadow-md";
+                btnSingle.className = "flex-1 py-3 rounded-[16px] text-gray-400 hover:text-white font-bold text-sm transition-all";
+                seriesDiv.classList.replace('hidden', 'block');
+                singleDiv.classList.replace('block', 'hidden');
+                if (document.getElementById('seriesEpisodesContainer').children.length === 0) window.addEpisodeInputRow();
+            }
+        }
+
+        window.addEpisodeInputRow = function(url = '', title = '') {
+            const container = document.getElementById('seriesEpisodesContainer');
+            const rowId = 'ep_' + Date.now() + Math.random().toString(36).substr(2, 5);
+            const partNum = container.children.length + 1;
+            const div = document.createElement('div');
+            div.id = rowId;
+            div.className = "flex items-center gap-2 p-2 bg-black/20 rounded-[16px] border border-glassBorder relative episode-row-item";
+            div.innerHTML = `<div class="bg-surface px-3 py-2 rounded-xl font-bold text-xs text-gray-400 border border-glassBorder flex-shrink-0">P${partNum}</div><div class="flex-1 flex flex-col gap-2"><input type="text" class="ep-url w-full bg-transparent border-none text-sm text-gray-200 focus:ring-0 outline-none placeholder-gray-600" placeholder="Paste URL..." value="${url}"><input type="text" class="ep-title w-full bg-transparent border-none text-xs text-gray-400 focus:ring-0 outline-none placeholder-gray-600" placeholder="Title (optional)" value="${title}"></div><button onclick="document.getElementById('${rowId}').remove(); updateEpisodeNumbers();" class="p-2 text-red-400 hover:bg-red-500/20 rounded-xl transition-colors flex-shrink-0"><i class="ph-bold ph-trash"></i></button>`;
+            container.appendChild(div);
+        }
+        window.updateEpisodeNumbers = function() { document.querySelectorAll('.episode-row-item').forEach((row, idx) => row.querySelector('.bg-surface.px-3').innerText = `P${idx + 1}`); }
+
+        function parseVideoUrl(url) {
+            try {
+                if (url.includes('youtube.com') || url.includes('youtu.be')) {
+                    const match = url.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i);
+                    if (match && match[1]) return { platform: 'youtube', embedUrl: `https://www.youtube.com/embed/${match[1]}?autoplay=1`, thumbnail: `https://img.youtube.com/vi/${match[1]}/hqdefault.jpg` };
+                } 
+                else if (url.includes('instagram.com')) {
+                    const match = url.match(/\/([p|reel|tv]+)\/([a-zA-Z0-9_-]+)/);
+                    if (match && match[2]) return { platform: 'instagram', embedUrl: `${url.split('?')[0].replace(/\/$/, '')}/embed`, thumbnail: 'https://images.unsplash.com/photo-1611162617474-5b21e879e113?auto=format&fit=crop&w=800&q=80' };
+                }
+                return { platform: 'link', embedUrl: url, thumbnail: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=800&auto=format&fit=crop' };
+            } catch (e) { return null; }
+        }
+
+        window.saveVideoData = async function() {
+            const category = document.getElementById('videoCategoryInput').value;
+            const folderId = document.getElementById('videoFolderInput').value;
+            if (addMode === 'single') {
+                const url = document.getElementById('videoUrlInput').value.trim();
+                const rawTitle = document.getElementById('videoTitleInput').value.trim();
+                if (!url) return showToast("Please enter a URL", "error");
+                const parsed = parseVideoUrl(url);
+                if (!parsed) return showToast("Invalid URL.", "error");
+                if (editingVideoId) {
+                    const idx = videos.findIndex(v => v.id === editingVideoId);
+                    videos[idx] = { ...videos[idx], type:'single', title: rawTitle || videos[idx].title, url, embedUrl: parsed.embedUrl, thumbnail: parsed.thumbnail, category, folderId: folderId || null, platform: parsed.platform };
+                    showToast("Updated successfully!", "success");
+                } else {
+                    videos.push({ id: Date.now().toString(), type: 'single', title: rawTitle || `${parsed.platform === 'link' ? 'Web Link' : 'Video'} ${Math.floor(Math.random() * 1000)}`, url, embedUrl: parsed.embedUrl, thumbnail: parsed.thumbnail, category, folderId: folderId || null, platform: parsed.platform, dateAdded: Date.now() });
+                    showToast("Saved securely!", "success");
+                }
+            } 
+            else if (addMode === 'series') {
+                const mainTitle = document.getElementById('seriesMainTitleInput').value.trim();
+                if (!mainTitle) return showToast("Please enter a Series Title", "error");
+                const episodeRows = document.querySelectorAll('.episode-row-item');
+                if (episodeRows.length === 0) return showToast("Please add at least one episode", "error");
+                let episodes = [];
+                for (let i = 0; i < episodeRows.length; i++) {
+                    const url = episodeRows[i].querySelector('.ep-url').value.trim();
+                    const title = episodeRows[i].querySelector('.ep-title').value.trim() || `Part ${i + 1}`;
+                    if (!url) return showToast(`Episode ${i + 1} is missing a URL`, "error");
+                    const parsed = parseVideoUrl(url);
+                    if (!parsed) return showToast(`Episode ${i + 1} URL is invalid`, "error");
+                    episodes.push({ title, url, embedUrl: parsed.embedUrl, thumbnail: parsed.thumbnail });
+                }
+                if (editingVideoId) {
+                    const idx = videos.findIndex(v => v.id === editingVideoId);
+                    videos[idx] = { ...videos[idx], type:'series', title: mainTitle, thumbnail: episodes[0].thumbnail, category, folderId: folderId || null, episodes, platform: 'youtube' };
+                    showToast("Series Updated!", "success");
+                } else {
+                    videos.push({ id: Date.now().toString(), type: 'series', title: mainTitle, thumbnail: episodes[0].thumbnail, category, folderId: folderId || null, platform: 'youtube', episodes, dateAdded: Date.now() });
+                    showToast("Series Saved!", "success");
+                }
+            }
+            saveLocalData(); renderMainContent(); window.closeAddModal();
+        }
+
+        window.openEditModal = (id, event) => {
+            event.stopPropagation(); editingVideoId = id; const video = videos.find(v => v.id === id); if(!video) return;
+            document.getElementById('modalTitle').innerText = "Edit Collection";
+            document.getElementById('modalSaveBtn').innerText = "Update Collection";
+            categoryInput.value = video.category;
+            window.updateFolderDropdown();
+            document.getElementById('videoFolderInput').value = video.folderId || '';
+            if (video.type === 'single' || !video.type) {
+                switchAddMode('single');
+                document.getElementById('videoUrlInput').value = video.url;
+                document.getElementById('videoTitleInput').value = video.title;
+            } else {
+                switchAddMode('series');
+                document.getElementById('seriesMainTitleInput').value = video.title;
+                const container = document.getElementById('seriesEpisodesContainer');
+                container.innerHTML = '';
+                video.episodes.forEach(ep => addEpisodeInputRow(ep.url, ep.title));
+            }
+            addModal.classList.remove('hidden'); setTimeout(() => addModalContent.classList.remove('scale-95'), 10); 
+        }
+
+        window.playVideo = function(id, episodeIndex = 0) {
+            const video = videos.find(v => v.id === id);
+            if (!video) return;
+            const sb = document.getElementById('seriesSidebar');
+            const container = document.getElementById('iframeContainer');
+            const extLink = document.getElementById('playerExternalLink');
+            
+            let embedUrl = video.embedUrl, displayTitle = video.title, isInsta = video.platform === 'instagram', originalUrl = video.url;
+
+            if (video.type === 'single') {
+                if (video.platform === 'link') { window.open(video.url, '_blank'); return; }
+                sb.classList.add('hidden'); sb.classList.remove('flex');
+            } 
+            else if (video.type === 'series') {
+                const ep = video.episodes[episodeIndex];
+                embedUrl = ep.embedUrl; displayTitle = `${video.title} - ${ep.title}`; isInsta = ep.url ? ep.url.includes('instagram') : false;
+                originalUrl = ep.url;
+                
+                sb.classList.remove('hidden'); sb.classList.add('flex');
+                document.getElementById('seriesCountBadge').innerText = `${video.episodes.length} Parts`;
+                let epHTML = '';
+                video.episodes.forEach((e, idx) => {
+                    const isActive = idx === episodeIndex;
+                    epHTML += `<div onclick="playVideo('${video.id}', ${idx})" class="p-4 border-b border-glassBorder flex gap-4 cursor-pointer hover:bg-white/5 transition-colors ${isActive ? 'bg-primary/10 border-l-4 border-primary' : 'border-l-4 border-transparent'}"><div class="w-24 aspect-video bg-darkBg rounded-lg overflow-hidden flex-shrink-0 relative"><img src="${e.thumbnail}" class="w-full h-full object-cover">${isActive ? '<div class="absolute inset-0 bg-primary/40 flex items-center justify-center"><i class="ph-fill ph-play-circle text-white text-xl drop-shadow-md"></i></div>' : ''}</div><div class="flex-1 flex flex-col justify-center"><span class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Part ${idx + 1}</span><h5 class="text-sm font-bold ${isActive ? 'text-white' : 'text-gray-300'} line-clamp-2 leading-tight">${e.title}</h5></div></div>`;
+                });
+                document.getElementById('seriesEpisodesList').innerHTML = epHTML;
+            }
+
+            playerTitle.innerText = displayTitle;
+            extLink.href = originalUrl;
+            
+            if (isInsta) { container.classList.remove('aspect-video'); container.classList.add('h-[65vh]'); } 
+            else { container.classList.add('aspect-video'); container.classList.remove('h-[65vh]'); }
+            
+            const iframeClasses = isInsta ? "absolute top-0 left-1/2 -translate-x-1/2 h-full w-full max-w-[450px] border-0 bg-white" : "absolute top-0 left-0 w-full h-full border-0";
+            iframeContainer.innerHTML = `<iframe src="${embedUrl}" class="${iframeClasses}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
+            
+            playerModal.classList.remove('hidden');
+            playerModal.classList.add('flex');
+            document.body.style.overflow = 'hidden'; 
+        }
+
+        // Data Export Methods
+        window.openDataModal = () => { const m = document.getElementById('dataModal'); const c = document.getElementById('dataModalContent'); m.classList.remove('hidden'); setTimeout(() => c.classList.remove('scale-95'), 10); }
+        window.closeDataModal = () => { const m = document.getElementById('dataModal'); const c = document.getElementById('dataModalContent'); c.classList.add('scale-95'); setTimeout(() => m.classList.add('hidden'), 300); }
+        window.exportAllJSON = () => { const dataToSave = { videos, folders, templates: savedTemplates, privateLinks, privatePassword }; const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(dataToSave, null, 2)); const downloadAnchorNode = document.createElement('a'); downloadAnchorNode.setAttribute("href", dataStr); downloadAnchorNode.setAttribute("download", "SanVideoHub_Backup.json"); document.body.appendChild(downloadAnchorNode); downloadAnchorNode.click(); downloadAnchorNode.remove(); showToast("JSON Backup Downloaded", "success"); }
+        window.exportAllCSV = () => { if(videos.length === 0) return showToast("No items to export.", "error"); let csvContent = "data:text/csv;charset=utf-8,ID,Type,Title,Category,Platform,URL,Date Added\n"; videos.forEach(v => { const title = `"${v.title.replace(/"/g, '""')}"`; const date = new Date(v.dateAdded).toLocaleDateString(); const url = v.type === 'series' ? 'Playlist' : v.url; csvContent += `${v.id},${v.type || 'single'},${title},${v.category},${v.platform},${url},${date}\n`; }); const encodedUri = encodeURI(csvContent); const downloadAnchorNode = document.createElement('a'); downloadAnchorNode.setAttribute("href", encodedUri); downloadAnchorNode.setAttribute("download", "SanVideoHub_Data.csv"); document.body.appendChild(downloadAnchorNode); downloadAnchorNode.click(); downloadAnchorNode.remove(); showToast("CSV Downloaded", "success"); }
+        window.importJSON = (event) => { const file = event.target.files[0]; if (!file) return; const reader = new FileReader(); reader.onload = function(e) { try { const importedData = JSON.parse(e.target.result); if (Array.isArray(importedData.videos)) { videos = importedData.videos; folders = importedData.folders || []; savedTemplates = importedData.templates || []; privateLinks = importedData.privateLinks || []; privatePassword = importedData.privatePassword || null; saveLocalData(); renderMainContent(); window.updateFolderDropdown(); window.closeDataModal(); showToast("Imported successfully!", "success"); } else { throw new Error("Invalid"); } } catch(err) { showToast("Invalid JSON Backup File.", "error"); } event.target.value = ''; }; reader.readAsText(file); }
+
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            let bgClass = 'bg-surface border-glassBorder', iconClass = 'ph-info text-blue-400';
+            if (type === 'success') { iconClass = 'ph-check-circle text-green-400'; } 
+            else if (type === 'error') { bgClass = 'bg-red-950/80 border-red-900/50'; iconClass = 'ph-warning-circle text-red-400'; }
+            toast.className = `toast-animate flex items-center gap-4 px-6 py-4 rounded-[24px] border shadow-[0_10px_40px_rgba(0,0,0,0.5)] backdrop-blur-xl text-sm font-bold text-white ${bgClass} glass-effect pointer-events-auto`;
+            toast.innerHTML = `<i class="ph-fill ${iconClass} text-2xl"></i> ${message}`;
+            container.appendChild(toast);
+            setTimeout(() => { toast.style.opacity = '0'; toast.style.transform = 'translateY(10px) scale(0.95)'; toast.style.transition = 'all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1)'; setTimeout(() => toast.remove(), 300); }, 3000);
+        }
+
+        // Generic Modal closers
+        window.closeAddModal = () => { addModalContent.classList.add('scale-95'); setTimeout(() => addModal.classList.add('hidden'), 150); }
+        window.closePlayerModal = () => { playerModal.classList.add('hidden'); playerModal.classList.remove('flex'); iframeContainer.innerHTML = ''; document.body.style.overflow = ''; }
+        window.openFolderModal = () => { const m = document.getElementById('folderModal'); const c = document.getElementById('folderModalContent'); m.classList.remove('hidden'); setTimeout(() => c.classList.remove('scale-95'), 10); document.getElementById('folderNameInput').focus(); }
+        window.closeFolderModal = () => { const m = document.getElementById('folderModal'); const c = document.getElementById('folderModalContent'); c.classList.add('scale-95'); setTimeout(() => m.classList.add('hidden'), 150); }
+        window.saveFolder = () => { const name = document.getElementById('folderNameInput').value.trim(); if (!name) return showToast("Please enter a folder name", "error"); folders.push({ id: 'f_' + Date.now(), name: name, category: currentCategory }); saveLocalData(); renderMainContent(); window.updateFolderDropdown(); window.closeFolderModal(); document.getElementById('folderNameInput').value = ''; showToast("Folder created!", "success"); }
+        
+        ['addModal', 'privateAddModal', 'folderModal', 'plannerModal', 'saveTemplateModal', 'loadTemplateModal', 'dataModal', 'deleteConfirmModal', 'setupPasswordModal', 'enterPasswordModal'].forEach(id => {
+            const el = document.getElementById(id);
+            if(el) el.addEventListener('click', (e) => { if (e.target.id === id) { if(id === 'setupPasswordModal' || id === 'enterPasswordModal') cancelPasswordModal(); else window['close' + id.charAt(0).toUpperCase() + id.slice(1)](); } });
+        });
+
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
