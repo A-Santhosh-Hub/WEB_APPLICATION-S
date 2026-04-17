@@ -4,15 +4,6 @@ An advanced, GPS-aware intelligent vehicle navigation assistant. This is not jus
 
 **Built 100% free of paid API keys using open-source mapping technologies.**
 
-\<div align="center"\>
-
-\<i\>Developed by \<b\>Santhosh A\</b\> | SanStudio Developer Team\</i\>
-
-\<a href="https://a-santhosh-hub.github.io/in/"\>Developer Profile\</a\> •
-
-\<a href="https://sanstudio-hub.github.io/SanStudio-Hub/in"\>SanStudio Hub\</a\>
-
-\</div\>
 
 ## **✨ Core Features**
 
@@ -71,3 +62,5 @@ Because this project uses a powerful **Single-File Architecture** with no build 
 Contributions, issues, and feature requests are welcome\! Feel free to check the [issues page](https://www.google.com/search?q=https://github.com/YOUR_GITHUB_USERNAME/smart-fuel-route-planner/issues).
 
 **License:** MIT License. Feel free to use this for educational purposes or extend it for your own portfolio.
+
+![Viewer Screenshot](https://github.com/A-Santhosh-Hub/WEB_APPLICATION-S/blob/main/SMART-FUEL-ROUTE-PLANNER/Location.png)
