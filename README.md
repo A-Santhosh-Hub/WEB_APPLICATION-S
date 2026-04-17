@@ -28,10 +28,11 @@
 
 
 # 15. San X Vs code on online text editer tool --- [https://a-santhosh-hub.github.io/in/Project/SanCode.html]
-![image alt](https://github.com/A-Santhosh-Hub/WEB_APPLICATION-S/blob/main/SanXVScode/SanxVS.png)
+
 
 # 16. SanVideoHub - Your Personal Video Collection --- [https://a-santhosh-hub.github.io/in/Project/SanVideoHub/in.html]
 ![Viewer Screenshot](https://github.com/A-Santhosh-Hub/WEB_APPLICATION-S/blob/main/SanVideoHub/SanVideoHub.png)
 
-
+# 17. SanMap - SMART FUEL ROUTE PLANNER -- [ https://a-santhosh-hub.github.io/in/Project/SanMap/in]
+![Viewer Screenshot](https://github.com/A-Santhosh-Hub/WEB_APPLICATION-S/blob/main/SMART-FUEL-ROUTE-PLANNER/Location.png)
 The SanStudio is Now working, wait 🫸 for Update!!!
