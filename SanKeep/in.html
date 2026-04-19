@@ -1,0 +1,1842 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#fbfdf9">
+    <title>SanKeep — Smart Notes</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <link rel="icon" type="image/png" href="https://sanstudio2026.neocities.org/San.png">
+    <style>
+        :root {
+            --md-sys-color-background: #fbfdf9;
+            --md-sys-color-on-background: #1a1c18;
+            --md-sys-color-surface: #edf1e8;
+            --md-sys-color-surface-variant: #e0e5d8;
+            --md-sys-color-on-surface: #1a1c18;
+            --md-sys-color-on-surface-variant: #43483e;
+            --md-sys-color-primary: #3f691e;
+            --md-sys-color-on-primary: #ffffff;
+            --md-sys-color-primary-container: #bdf296;
+            --md-sys-color-on-primary-container: #0d2000;
+            --md-sys-color-outline: #74796d;
+            --md-sys-color-error: #ba1a1a;
+            
+            --note-color-default: var(--md-sys-color-surface);
+            --note-color-red: #ffdad6;
+            --note-color-orange: #ffdbcc;
+            --note-color-yellow: #f5e39b;
+            --note-color-green: #c4eccb;
+            --note-color-blue: #d1e4ff;
+            --note-color-purple: #eaddff;
+
+            --font-family: 'OriginOS Sans', 'Inter', Roboto, system-ui, sans-serif;
+            
+            --radius-small: 8px;
+            --radius-medium: 16px;
+            --radius-large: 24px;
+            --radius-extra-large: 32px;
+            --motion-spring: 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+            --motion-fade: 0.2s ease-in-out;
+            --shadow-soft: 0 4px 20px rgba(0,0,0,0.04);
+            --shadow-elevated: 0 8px 30px rgba(0,0,0,0.08);
+            
+            --sidebar-width: 280px;
+            --header-height: 72px;
+        }
+
+        [data-theme="dark"] {
+            --md-sys-color-background: #1a1c18;
+            --md-sys-color-on-background: #e3e3dc;
+            --md-sys-color-surface: #2b2e27;
+            --md-sys-color-surface-variant: #43483e;
+            --md-sys-color-on-surface: #e3e3dc;
+            --md-sys-color-on-surface-variant: #c3c8bc;
+            --md-sys-color-primary: #a2d57d;
+            --md-sys-color-on-primary: #153800;
+            --md-sys-color-primary-container: #285006;
+            --md-sys-color-on-primary-container: #bdf296;
+            --md-sys-color-outline: #8d9286;
+            
+            --note-color-default: var(--md-sys-color-surface);
+            --note-color-red: #410002;
+            --note-color-orange: #4c1700;
+            --note-color-yellow: #3c2f00;
+            --note-color-green: #003917;
+            --note-color-blue: #003258;
+            --note-color-purple: #381e72;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: var(--font-family);
+            background-color: var(--md-sys-color-background);
+            color: var(--md-sys-color-on-background);
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+            transition: background-color var(--motion-fade), color var(--motion-fade);
+            -webkit-tap-highlight-color: transparent;
+        }
+        button { border: none; background: none; cursor: pointer; font-family: inherit; color: inherit; }
+        input, textarea, [contenteditable] { font-family: inherit; border: none; outline: none; background: transparent; color: inherit; }
+        [contenteditable]:empty:before { content: attr(data-placeholder); color: var(--md-sys-color-on-surface-variant); cursor: text; }
+
+        #app-shell { display: flex; flex-direction: column; width: 100%; height: 100%; }
+        
+        header {
+            height: var(--header-height);
+            display: flex;
+            align-items: center;
+            padding: 0 16px;
+            justify-content: space-between;
+            border-bottom: 1px solid transparent;
+            z-index: 10;
+        }
+        .header-left { display: flex; align-items: center; gap: 12px; }
+        .menu-btn { width: 48px; height: 48px; border-radius: 50%; display: grid; place-items: center; font-size: 24px; transition: background var(--motion-fade); }
+        .menu-btn:hover { background-color: var(--md-sys-color-surface-variant); }
+        .logo { font-size: 22px; font-weight: 600; display: flex; align-items: center; gap: 8px; color: var(--md-sys-color-on-background); }
+        .logo i { color: var(--md-sys-color-primary); }
+        
+        .header-center { flex: 1; max-width: 720px; padding: 0 24px; }
+        .search-bar {
+            display: flex; align-items: center; gap: 12px;
+            background-color: var(--md-sys-color-surface);
+            padding: 0 16px; height: 52px; border-radius: var(--radius-large);
+            transition: all var(--motion-spring);
+        }
+        .search-bar:focus-within { background-color: var(--md-sys-color-background); box-shadow: var(--shadow-elevated); }
+        .search-bar input { flex: 1; height: 100%; font-size: 16px; }
+        .search-bar i { font-size: 20px; color: var(--md-sys-color-on-surface-variant); }
+
+        .header-right { display: flex; align-items: center; gap: 8px; position: relative; }
+        .header-dropdown { display: flex; align-items: center; gap: 8px; }
+        .mobile-more-btn { display: none; }
+        .profile-btn { width: 40px; height: 40px; border-radius: 50%; background-color: var(--md-sys-color-primary); color: var(--md-sys-color-on-primary); display: grid; place-items: center; font-weight: bold; margin-left: 8px; cursor: pointer; }
+        
+        #btn-theme i { display: inline-block; transition: transform var(--motion-spring); }
+        #btn-theme:active i { transform: rotate(45deg) scale(0.8); }
+
+        .content-wrapper { display: flex; flex: 1; overflow: hidden; }
+        
+        aside {
+            width: var(--sidebar-width);
+            display: flex; flex-direction: column;
+            padding: 12px;
+            transition: width var(--motion-spring), transform var(--motion-spring);
+            background-color: var(--md-sys-color-background);
+            z-index: 5;
+        }
+        aside.collapsed { width: 80px; }
+        .nav-item {
+            display: flex; align-items: center; gap: 16px;
+            height: 52px; padding: 0 16px; border-radius: var(--radius-extra-large);
+            color: var(--md-sys-color-on-surface-variant);
+            font-weight: 500; font-size: 15px; margin-bottom: 4px;
+            transition: background var(--motion-fade), color var(--motion-fade);
+        }
+        aside.collapsed .nav-item { border-radius: 50%; width: 52px; padding: 0; justify-content: center; }
+        aside.collapsed .nav-label { display: none; }
+        .nav-item i { font-size: 22px; }
+        .nav-item:hover { background-color: var(--md-sys-color-surface-variant); }
+        .nav-item.active { background-color: var(--md-sys-color-primary-container); color: var(--md-sys-color-on-primary-container); }
+        
+        .brand-footer {
+            margin-top: auto; padding: 16px; text-align: center;
+            font-size: 12px; color: var(--md-sys-color-on-surface-variant);
+            opacity: 0.8; transition: opacity var(--motion-fade);
+        }
+        .brand-footer a { color: var(--md-sys-color-primary); text-decoration: none; font-weight: 600; display: block; margin-top: 4px; }
+        aside.collapsed .brand-footer { display: none; }
+
+        main { flex: 1; overflow-y: auto; padding: 32px 16px; position: relative; scroll-behavior: smooth; }
+        .creator-area { max-width: 600px; margin: 0 auto 48px; position: relative; z-index: 2; }
+        .creator-card {
+            background-color: var(--md-sys-color-surface);
+            border-radius: var(--radius-large);
+            box-shadow: var(--shadow-elevated);
+            padding: 12px 16px;
+            display: flex; align-items: center; justify-content: space-between;
+            transition: all var(--motion-spring);
+            cursor: text;
+        }
+        .creator-card.expanded { flex-direction: column; align-items: stretch; padding: 16px; border-radius: var(--radius-extra-large); }
+        .creator-title { font-weight: 500; font-size: 16px; margin-bottom: 12px; display: none; }
+        .creator-body { font-size: 15px; min-height: 24px; flex: 1; line-height: 1.5; }
+        .creator-card.expanded .creator-title { display: block; }
+        .creator-actions { display: flex; justify-content: space-between; margin-top: 16px; display: none; }
+        .creator-card.expanded .creator-actions { display: flex; }
+        .action-btns { display: flex; gap: 4px; }
+        .icon-btn { width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; color: var(--md-sys-color-on-surface-variant); transition: background 0.2s; }
+        .icon-btn:hover { background-color: rgba(0,0,0,0.05); }
+        .close-btn { background: none; font-weight: 600; padding: 8px 16px; border-radius: var(--radius-small); color: var(--md-sys-color-primary); }
+        .close-btn:hover { background-color: var(--md-sys-color-surface-variant); }
+
+        .notes-section { margin-bottom: 48px; }
+        .section-title { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: var(--md-sys-color-on-surface-variant); margin-bottom: 16px; margin-left: 16px; }
+        .masonry-grid {
+            column-count: 4; column-gap: 16px; padding: 0 16px;
+        }
+        
+        .note-card {
+            background-color: var(--note-color-default);
+            border: 1px solid var(--md-sys-color-outline);
+            border-radius: var(--radius-medium);
+            padding: 16px; margin-bottom: 16px;
+            break-inside: avoid;
+            position: relative;
+            transition: box-shadow var(--motion-spring), transform var(--motion-spring);
+            cursor: pointer;
+            overflow: hidden;
+            group: note;
+        }
+        .note-card:hover { box-shadow: var(--shadow-elevated); border-color: transparent; transform: translateY(-2px); }
+        .note-title { font-weight: 600; font-size: 16px; margin-bottom: 8px; line-height: 1.4; word-wrap: break-word; }
+        .note-content { font-size: 14px; line-height: 1.5; color: var(--md-sys-color-on-surface); word-wrap: break-word; white-space: pre-wrap; }
+        .note-image { width: 100%; max-height: 200px; object-fit: cover; border-radius: var(--radius-small); margin-bottom: 8px; }
+        .note-canvas { width: 100%; border-radius: var(--radius-small); margin-bottom: 8px; background: #fff; }
+        
+        .note-card-actions {
+            opacity: 0; position: absolute; bottom: 0; left: 0; right: 0;
+            display: flex; justify-content: space-around; padding: 8px 12px;
+            transition: opacity var(--motion-fade);
+            background-color: inherit;
+            border-bottom-left-radius: calc(var(--radius-medium) - 1px);
+            border-bottom-right-radius: calc(var(--radius-medium) - 1px);
+            z-index: 5;
+        }
+        .note-card:hover .note-card-actions { opacity: 1; }
+        .note-card-actions .icon-btn { width: 36px; height: 36px; font-size: 18px; }
+        
+        .checklist-item { display: flex; align-items: flex-start; gap: 8px; margin-bottom: 4px; }
+        .checklist-item input[type="checkbox"] { margin-top: 4px; accent-color: var(--md-sys-color-primary); }
+        .checklist-item.checked span { text-decoration: line-through; opacity: 0.6; }
+
+        .overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background-color: rgba(0,0,0,0.5); backdrop-filter: blur(2px);
+            z-index: 100; display: none; opacity: 0; align-items: center; justify-content: center;
+            transition: opacity var(--motion-fade);
+        }
+        .overlay.active { display: flex; opacity: 1; }
+        
+        .modal-card {
+            width: 100%; max-width: 600px; max-height: 90vh;
+            background-color: var(--md-sys-color-background);
+            border-radius: var(--radius-large);
+            box-shadow: var(--shadow-elevated);
+            display: flex; flex-direction: column;
+            transform: scale(0.95); transition: transform var(--motion-spring);
+            overflow: hidden;
+        }
+        .overlay.active .modal-card { transform: scale(1); }
+        .modal-content { padding: 24px; overflow-y: auto; flex: 1; display: flex; flex-direction: column; gap: 16px; }
+        .modal-actions { padding: 16px 24px; display: flex; justify-content: space-between; border-top: 1px solid var(--md-sys-color-surface-variant); background: var(--md-sys-color-background); }
+        
+        #drawing-canvas-wrapper { border: 1px solid var(--md-sys-color-outline); border-radius: var(--radius-small); background: #fff; cursor: crosshair; touch-action: none; position: relative; }
+        
+        .fab {
+            position: fixed; bottom: 24px; right: 24px;
+            width: 56px; height: 56px; border-radius: var(--radius-medium);
+            background-color: var(--md-sys-color-primary-container);
+            color: var(--md-sys-color-on-primary-container);
+            display: none; place-items: center; font-size: 24px;
+            box-shadow: var(--shadow-elevated); z-index: 50;
+            transition: transform var(--motion-spring);
+        }
+        .fab:active { transform: scale(0.9); }
+
+        .color-picker {
+            position: absolute; bottom: 100%; left: 0;
+            background: var(--md-sys-color-surface); padding: 8px; border-radius: var(--radius-medium);
+            box-shadow: var(--shadow-elevated); display: none; gap: 8px; z-index: 10;
+        }
+        .color-picker.active { display: flex; }
+        .color-swatch { width: 32px; height: 32px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; }
+        .color-swatch:hover { border-color: var(--md-sys-color-on-surface); }
+
+        #toast-container { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); z-index: 1000; display: flex; flex-direction: column; gap: 8px; }
+        .toast { background-color: var(--md-sys-color-on-surface); color: var(--md-sys-color-surface); padding: 12px 24px; border-radius: var(--radius-small); font-size: 14px; opacity: 0; animation: toastFade 3s forwards; }
+        @keyframes toastFade { 0% { opacity: 0; transform: translateY(20px); } 10% { opacity: 1; transform: translateY(0); } 90% { opacity: 1; transform: translateY(0); } 100% { opacity: 0; transform: translateY(-20px); } }
+        @keyframes fadeDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .auth-view { display: flex; flex-direction: column; gap: 16px; }
+        .auth-view.hidden { display: none; }
+        .auth-title { font-size: 24px; font-weight: 600; text-align: center; margin-bottom: 8px; }
+        .auth-input { width: 100%; padding: 12px 16px; border-radius: var(--radius-small); background: var(--md-sys-color-surface); border: 1px solid var(--md-sys-color-outline); font-size: 16px; transition: border-color var(--motion-fade); }
+        .auth-input:focus { border-color: var(--md-sys-color-primary); outline: none; }
+        .auth-btn { width: 100%; padding: 12px; border-radius: var(--radius-large); background: var(--md-sys-color-primary); color: var(--md-sys-color-on-primary); font-weight: 600; font-size: 16px; text-align: center; transition: opacity var(--motion-fade); }
+        .auth-btn:hover { opacity: 0.9; }
+        .auth-btn-secondary { background: transparent; color: var(--md-sys-color-primary); border: 1px solid var(--md-sys-color-primary); }
+        .account-list { display: flex; flex-direction: column; gap: 8px; max-height: 300px; overflow-y: auto; }
+        .account-item { display: flex; align-items: center; gap: 16px; padding: 12px; border-radius: var(--radius-medium); background: var(--md-sys-color-surface); cursor: pointer; transition: background var(--motion-fade); }
+        .account-item:hover { background: var(--md-sys-color-surface-variant); }
+        .account-avatar { width: 40px; height: 40px; border-radius: 50%; background: var(--md-sys-color-primary); color: var(--md-sys-color-on-primary); display: grid; place-items: center; font-weight: bold; font-size: 18px; }
+
+        .custom-context-menu {
+            position: fixed;
+            background-color: var(--md-sys-color-surface);
+            border: 1px solid var(--md-sys-color-outline);
+            border-radius: var(--radius-medium);
+            box-shadow: var(--shadow-elevated);
+            padding: 8px 0;
+            min-width: 220px;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            opacity: 0;
+            transform: scale(0.95);
+            transform-origin: top left;
+            pointer-events: none;
+            transition: opacity 0.15s ease, transform 0.15s ease;
+        }
+        .custom-context-menu.active {
+            opacity: 1;
+            transform: scale(1);
+            pointer-events: auto;
+        }
+        .custom-context-menu .menu-item {
+            padding: 10px 16px;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            color: var(--md-sys-color-on-surface);
+            transition: background var(--motion-fade);
+        }
+        .custom-context-menu .menu-item:hover {
+            background-color: var(--md-sys-color-surface-variant);
+        }
+        .custom-context-menu .menu-item i {
+            font-size: 18px;
+            color: var(--md-sys-color-on-surface-variant);
+        }
+        .custom-context-menu .menu-divider {
+            height: 1px;
+            background-color: var(--md-sys-color-outline);
+            margin: 4px 0;
+            opacity: 0.2;
+        }
+
+        .wallpaper-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 12px; margin-top: 16px; }
+        .wp-item { height: 100px; border-radius: var(--radius-small); cursor: pointer; background-size: cover; background-position: center; border: 2px solid transparent; transition: transform var(--motion-fade); }
+        .wp-item:hover { transform: scale(1.05); }
+        .wp-upload-btn { height: 100px; border-radius: var(--radius-small); border: 2px dashed var(--md-sys-color-outline); display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; color: var(--md-sys-color-on-surface-variant); font-size: 12px; font-weight: 500; transition: background var(--motion-fade); }
+        .wp-upload-btn:hover { background: rgba(0,0,0,0.05); }
+        .wp-upload-btn i { font-size: 24px; margin-bottom: 4px; }
+        .sidebar-divider { height: 1px; background: var(--md-sys-color-outline); opacity: 0.2; margin: 8px 16px; }
+        .folder-list { display: flex; flex-direction: column; overflow-y: auto; max-height: 40vh; }
+
+        .bottom-nav {
+            display: none;
+            position: fixed; bottom: 0; left: 0; right: 0;
+            height: calc(80px + env(safe-area-inset-bottom));
+            background: var(--md-sys-color-surface);
+            z-index: 40;
+            padding-bottom: env(safe-area-inset-bottom);
+            box-shadow: 0 -1px 10px rgba(0,0,0,0.05);
+        }
+        .bottom-nav .nav-item {
+            flex-direction: column; gap: 4px; height: 100%; border-radius: 0;
+            justify-content: center; align-items: center; flex: 1; margin: 0; padding: 0;
+            color: var(--md-sys-color-on-surface-variant);
+            background: transparent !important;
+        }
+        .bottom-nav .nav-item .icon-wrapper {
+            width: 64px; height: 32px; display: grid; place-items: center; border-radius: 16px;
+            transition: background var(--motion-fade), color var(--motion-fade);
+        }
+        .bottom-nav .nav-item.active .icon-wrapper {
+            background: var(--md-sys-color-primary-container);
+            color: var(--md-sys-color-on-primary-container);
+        }
+        .bottom-nav .nav-item i { font-size: 24px; margin: 0; }
+        .bottom-nav .nav-item .nav-label { font-size: 12px; font-weight: 600; display: block; }
+        .bottom-nav .nav-item.active .nav-label { color: var(--md-sys-color-on-surface); }
+
+        @media (max-width: 1024px) { .masonry-grid { column-count: 3; } }
+        @media (max-width: 768px) {
+            .masonry-grid { column-count: 2; }
+            aside { display: none !important; }
+            .bottom-nav { display: flex; }
+            .content-wrapper { padding-bottom: calc(80px + env(safe-area-inset-bottom)); }
+            .fab { bottom: calc(100px + env(safe-area-inset-bottom)); }
+            .menu-btn { display: none; }
+            
+            .modal-card {
+                width: calc(100% - 32px);
+                max-height: calc(100vh - 32px);
+                margin: 16px;
+                border-radius: var(--radius-large) !important;
+            }
+        }
+        @media (max-width: 500px) {
+            .masonry-grid { column-count: 1; padding: 0 12px; }
+            .creator-area { display: none; }
+            .fab { display: grid; }
+            
+            header { padding: 0 12px; }
+            .logo { font-size: 0; gap: 0; }
+            .logo i { font-size: 28px; margin-right: 12px; }
+            .header-center { padding: 0; }
+            .search-bar { padding: 0 12px; height: 44px; }
+            .icon-btn { width: 36px; height: 36px; font-size: 20px; }
+            .profile-btn { width: 36px; height: 36px; font-size: 16px; margin-left: 4px; }
+            
+            .mobile-more-btn { display: grid; }
+            .header-dropdown {
+                display: none;
+                position: absolute;
+                top: 56px;
+                right: 12px;
+                background-color: var(--md-sys-color-surface);
+                border: 1px solid var(--md-sys-color-outline);
+                padding: 8px 12px;
+                border-radius: var(--radius-large);
+                box-shadow: var(--shadow-elevated);
+                flex-direction: row;
+                z-index: 100;
+                gap: 8px;
+            }
+            .header-dropdown.active { display: flex; animation: fadeDown 0.2s ease-out forwards; }
+            
+            #auth-modal .modal-card { padding: 24px !important; }
+        }
+        
+        .hidden { display: none !important; }
+        .text-muted { color: var(--md-sys-color-on-surface-variant); }
+        .pinned-icon { position: absolute; top: -8px; right: -8px; width: 24px; height: 24px; background: var(--md-sys-color-primary); color: var(--md-sys-color-on-primary); border-radius: 50%; display: grid; place-items: center; font-size: 14px; box-shadow: var(--shadow-soft); z-index: 5; }
+    </style>
+</head>
+<body>
+
+    <div id="app-shell">
+        <header>
+            <div class="header-left">
+                <button class="menu-btn" id="btn-toggle-sidebar" aria-label="Toggle Menu" title="Main Menu (Ctrl+M)"><i class="ri-menu-line"></i></button>
+                <div class="logo">
+                    <i class="ri-lightbulb-flash-fill"></i> SanKeep
+                </div>
+            </div>
+            
+            <div class="header-center">
+                <div class="search-bar">
+                    <i class="ri-search-line"></i>
+                    <input type="text" id="search-input" placeholder="Search notes... (Ctrl+F)" aria-label="Search">
+                </div>
+            </div>
+
+            <div class="header-right">
+                <div class="header-dropdown" id="header-dropdown">
+                    <button class="icon-btn" id="btn-refresh" title="Sync"><i class="ri-refresh-line"></i></button>
+                    <button class="icon-btn" id="btn-theme" title="Toggle Theme"><i class="ri-moon-line"></i></button>
+                    <button class="icon-btn" id="btn-settings" title="Settings"><i class="ri-settings-4-line"></i></button>
+                    <div class="profile-btn">S</div>
+                </div>
+                <button class="icon-btn mobile-more-btn" id="btn-mobile-more"><i class="ri-more-2-fill"></i></button>
+            </div>
+        </header>
+
+        <div class="content-wrapper">
+            <aside id="sidebar">
+                <nav>
+                    <div class="nav-item active" data-view="notes">
+                        <i class="ri-lightbulb-line"></i> <span class="nav-label">Notes</span>
+                    </div>
+                    <div class="nav-item" data-view="reminders">
+                        <i class="ri-notification-4-line"></i> <span class="nav-label">Reminders</span>
+                    </div>
+                    <div class="nav-item" data-view="archive">
+                        <i class="ri-archive-line"></i> <span class="nav-label">Archive</span>
+                    </div>
+                    <div class="nav-item" data-view="trash">
+                        <i class="ri-delete-bin-line"></i> <span class="nav-label">Trash</span>
+                    </div>
+                    
+                    <div class="sidebar-divider"></div>
+                    <div class="nav-item" style="pointer-events: none; opacity: 0.7; height: 32px;">
+                        <span class="nav-label" style="font-size: 12px; font-weight: bold; text-transform: uppercase;">Folders</span>
+                    </div>
+                    <div id="dynamic-folder-list" class="folder-list"></div>
+                </nav>
+                
+                <div class="brand-footer">
+                    Developed By <br>
+                    <a href="https://sanstudio-hub.github.io/SanStudio-Hub/in" target="_blank" rel="noopener">SanStudio Developer Team</a>
+                </div>
+            </aside>
+
+            <main id="main-content">
+                <div class="creator-area" id="creator-area">
+                    <div class="creator-card" id="creator-card">
+                        <div class="creator-title" contenteditable="true" data-placeholder="Title" id="quick-title"></div>
+                        <div class="creator-body" contenteditable="true" data-placeholder="Take a note..." id="quick-body"></div>
+                        
+                        <div class="creator-actions">
+                            <div class="action-btns">
+                                <button class="icon-btn" title="Add Reminder"><i class="ri-notification-add-line"></i></button>
+                                <button class="icon-btn" title="Add Image" onclick="document.getElementById('file-upload').click()"><i class="ri-image-line"></i></button>
+                                <button class="icon-btn" id="btn-quick-draw" title="Draw"><i class="ri-brush-line"></i></button>
+                                <input type="file" id="file-upload" accept="image/*" class="hidden">
+                            </div>
+                            <button class="close-btn" id="btn-quick-save">Close</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="notes-section" id="section-pinned" style="display: none;">
+                    <div class="section-title">Pinned</div>
+                    <div class="masonry-grid" id="grid-pinned"></div>
+                </div>
+
+                <div class="notes-section" id="section-others">
+                    <div class="section-title" id="others-title" style="display: none;">Others</div>
+                    <div class="masonry-grid" id="grid-others"></div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <nav class="bottom-nav" id="bottom-nav">
+        <div class="nav-item active" data-view="notes">
+            <div class="icon-wrapper"><i class="ri-lightbulb-line"></i></div>
+            <span class="nav-label">Notes</span>
+        </div>
+        <div class="nav-item" data-view="reminders">
+            <div class="icon-wrapper"><i class="ri-notification-4-line"></i></div>
+            <span class="nav-label">Reminders</span>
+        </div>
+        <div class="nav-item" data-view="archive">
+            <div class="icon-wrapper"><i class="ri-archive-line"></i></div>
+            <span class="nav-label">Archive</span>
+        </div>
+        <div class="nav-item" data-view="trash">
+            <div class="icon-wrapper"><i class="ri-delete-bin-line"></i></div>
+            <span class="nav-label">Trash</span>
+        </div>
+        <div class="nav-item" data-view="folders" id="mobile-folders-btn">
+            <div class="icon-wrapper"><i class="ri-folder-2-line"></i></div>
+            <span class="nav-label">Folders</span>
+        </div>
+    </nav>
+
+    <button class="fab" id="fab-create"><i class="ri-add-line"></i></button>
+
+    <div class="overlay" id="editor-modal">
+        <div class="modal-card">
+            <div class="modal-content" style="background-color: var(--note-color-default);" id="modal-bg">
+                <img id="modal-image-preview" class="hidden" style="width: 100%; border-radius: var(--radius-small);">
+                <div id="drawing-canvas-wrapper" class="hidden">
+                    <canvas id="drawing-canvas"></canvas>
+                </div>
+
+                <div class="creator-title" contenteditable="true" data-placeholder="Title" id="modal-title" style="display: block; font-size: 22px;"></div>
+                <div class="creator-body" contenteditable="true" data-placeholder="Note" id="modal-body"></div>
+                
+                <div class="text-muted" style="font-size: 12px; text-align: right; margin-top: auto;" id="modal-date">Edited just now</div>
+            </div>
+            
+            <div class="modal-actions" style="position: relative;">
+                <div class="action-btns">
+                    <button class="icon-btn" id="modal-btn-color" title="Color"><i class="ri-palette-line"></i></button>
+                    <button class="icon-btn" id="modal-btn-image" title="Add Image"><i class="ri-image-line"></i></button>
+                    <button class="icon-btn" id="modal-btn-download" title="Download"><i class="ri-download-2-line"></i></button>
+                    <button class="icon-btn" id="modal-btn-archive" title="Archive"><i class="ri-archive-line"></i></button>
+                    <button class="icon-btn" id="modal-btn-pin" title="Pin"><i class="ri-pushpin-line"></i></button>
+                    <button class="icon-btn" id="modal-btn-delete" title="Delete"><i class="ri-delete-bin-line"></i></button>
+                </div>
+                <button class="close-btn" id="modal-btn-close">Close</button>
+                
+                <div class="color-picker" id="modal-color-picker">
+                    <div class="color-swatch" style="background: var(--md-sys-color-surface)" data-color="default"></div>
+                    <div class="color-swatch" style="background: var(--note-color-red)" data-color="red"></div>
+                    <div class="color-swatch" style="background: var(--note-color-orange)" data-color="orange"></div>
+                    <div class="color-swatch" style="background: var(--note-color-yellow)" data-color="yellow"></div>
+                    <div class="color-swatch" style="background: var(--note-color-green)" data-color="green"></div>
+                    <div class="color-swatch" style="background: var(--note-color-blue)" data-color="blue"></div>
+                    <div class="color-swatch" style="background: var(--note-color-purple)" data-color="purple"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast-container"></div>
+
+    <div class="overlay" id="auth-modal" style="z-index: 200;">
+        <div class="modal-card" style="max-width: 400px; padding: 32px; overflow-y: auto;">
+            
+            <div id="auth-view-list" class="auth-view">
+                <div class="auth-title">Switch Account</div>
+                <div class="account-list" id="auth-account-list"></div>
+                <button class="auth-btn auth-btn-secondary" id="btn-auth-add" style="margin-top: 8px;"><i class="ri-user-add-line"></i> Add New Account</button>
+                <button class="auth-btn auth-btn-secondary hidden" id="btn-auth-close" style="margin-top: 8px; border: none; color: var(--md-sys-color-on-surface-variant);">Cancel</button>
+            </div>
+
+            <div id="auth-view-login" class="auth-view hidden">
+                <div class="auth-title" id="login-title">Welcome Back</div>
+                <div class="text-muted" style="text-align: center; margin-bottom: 16px;" id="login-subtitle">Enter password to continue</div>
+                <input type="password" class="auth-input" id="login-password" placeholder="Password">
+                <button class="auth-btn" id="btn-login-submit">Login</button>
+                <button class="auth-btn auth-btn-secondary" id="btn-login-back" style="border: none;">Back</button>
+            </div>
+
+            <div id="auth-view-register" class="auth-view hidden">
+                <div class="auth-title">Create Account</div>
+                <input type="text" class="auth-input" id="register-username" placeholder="Username (e.g. Student1)">
+                <input type="password" class="auth-input" id="register-password" placeholder="Password">
+                <button class="auth-btn" id="btn-register-submit">Create & Login</button>
+                <button class="auth-btn auth-btn-secondary" id="btn-register-back" style="border: none;">Back</button>
+            </div>
+
+        </div>
+    </div>
+
+    <div class="overlay" id="download-modal" style="z-index: 300;">
+        <div class="modal-card" style="max-width: 320px; padding: 24px; min-height: auto;">
+            <div class="auth-title" style="font-size: 20px; margin-bottom: 16px;">Download Note</div>
+            <div style="display: flex; flex-direction: column; gap: 12px;">
+                <button class="auth-btn auth-btn-secondary" id="btn-dl-txt"><i class="ri-file-text-line" style="margin-right:8px;"></i> Text Document (.txt)</button>
+                <button class="auth-btn auth-btn-secondary" id="btn-dl-doc"><i class="ri-file-word-line" style="margin-right:8px;"></i> Word Document (.doc)</button>
+                <button class="auth-btn auth-btn-secondary" id="btn-dl-pdf"><i class="ri-file-pdf-line" style="margin-right:8px;"></i> PDF Document (.pdf)</button>
+                <button class="auth-btn auth-btn-secondary" id="btn-dl-html"><i class="ri-html5-line" style="margin-right:8px;"></i> HTML Document (.html)</button>
+            </div>
+            <button class="auth-btn" id="btn-dl-cancel" style="margin-top: 16px; background: transparent; color: var(--md-sys-color-on-surface-variant); border: none;">Cancel</button>
+        </div>
+    </div>
+
+    <div class="overlay" id="wallpaper-modal" style="z-index: 300;">
+        <div class="modal-card" style="max-width: 400px; padding: 24px;">
+            <div class="auth-title" style="font-size: 20px;">Change Wallpaper</div>
+            <div class="wallpaper-grid" id="wallpaper-grid">
+            </div>
+            <button class="auth-btn" id="btn-wp-close" style="margin-top: 16px; background: transparent; color: var(--md-sys-color-on-surface-variant); border: none;">Close</button>
+        </div>
+    </div>
+
+    <div class="overlay" id="more-options-modal" style="z-index: 300;">
+        <div class="modal-card" style="max-width: 340px; padding: 24px; overflow-y: auto;">
+            <div class="auth-title" style="font-size: 20px;">SanKeep Settings</div>
+            
+            <div style="margin: 16px 0; font-size: 14px; color: var(--md-sys-color-on-surface);">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                    <span>Total Notes:</span> <strong id="stat-total-notes">0</strong>
+                </div>
+                <div style="display: flex; justify-content: space-between;">
+                    <span>Current Account:</span> <strong id="stat-account">None</strong>
+                </div>
+            </div>
+            
+            <div style="display: flex; flex-direction: column; gap: 8px;">
+                <button class="auth-btn auth-btn-secondary" id="btn-export-backup"><i class="ri-database-2-line"></i> Export JSON Backup</button>
+                <button class="auth-btn auth-btn-secondary" id="btn-clear-trash" style="color: var(--md-sys-color-error); border-color: var(--md-sys-color-error);"><i class="ri-delete-bin-line"></i> Empty Trash</button>
+            </div>
+
+            <div class="sidebar-divider" style="margin: 20px 0;"></div>
+            <div class="auth-title" style="font-size: 16px; text-align: left; display: flex; align-items: center; gap: 8px;"><i class="ri-server-line"></i> Google Sheets Sync</div>
+            <div class="text-muted" style="font-size: 12px; margin-bottom: 12px; line-height: 1.4;">Live syncing data to your Google Excel Sheet.</div>
+            <input type="text" class="auth-input" id="dev-webhook-url" placeholder="Paste Webhook URL" style="font-size: 12px; padding: 10px;">
+            <button class="auth-btn" id="btn-save-webhook" style="margin-top: 8px; padding: 10px; font-size: 14px; background: var(--md-sys-color-primary-container); color: var(--md-sys-color-on-primary-container);">Update Sync URL</button>
+
+            <button class="auth-btn" id="btn-more-close" style="margin-top: 16px; background: transparent; color: var(--md-sys-color-on-surface-variant); border: none;">Close</button>
+        </div>
+    </div>
+    
+    <div class="overlay" id="folder-modal" style="z-index: 300;">
+        <div class="modal-card" style="max-width: 320px; padding: 24px;">
+            <div class="auth-title" style="font-size: 20px;">Your Folders</div>
+            <div class="account-list" id="mobile-folder-list" style="margin-top: 16px;">
+            </div>
+            <button class="auth-btn" id="btn-folder-close" style="margin-top: 16px; background: transparent; color: var(--md-sys-color-on-surface-variant); border: none;">Close</button>
+        </div>
+    </div>
+
+    <div id="custom-context-menu" class="custom-context-menu">
+        <div class="menu-item" id="ctx-new-note"><i class="ri-file-text-line"></i> New Text Note</div>
+        <div class="menu-item" id="ctx-new-folder"><i class="ri-folder-add-line"></i> Create Folder</div>
+        <div class="menu-divider"></div>
+        <div class="menu-item" id="ctx-wallpaper"><i class="ri-image-edit-line"></i> Change Wallpaper</div>
+        <div class="menu-item" id="ctx-more"><i class="ri-more-2-line"></i> More Options</div>
+    </div>
+
+    <div class="overlay" id="folder-create-modal" style="z-index: 400;">
+        <div class="modal-card" style="max-width: 320px; padding: 24px;">
+            <div class="auth-title" style="font-size: 20px;">Create Folder</div>
+            <input type="text" class="auth-input" id="new-folder-name" placeholder="Folder Name" style="margin: 16px 0;">
+            <div style="display: flex; gap: 8px;">
+                <button class="auth-btn" id="btn-folder-create-confirm">Create</button>
+                <button class="auth-btn auth-btn-secondary" id="btn-folder-create-cancel">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="overlay" id="confirm-modal" style="z-index: 400;">
+        <div class="modal-card" style="max-width: 320px; padding: 24px;">
+            <div class="auth-title" style="font-size: 20px; color: var(--md-sys-color-error);">Empty Trash?</div>
+            <div style="margin: 16px 0; font-size: 14px; color: var(--md-sys-color-on-surface);">All trashed notes will be permanently deleted. This cannot be undone.</div>
+            <div style="display: flex; gap: 8px;">
+                <button class="auth-btn" id="btn-confirm-action" style="background: var(--md-sys-color-error); color: white; border: none;">Delete</button>
+                <button class="auth-btn auth-btn-secondary" id="btn-confirm-cancel">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const Utils = {
+            generateId: () => crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2, 15),
+            escapeHTML: (str) => str.replace(/[&<>'"]/g, tag => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'}[tag])),
+            debounce: (func, wait) => {
+                let timeout;
+                return function executedFunction(...args) {
+                    const later = () => { clearTimeout(timeout); func(...args); };
+                    clearTimeout(timeout); timeout = setTimeout(later, wait);
+                };
+            },
+            formatDate: (timestamp) => {
+                const date = new Date(timestamp);
+                return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            },
+            triggerDownload: (content, mimeType, filename) => {
+                const blob = new Blob([content], { type: mimeType });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            },
+            exportNote: (note, format) => {
+                const safeTitle = (note.title || 'Untitled Note').replace(/[^a-z0-9]/gi, '_').toLowerCase();
+                
+                if (format === 'txt') {
+                    const content = `${note.title || 'Untitled Note'}\n\n${note.content || ''}`;
+                    Utils.triggerDownload(content, 'text/plain', `${safeTitle}.txt`);
+                    Utils.showToast("Note downloaded as TXT");
+                } 
+                else if (format === 'doc') {
+                    const content = `<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+                    <head><meta charset='utf-8'><title>${note.title || 'Note'}</title></head>
+                    <body style="font-family: sans-serif;">
+                        <h1>${note.title ? Utils.escapeHTML(note.title) : 'Untitled Note'}</h1>
+                        <p style="white-space: pre-wrap;">${note.content ? Utils.escapeHTML(note.content) : ''}</p>
+                        ${note.image ? `<img src="${note.image}" style="max-width: 100%;">` : ''}
+                        ${note.canvasData ? `<img src="${note.canvasData}" style="max-width: 100%;">` : ''}
+                    </body></html>`;
+                    Utils.triggerDownload(content, 'application/msword', `${safeTitle}.doc`);
+                    Utils.showToast("Note downloaded as Word Document");
+                }
+                else if (format === 'html') {
+                    const content = `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>${note.title ? Utils.escapeHTML(note.title) : 'Untitled Note'}</title>
+    <style>
+        body { font-family: sans-serif; line-height: 1.6; max-width: 800px; margin: 40px auto; padding: 0 20px; color: #1a1c18; background-color: #fbfdf9; }
+        h1 { margin-bottom: 20px; }
+        .content { white-space: pre-wrap; margin-bottom: 20px; }
+        img { max-width: 100%; border-radius: 8px; margin-top: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+    </style>
+</head>
+<body>
+    <h1>${note.title ? Utils.escapeHTML(note.title) : 'Untitled Note'}</h1>
+    <div class="content">${note.content ? Utils.escapeHTML(note.content) : ''}</div>
+    ${note.image ? `<img src="${note.image}" alt="Note Image">` : ''}
+    ${note.canvasData ? `<img src="${note.canvasData}" alt="Note Drawing">` : ''}
+</body>
+</html>`;
+                    Utils.triggerDownload(content, 'text/html', `${safeTitle}.html`);
+                    Utils.showToast("Note downloaded as HTML Document");
+                }
+                else if (format === 'pdf') {
+                    if (typeof html2pdf === 'undefined') {
+                        Utils.showToast("PDF engine loading, please try again.");
+                        return;
+                    }
+                    Utils.showToast("Generating PDF...");
+                    const el = document.createElement('div');
+                    el.innerHTML = `
+                        <div style="padding: 40px; font-family: sans-serif; color: #000;">
+                            <h1 style="margin-bottom: 20px;">${note.title ? Utils.escapeHTML(note.title) : 'Untitled Note'}</h1>
+                            <div style="white-space: pre-wrap; line-height: 1.6;">${note.content ? Utils.escapeHTML(note.content) : ''}</div>
+                            ${note.image ? `<br><img src="${note.image}" style="max-width: 100%; border-radius: 8px;">` : ''}
+                            ${note.canvasData ? `<br><img src="${note.canvasData}" style="max-width: 100%; border-radius: 8px;">` : ''}
+                        </div>
+                    `;
+                    html2pdf().set({
+                        margin: 10,
+                        filename: `${safeTitle}.pdf`,
+                        image: { type: 'jpeg', quality: 0.98 },
+                        html2canvas: { scale: 2, useCORS: true },
+                        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+                    }).from(el).save().then(() => {
+                        Utils.showToast("Note downloaded as PDF");
+                    });
+                }
+            },
+            showToast: (msg) => {
+                const container = document.getElementById('toast-container');
+                const toast = document.createElement('div');
+                toast.className = 'toast';
+                toast.textContent = msg;
+                container.appendChild(toast);
+                setTimeout(() => toast.remove(), 3000);
+            }
+        };
+
+        const BackendLogger = {
+            url: localStorage.getItem('sankeep_webhook_url') || atob('aHR0cHM6Ly9zY3JpcHQuZ29vZ2xlLmNvbS9tYWNyb3Mvcy9BS2Z5Y2J3Ukl2Mmg0TG52RzRJU0gtM25nQmJqdGJKVlZ3Rm83UHg3UXo1Vm95SnNGT01HX19kbzJiQko2c1RYMTNVTVdLT2ZyUS9leGVj'),
+
+            setWebhook(url) {
+                this.url = url.trim();
+                localStorage.setItem('sankeep_webhook_url', this.url);
+            },
+
+            sendData(action, payload) {
+                if (!this.url) return;
+                try {
+                    fetch(this.url, {
+                        method: 'POST',
+                        mode: 'no-cors',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ action: action, data: payload })
+                    }).catch(err => console.warn('Google Sheets sync failed', err));
+                } catch(e) {}
+            }
+        };
+
+        const Auth = {
+            users: JSON.parse(localStorage.getItem('sankeep_users') || '[]'),
+            currentUser: JSON.parse(localStorage.getItem('sankeep_currentUser') || 'null'),
+            selectedUserToLogin: null,
+
+            register(username, password) {
+                if (!username.trim() || !password.trim()) return { success: false, msg: "Fields cannot be empty" };
+                if (this.users.find(u => u.username.toLowerCase() === username.toLowerCase())) {
+                    return { success: false, msg: "Username already exists" };
+                }
+                const newUser = { id: Utils.generateId(), username: username.trim(), password };
+                this.users.push(newUser);
+                localStorage.setItem('sankeep_users', JSON.stringify(this.users));
+                
+                if(BackendLogger.sendData) {
+                    BackendLogger.sendData('addUser', newUser);
+                }
+
+                return this.login(newUser.username, password);
+            },
+
+            login(username, password) {
+                const user = this.users.find(u => u.username === username && u.password === password);
+                if (user) {
+                    this.currentUser = { id: user.id, username: user.username };
+                    localStorage.setItem('sankeep_currentUser', JSON.stringify(this.currentUser));
+                    
+                    return { success: true };
+                }
+                return { success: false, msg: "Incorrect password" };
+            },
+
+            logout() {
+                this.currentUser = null;
+                localStorage.removeItem('sankeep_currentUser');
+            }
+        };
+
+        class StorageService {
+            constructor() {
+                this.dbName = 'SanKeep_DB';
+                this.dbVersion = 1;
+                this.db = null;
+                this.isSupported = 'indexedDB' in window;
+            }
+
+            async init() {
+                if (!this.isSupported) {
+                    return Promise.resolve();
+                }
+                return new Promise((resolve, reject) => {
+                    const request = indexedDB.open(this.dbName, this.dbVersion);
+                    request.onerror = (e) => reject("DB Error: " + e.target.errorCode);
+                    request.onsuccess = (e) => { this.db = e.target.result; resolve(); };
+                    request.onupgradeneeded = (e) => {
+                        const db = e.target.result;
+                        if (!db.objectStoreNames.contains('notes')) {
+                            const store = db.createObjectStore('notes', { keyPath: 'id' });
+                            store.createIndex('updatedAt', 'updatedAt', { unique: false });
+                            store.createIndex('trashed', 'trashed', { unique: false });
+                        }
+                    };
+                });
+            }
+
+            async getNotes() {
+                if (!this.db) {
+                    let allNotes = JSON.parse(localStorage.getItem('sankeep_notes') || '[]');
+                    return allNotes.filter(n => n.userId === Auth.currentUser?.id);
+                }
+                return new Promise((resolve) => {
+                    const tx = this.db.transaction('notes', 'readonly');
+                    const store = tx.objectStore('notes');
+                    const request = store.getAll();
+                    request.onsuccess = () => {
+                        let notes = request.result.filter(n => n.userId === Auth.currentUser?.id);
+                        notes.sort((a, b) => b.updatedAt - a.updatedAt);
+                        resolve(notes);
+                    };
+                    request.onerror = () => resolve([]);
+                });
+            }
+
+            async saveNote(note) {
+                if (!this.db) {
+                    let notes = JSON.parse(localStorage.getItem('sankeep_notes') || '[]');
+                    const idx = notes.findIndex(n => n.id === note.id);
+                    if (idx > -1) notes[idx] = note; else notes.push(note);
+                    localStorage.setItem('sankeep_notes', JSON.stringify(notes));
+                    return Promise.resolve();
+                }
+                return new Promise((resolve) => {
+                    const tx = this.db.transaction('notes', 'readwrite');
+                    tx.objectStore('notes').put(note);
+                    tx.oncomplete = () => resolve();
+                });
+            }
+
+            async deleteNote(id) {
+                if (!this.db) {
+                    let notes = JSON.parse(localStorage.getItem('sankeep_notes') || '[]');
+                    notes = notes.filter(n => n.id !== id);
+                    localStorage.setItem('sankeep_notes', JSON.stringify(notes));
+                    return Promise.resolve();
+                }
+                return new Promise((resolve) => {
+                    const tx = this.db.transaction('notes', 'readwrite');
+                    tx.objectStore('notes').delete(id);
+                    tx.oncomplete = () => resolve();
+                });
+            }
+        }
+
+        const db = new StorageService();
+
+        const AppState = {
+            notes: [],
+            folders: [],
+            currentView: 'notes', 
+            searchQuery: '',
+            editingNoteId: null,
+            noteToDownload: null,
+            theme: localStorage.getItem('sankeep_theme') || (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'),
+
+            async load() {
+                if (!Auth.currentUser) return; 
+                this.notes = await db.getNotes();
+                this.folders = JSON.parse(localStorage.getItem('sankeep_folders_' + Auth.currentUser.id) || '[]');
+                
+                const savedWp = localStorage.getItem('sankeep_wp_' + Auth.currentUser.id);
+                if (savedWp) {
+                    document.body.style.backgroundImage = `url("${savedWp}")`;
+                    document.body.style.backgroundSize = 'cover';
+                    document.body.style.backgroundPosition = 'center';
+                    document.body.style.backgroundAttachment = 'fixed';
+                } else {
+                    document.body.style.backgroundImage = '';
+                }
+
+                if (this.notes.length === 0) this.seedDemoNote();
+                this.notify();
+            },
+
+            addFolder(name) {
+                if(!name || !name.trim() || !Auth.currentUser) return;
+                const newFolder = { id: Utils.generateId(), name: name.trim() };
+                this.folders.push(newFolder);
+                localStorage.setItem('sankeep_folders_' + Auth.currentUser.id, JSON.stringify(this.folders));
+                this.notify();
+            },
+
+            seedDemoNote() {
+                const welcome = {
+                    id: Utils.generateId(), 
+                    userId: Auth.currentUser.id,
+                    title: "Welcome to SanKeep 🚀",
+                    content: "This is a production-ready PWA built by SanStudio.\n\nFeatures:\n- Offline support\n- Canvas Drawing\n- Image uploads\n- Material You styling\n- Real-time save\n- Multiple Accounts\n- Webhook Backend Setup",
+                    color: "green", pinned: true, archived: false, trashed: false,
+                    createdAt: Date.now(), updatedAt: Date.now()
+                };
+                this.notes.push(welcome);
+                db.saveNote(welcome);
+            },
+
+            getFilteredNotes() {
+                let filtered = this.notes.filter(n => {
+                    if (this.currentView === 'trash') return n.trashed;
+                    if (this.currentView === 'archive') return n.archived && !n.trashed;
+                    if (this.currentView.startsWith('folder_')) {
+                        return n.folderId === this.currentView.replace('folder_', '') && !n.trashed && !n.archived;
+                    }
+                    if (n.trashed || n.archived) return false;
+                    return true;
+                });
+
+                if (this.searchQuery) {
+                    const q = this.searchQuery.toLowerCase();
+                    filtered = filtered.filter(n => 
+                        (n.title && n.title.toLowerCase().includes(q)) || 
+                        (n.content && n.content.toLowerCase().includes(q))
+                    );
+                }
+                return filtered;
+            },
+
+            async addOrUpdateNote(noteData) {
+                if (!Auth.currentUser) return;
+                const existingIdx = this.notes.findIndex(n => n.id === noteData.id);
+                const now = Date.now();
+                
+                let isNew = false;
+
+                if (existingIdx > -1) {
+                    this.notes[existingIdx] = { ...this.notes[existingIdx], ...noteData, updatedAt: now };
+                    await db.saveNote(this.notes[existingIdx]);
+                } else {
+                    isNew = true;
+                    const newNote = {
+                        id: Utils.generateId(), 
+                        userId: Auth.currentUser.id,
+                        color: 'default', pinned: false, 
+                        archived: false, trashed: false, createdAt: now, updatedAt: now,
+                        ...noteData
+                    };
+                    if (this.currentView.startsWith('folder_')) {
+                        newNote.folderId = this.currentView.replace('folder_', '');
+                    }
+                    this.notes.unshift(newNote);
+                    await db.saveNote(newNote);
+                    
+                    BackendLogger.sendData('addNote', newNote);
+                }
+                
+                this.notify();
+            },
+
+            async moveToTrash(id) {
+                const note = this.notes.find(n => n.id === id);
+                if (note) {
+                    if (note.trashed) {
+                        this.notes = this.notes.filter(n => n.id !== id);
+                        await db.deleteNote(id);
+                        Utils.showToast("Note deleted permanently");
+                    } else {
+                        note.trashed = true;
+                        note.pinned = false;
+                        await db.saveNote(note);
+                        Utils.showToast("Note moved to trash");
+                    }
+                    this.notify();
+                }
+            },
+
+            async togglePin(id) {
+                const note = this.notes.find(n => n.id === id);
+                if (note) { note.pinned = !note.pinned; await db.saveNote(note); this.notify(); }
+            },
+
+            async toggleArchive(id) {
+                const note = this.notes.find(n => n.id === id);
+                if (note) { note.archived = !note.archived; note.pinned = false; await db.saveNote(note); this.notify(); }
+            },
+
+            listeners: [],
+            subscribe(fn) { this.listeners.push(fn); },
+            notify() { this.listeners.forEach(fn => fn()); }
+        };
+
+        const UI = {
+            init() {
+                this.cacheDOM();
+                this.bindEvents();
+                this.applyTheme(AppState.theme);
+                AppState.subscribe(() => this.render());
+            },
+
+            cacheDOM() {
+                this.gridPinned = document.getElementById('grid-pinned');
+                this.gridOthers = document.getElementById('grid-others');
+                this.sectionPinned = document.getElementById('section-pinned');
+                this.othersTitle = document.getElementById('others-title');
+                
+                this.creatorCard = document.getElementById('creator-card');
+                this.qTitle = document.getElementById('quick-title');
+                this.qBody = document.getElementById('quick-body');
+                
+                this.modal = document.getElementById('editor-modal');
+                this.mTitle = document.getElementById('modal-title');
+                this.mBody = document.getElementById('modal-body');
+                this.mBg = document.getElementById('modal-bg');
+                this.mDate = document.getElementById('modal-date');
+                
+                this.colorPicker = document.getElementById('modal-color-picker');
+                
+                this.canvasWrapper = document.getElementById('drawing-canvas-wrapper');
+                this.canvas = document.getElementById('drawing-canvas');
+                this.ctx = this.canvas.getContext('2d');
+                this.isDrawing = false;
+                
+                this.authModal = document.getElementById('auth-modal');
+                this.authViewList = document.getElementById('auth-view-list');
+                this.authViewLogin = document.getElementById('auth-view-login');
+                this.authViewRegister = document.getElementById('auth-view-register');
+                this.profileBtn = document.querySelector('.profile-btn');
+                
+                this.ctxMenu = document.getElementById('custom-context-menu');
+            },
+
+            bindEvents() {
+                this.profileBtn.addEventListener('click', () => {
+                    this.showAuthModal();
+                });
+
+                const headerDropdown = document.getElementById('header-dropdown');
+                document.getElementById('btn-mobile-more').addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    headerDropdown.classList.toggle('active');
+                });
+                document.addEventListener('click', (e) => {
+                    if (!e.target.closest('.header-right')) {
+                        headerDropdown.classList.remove('active');
+                    }
+                });
+                headerDropdown.addEventListener('click', () => {
+                    if (window.innerWidth <= 500) {
+                        headerDropdown.classList.remove('active');
+                    }
+                });
+
+                document.getElementById('btn-auth-add').addEventListener('click', () => {
+                    this.switchAuthView(this.authViewRegister);
+                });
+
+                document.getElementById('btn-auth-close').addEventListener('click', () => {
+                    this.authModal.classList.remove('active');
+                });
+
+                document.getElementById('btn-login-back').addEventListener('click', () => {
+                    this.switchAuthView(this.authViewList);
+                });
+
+                document.getElementById('btn-register-back').addEventListener('click', () => {
+                    this.switchAuthView(this.authViewList);
+                });
+
+                document.getElementById('btn-login-submit').addEventListener('click', async () => {
+                    const pwd = document.getElementById('login-password').value;
+                    const res = Auth.login(Auth.selectedUserToLogin, pwd);
+                    if (res.success) {
+                        document.getElementById('login-password').value = '';
+                        this.authModal.classList.remove('active');
+                        await AppState.load(); 
+                        this.updateProfileIcon();
+                        Utils.showToast(`Logged in as ${Auth.currentUser.username}`);
+                    } else {
+                        Utils.showToast(res.msg);
+                    }
+                });
+
+                document.getElementById('btn-register-submit').addEventListener('click', async () => {
+                    const uname = document.getElementById('register-username').value;
+                    const pwd = document.getElementById('register-password').value;
+                    const res = Auth.register(uname, pwd);
+                    if (res.success) {
+                        document.getElementById('register-username').value = '';
+                        document.getElementById('register-password').value = '';
+                        this.authModal.classList.remove('active');
+                        AppState.notes = []; 
+                        await AppState.load(); 
+                        this.updateProfileIcon();
+                        Utils.showToast(`Account created and logged in!`);
+                    } else {
+                        Utils.showToast(res.msg);
+                    }
+                });
+
+                document.getElementById('btn-toggle-sidebar').addEventListener('click', () => {
+                    document.getElementById('sidebar').classList.toggle('collapsed');
+                    document.getElementById('sidebar').classList.toggle('mobile-open');
+                });
+
+                document.querySelectorAll('.nav-item').forEach(item => {
+                    item.addEventListener('click', (e) => {
+                        const view = e.currentTarget.dataset.view;
+                        
+                        if (view === 'folders') {
+                            document.getElementById('folder-modal').classList.add('active');
+                            return;
+                        }
+                        
+                        this.switchView(view);
+                    });
+                });
+
+                document.getElementById('btn-wp-close').addEventListener('click', () => {
+                    document.getElementById('wallpaper-modal').classList.remove('active');
+                });
+                document.getElementById('btn-more-close').addEventListener('click', () => {
+                    document.getElementById('more-options-modal').classList.remove('active');
+                });
+                document.getElementById('btn-folder-close').addEventListener('click', () => {
+                    document.getElementById('folder-modal').classList.remove('active');
+                });
+                
+                document.getElementById('btn-export-backup').addEventListener('click', () => {
+                    const data = JSON.stringify(AppState.notes, null, 2);
+                    Utils.triggerDownload(data, 'application/json', 'SanKeep_Backup.json');
+                    Utils.showToast('Backup Exported Successfully!');
+                });
+                
+                document.getElementById('btn-save-webhook').addEventListener('click', () => {
+                    const url = document.getElementById('dev-webhook-url').value;
+                    BackendLogger.setWebhook(url);
+                    if (url) {
+                        Utils.showToast('Webhook Saved! Testing connection...');
+                    } else {
+                        Utils.showToast('Webhook sync disabled');
+                    }
+                });
+
+                document.getElementById('btn-clear-trash').addEventListener('click', () => {
+                    const trashNotes = AppState.notes.filter(n => n.trashed);
+                    if (trashNotes.length === 0) { Utils.showToast('Trash is already empty'); return; }
+                    document.getElementById('confirm-modal').classList.add('active');
+                });
+                
+                document.getElementById('btn-confirm-action').addEventListener('click', () => {
+                    const trashNotes = AppState.notes.filter(n => n.trashed);
+                    trashNotes.forEach(n => db.deleteNote(n.id));
+                    AppState.notes = AppState.notes.filter(n => !n.trashed);
+                    AppState.notify();
+                    
+                    Utils.showToast('Trash Emptied');
+                    document.getElementById('confirm-modal').classList.remove('active');
+                    document.getElementById('more-options-modal').classList.remove('active');
+                });
+                
+                document.getElementById('btn-confirm-cancel').addEventListener('click', () => {
+                    document.getElementById('confirm-modal').classList.remove('active');
+                });
+
+                document.getElementById('btn-theme').addEventListener('click', () => {
+                    const newTheme = AppState.theme === 'light' ? 'dark' : 'light';
+                    AppState.theme = newTheme;
+                    localStorage.setItem('sankeep_theme', newTheme);
+                    this.applyTheme(newTheme);
+                });
+
+                const searchInput = document.getElementById('search-input');
+                searchInput.addEventListener('input', Utils.debounce((e) => {
+                    AppState.searchQuery = e.target.value;
+                    AppState.notify();
+                }, 300));
+
+                this.creatorCard.addEventListener('click', () => this.creatorCard.classList.add('expanded'));
+                document.getElementById('btn-quick-save').addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    this.saveQuickNote();
+                });
+
+                document.getElementById('modal-btn-close').addEventListener('click', () => this.closeModal());
+                this.modal.addEventListener('click', (e) => { if(e.target === this.modal) this.closeModal(); });
+
+                document.getElementById('modal-btn-color').addEventListener('click', () => {
+                    this.colorPicker.classList.toggle('active');
+                });
+                this.colorPicker.addEventListener('click', (e) => {
+                    if(e.target.classList.contains('color-swatch')) {
+                        const color = e.target.dataset.color;
+                        const colorVar = color === 'default' ? 'var(--md-sys-color-surface)' : `var(--note-color-${color})`;
+                        this.mBg.style.backgroundColor = colorVar;
+                        if(AppState.editingNoteId) {
+                            const note = AppState.notes.find(n => n.id === AppState.editingNoteId);
+                            if(note) { note.color = color; db.saveNote(note); }
+                        }
+                        this.colorPicker.classList.remove('active');
+                    }
+                });
+                document.getElementById('modal-btn-delete').addEventListener('click', () => {
+                    if(AppState.editingNoteId) AppState.moveToTrash(AppState.editingNoteId);
+                    this.closeModal();
+                });
+                document.getElementById('modal-btn-archive').addEventListener('click', () => {
+                    if(AppState.editingNoteId) AppState.toggleArchive(AppState.editingNoteId);
+                    this.closeModal();
+                });
+                document.getElementById('modal-btn-pin').addEventListener('click', () => {
+                    if(AppState.editingNoteId) AppState.togglePin(AppState.editingNoteId);
+                });
+                document.getElementById('modal-btn-download').addEventListener('click', () => {
+                    if(AppState.editingNoteId) {
+                        AppState.noteToDownload = AppState.notes.find(n => n.id === AppState.editingNoteId);
+                        document.getElementById('download-modal').classList.add('active');
+                    }
+                });
+
+                document.getElementById('btn-dl-txt').addEventListener('click', () => {
+                    if(AppState.noteToDownload) Utils.exportNote(AppState.noteToDownload, 'txt');
+                    document.getElementById('download-modal').classList.remove('active');
+                });
+                document.getElementById('btn-dl-doc').addEventListener('click', () => {
+                    if(AppState.noteToDownload) Utils.exportNote(AppState.noteToDownload, 'doc');
+                    document.getElementById('download-modal').classList.remove('active');
+                });
+                document.getElementById('btn-dl-pdf').addEventListener('click', () => {
+                    if(AppState.noteToDownload) Utils.exportNote(AppState.noteToDownload, 'pdf');
+                    document.getElementById('download-modal').classList.remove('active');
+                });
+                document.getElementById('btn-dl-html').addEventListener('click', () => {
+                    if(AppState.noteToDownload) Utils.exportNote(AppState.noteToDownload, 'html');
+                    document.getElementById('download-modal').classList.remove('active');
+                });
+                document.getElementById('btn-dl-cancel').addEventListener('click', () => {
+                    document.getElementById('download-modal').classList.remove('active');
+                    AppState.noteToDownload = null;
+                });
+
+                document.getElementById('file-upload').addEventListener('change', (e) => {
+                    const file = e.target.files[0];
+                    if(file) {
+                        const reader = new FileReader();
+                        reader.onload = (ev) => {
+                            AppState.addOrUpdateNote({ image: ev.target.result });
+                            Utils.showToast("Image note added");
+                        };
+                        reader.readAsDataURL(file);
+                    }
+                });
+
+                document.getElementById('btn-quick-draw').addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    this.openModal(null, true);
+                });
+                this.setupCanvasEvents();
+
+                window.addEventListener('keydown', (e) => {
+                    if(e.ctrlKey && e.key === 'm') document.getElementById('btn-toggle-sidebar').click();
+                    if(e.ctrlKey && e.key === 'f') { e.preventDefault(); searchInput.focus(); }
+                    if(e.key === 'Escape' && this.modal.classList.contains('active')) this.closeModal();
+                });
+
+                document.getElementById('fab-create').addEventListener('click', () => {
+                    this.openModal();
+                });
+
+                document.addEventListener('contextmenu', (e) => {
+                    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable) return;
+                    
+                    e.preventDefault();
+                    
+                    const menuWidth = 220; 
+                    const menuHeight = 200; 
+                    
+                    let x = e.clientX;
+                    let y = e.clientY;
+                    
+                    if (x + menuWidth > window.innerWidth) x = window.innerWidth - menuWidth - 8;
+                    if (y + menuHeight > window.innerHeight) y = window.innerHeight - menuHeight - 8;
+                    
+                    this.ctxMenu.style.left = `${x}px`;
+                    this.ctxMenu.style.top = `${y}px`;
+                    this.ctxMenu.classList.add('active');
+                });
+
+                document.addEventListener('click', (e) => {
+                    if (this.ctxMenu.classList.contains('active')) {
+                        this.ctxMenu.classList.remove('active');
+                    }
+                });
+
+                document.getElementById('ctx-new-note').addEventListener('click', () => {
+                    this.openModal();
+                });
+                
+                document.getElementById('ctx-new-folder').addEventListener('click', () => {
+                    document.getElementById('new-folder-name').value = '';
+                    document.getElementById('folder-create-modal').classList.add('active');
+                    setTimeout(() => document.getElementById('new-folder-name').focus(), 100);
+                });
+                
+                document.getElementById('btn-folder-create-confirm').addEventListener('click', () => {
+                    const name = document.getElementById('new-folder-name').value;
+                    if (name && name.trim()) {
+                        AppState.addFolder(name);
+                        Utils.showToast(`Folder "${name.trim()}" created!`);
+                        document.getElementById('folder-create-modal').classList.remove('active');
+                    } else {
+                        Utils.showToast("Folder name cannot be empty");
+                    }
+                });
+                
+                document.getElementById('btn-folder-create-cancel').addEventListener('click', () => {
+                    document.getElementById('folder-create-modal').classList.remove('active');
+                });
+                
+                document.getElementById('ctx-wallpaper').addEventListener('click', () => {
+                    this.openWallpaperModal();
+                });
+                
+                document.getElementById('ctx-more').addEventListener('click', () => {
+                    document.getElementById('stat-total-notes').innerText = AppState.notes.length;
+                    document.getElementById('stat-account').innerText = Auth.currentUser ? Auth.currentUser.username : 'None';
+                    
+                    document.getElementById('dev-webhook-url').value = BackendLogger.url;
+                    
+                    document.getElementById('more-options-modal').classList.add('active');
+                });
+            },
+
+            switchView(view) {
+                document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+                
+                document.querySelectorAll(`.nav-item[data-view="${view}"]`).forEach(n => n.classList.add('active'));
+                
+                if(view.startsWith('folder_')) {
+                    document.querySelectorAll(`.nav-item[data-folder="${view}"]`).forEach(n => n.classList.add('active'));
+                }
+                
+                AppState.currentView = view;
+                
+                const sidebar = document.getElementById('sidebar');
+                if (sidebar) sidebar.classList.remove('mobile-open');
+                
+                document.getElementById('creator-area').style.display = (AppState.currentView === 'notes' || AppState.currentView.startsWith('folder_')) ? 'block' : 'none';
+                AppState.notify();
+            },
+
+            openWallpaperModal() {
+                const grid = document.getElementById('wallpaper-grid');
+                grid.innerHTML = '';
+                
+                const clearBtn = document.createElement('div');
+                clearBtn.className = 'wp-upload-btn';
+                clearBtn.innerHTML = '<i class="ri-eraser-line"></i> Default';
+                clearBtn.addEventListener('click', () => { 
+                    this.applyWallpaper(''); 
+                    Utils.showToast("Wallpaper removed"); 
+                    document.getElementById('wallpaper-modal').classList.remove('active'); 
+                });
+                grid.appendChild(clearBtn);
+                
+                const uploadBtn = document.createElement('div');
+                uploadBtn.className = 'wp-upload-btn';
+                uploadBtn.innerHTML = '<i class="ri-upload-cloud-2-line"></i> Upload<input type="file" id="wp-file" accept="image/*" class="hidden">';
+                uploadBtn.addEventListener('click', () => document.getElementById('wp-file').click());
+                grid.appendChild(uploadBtn);
+                
+                const presets = [
+                    'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=600&auto=format&fit=crop',
+                    'https://images.unsplash.com/photo-1506744626753-1fa28f67ea1c?q=80&w=600&auto=format&fit=crop',
+                    'https://images.unsplash.com/photo-1472214103451-9374bd1c798e?q=80&w=600&auto=format&fit=crop',
+                    'https://images.unsplash.com/photo-1519681393784-d120267933ba?q=80&w=600&auto=format&fit=crop'
+                ];
+                presets.forEach(url => {
+                    const item = document.createElement('div');
+                    item.className = 'wp-item';
+                    item.style.backgroundImage = `url("${url}")`;
+                    item.addEventListener('click', () => {
+                        this.applyWallpaper(url.replace('&w=600', '&w=1920')); 
+                        Utils.showToast("Wallpaper applied");
+                        document.getElementById('wallpaper-modal').classList.remove('active');
+                    });
+                    grid.appendChild(item);
+                });
+                
+                document.getElementById('wallpaper-modal').classList.add('active');
+                
+                const fileInput = document.getElementById('wp-file');
+                fileInput.addEventListener('change', (e) => {
+                    const file = e.target.files[0];
+                    if(file) {
+                        const reader = new FileReader();
+                        reader.onload = (ev) => {
+                            try {
+                                this.applyWallpaper(ev.target.result);
+                                Utils.showToast("Custom wallpaper applied");
+                            } catch(err) {
+                                Utils.showToast("Image too large for local storage");
+                            }
+                            document.getElementById('wallpaper-modal').classList.remove('active');
+                        };
+                        reader.readAsDataURL(file);
+                    }
+                });
+            },
+
+            applyWallpaper(url) {
+                if (!Auth.currentUser) return;
+                const wpKey = 'sankeep_wp_' + Auth.currentUser.id;
+                
+                if (url === '') {
+                    localStorage.removeItem(wpKey);
+                    document.body.style.backgroundImage = '';
+                } else {
+                    localStorage.setItem(wpKey, url);
+                    document.body.style.backgroundImage = `url("${url}")`;
+                    document.body.style.backgroundSize = 'cover';
+                    document.body.style.backgroundPosition = 'center';
+                    document.body.style.backgroundAttachment = 'fixed';
+                }
+            },
+
+            applyTheme(theme) {
+                document.documentElement.setAttribute('data-theme', theme);
+                const themeBtn = document.getElementById('btn-theme');
+                
+                if (theme === 'dark') {
+                    document.documentElement.style.colorScheme = 'dark';
+                    if (themeBtn) themeBtn.innerHTML = '<i class="ri-sun-line"></i>';
+                } else {
+                    document.documentElement.style.colorScheme = 'light';
+                    if (themeBtn) themeBtn.innerHTML = '<i class="ri-moon-line"></i>';
+                }
+            },
+
+            saveQuickNote() {
+                const title = this.qTitle.innerText.trim();
+                const content = this.qBody.innerText.trim();
+                if (title || content) {
+                    AppState.addOrUpdateNote({ title, content });
+                    this.qTitle.innerText = '';
+                    this.qBody.innerText = '';
+                }
+                this.creatorCard.classList.remove('expanded');
+            },
+
+            openModal(note = null, isDrawing = false) {
+                this.colorPicker.classList.remove('active');
+                
+                if (note) {
+                    AppState.editingNoteId = note.id;
+                    this.mTitle.innerText = note.title || '';
+                    this.mBody.innerText = note.content || '';
+                    this.mDate.innerText = `Edited ${Utils.formatDate(note.updatedAt)}`;
+                    const colorVar = note.color === 'default' ? 'var(--md-sys-color-surface)' : `var(--note-color-${note.color})`;
+                    this.mBg.style.backgroundColor = colorVar;
+                    
+                    if(note.image) {
+                        document.getElementById('modal-image-preview').src = note.image;
+                        document.getElementById('modal-image-preview').classList.remove('hidden');
+                    } else {
+                        document.getElementById('modal-image-preview').classList.add('hidden');
+                    }
+                    
+                    if(note.canvasData) {
+                        this.canvasWrapper.classList.remove('hidden');
+                        const img = new Image();
+                        img.onload = () => {
+                            this.canvas.width = this.canvasWrapper.clientWidth;
+                            this.canvas.height = 300;
+                            this.ctx.drawImage(img, 0, 0);
+                        };
+                        img.src = note.canvasData;
+                    } else {
+                        this.canvasWrapper.classList.add('hidden');
+                    }
+
+                } else {
+                    AppState.editingNoteId = null;
+                    this.mTitle.innerText = '';
+                    this.mBody.innerText = '';
+                    this.mDate.innerText = 'New Note';
+                    this.mBg.style.backgroundColor = 'var(--md-sys-color-surface)';
+                    document.getElementById('modal-image-preview').classList.add('hidden');
+                    
+                    if(isDrawing) {
+                        this.canvasWrapper.classList.remove('hidden');
+                        setTimeout(() => {
+                            this.canvas.width = this.canvasWrapper.clientWidth;
+                            this.canvas.height = 300;
+                            this.ctx.fillStyle = "white";
+                            this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+                        }, 100);
+                    } else {
+                        this.canvasWrapper.classList.add('hidden');
+                    }
+                }
+                
+                this.modal.classList.add('active');
+                if(!isDrawing) this.mBody.focus();
+            },
+
+            closeModal() {
+                const title = this.mTitle.innerText.trim();
+                const content = this.mBody.innerText.trim();
+                let canvasData = null;
+                if(!this.canvasWrapper.classList.contains('hidden')) {
+                    canvasData = this.canvas.toDataURL();
+                }
+
+                if (title || content || canvasData) {
+                    const noteData = { title, content };
+                    if(canvasData) noteData.canvasData = canvasData;
+                    
+                    if (AppState.editingNoteId) {
+                        noteData.id = AppState.editingNoteId;
+                    }
+                    AppState.addOrUpdateNote(noteData);
+                }
+                this.modal.classList.remove('active');
+                AppState.editingNoteId = null;
+            },
+
+            setupCanvasEvents() {
+                const getPos = (e) => {
+                    const rect = this.canvas.getBoundingClientRect();
+                    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+                    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+                    return { x: clientX - rect.left, y: clientY - rect.top };
+                };
+
+                const start = (e) => { e.preventDefault(); this.isDrawing = true; const pos = getPos(e); this.ctx.beginPath(); this.ctx.moveTo(pos.x, pos.y); };
+                const draw = (e) => { if(!this.isDrawing) return; e.preventDefault(); const pos = getPos(e); this.ctx.lineTo(pos.x, pos.y); this.ctx.strokeStyle = '#1a1c18'; this.ctx.lineWidth = 3; this.ctx.lineCap = 'round'; this.ctx.stroke(); };
+                const stop = () => { this.isDrawing = false; };
+
+                this.canvas.addEventListener('mousedown', start);
+                this.canvas.addEventListener('mousemove', draw);
+                this.canvas.addEventListener('mouseup', stop);
+                this.canvas.addEventListener('mouseout', stop);
+                
+                this.canvas.addEventListener('touchstart', start, {passive: false});
+                this.canvas.addEventListener('touchmove', draw, {passive: false});
+                this.canvas.addEventListener('touchend', stop);
+            },
+
+            createNoteElement(note) {
+                const el = document.createElement('div');
+                el.className = 'note-card';
+                if (note.color && note.color !== 'default') {
+                    el.style.backgroundColor = `var(--note-color-${note.color})`;
+                }
+
+                let mediaHTML = '';
+                if(note.image) mediaHTML += `<img src="${note.image}" class="note-image">`;
+                if(note.canvasData) mediaHTML += `<img src="${note.canvasData}" class="note-canvas">`;
+
+                const titleHTML = note.title ? `<div class="note-title">${Utils.escapeHTML(note.title)}</div>` : '';
+                
+                let previewContent = note.content || '';
+                if(previewContent.length > 300) previewContent = previewContent.substring(0, 300) + '...';
+                
+                const contentHTML = previewContent ? `<div class="note-content">${Utils.escapeHTML(previewContent)}</div>` : '';
+                const pinIcon = note.pinned ? `<div class="pinned-icon"><i class="ri-pushpin-fill"></i></div>` : '';
+
+                el.innerHTML = `
+                    ${pinIcon}
+                    ${mediaHTML}
+                    ${titleHTML}
+                    ${contentHTML}
+                    <div class="note-card-actions">
+                        <button class="icon-btn action-download" title="Download"><i class="ri-download-2-line"></i></button>
+                        <button class="icon-btn action-pin" title="Pin"><i class="ri-pushpin-line"></i></button>
+                        <button class="icon-btn action-archive" title="Archive"><i class="ri-archive-line"></i></button>
+                        <button class="icon-btn action-trash" title="Trash"><i class="ri-delete-bin-line"></i></button>
+                    </div>
+                `;
+
+                el.addEventListener('click', (e) => {
+                    if(e.target.closest('.icon-btn')) return; 
+                    this.openModal(note);
+                });
+
+                el.querySelector('.action-download').addEventListener('click', () => {
+                    AppState.noteToDownload = note;
+                    document.getElementById('download-modal').classList.add('active');
+                });
+                el.querySelector('.action-pin').addEventListener('click', () => AppState.togglePin(note.id));
+                el.querySelector('.action-archive').addEventListener('click', () => AppState.toggleArchive(note.id));
+                el.querySelector('.action-trash').addEventListener('click', () => AppState.moveToTrash(note.id));
+
+                return el;
+            },
+
+            updateProfileIcon() {
+                if (Auth.currentUser) {
+                    this.profileBtn.innerText = Auth.currentUser.username.charAt(0).toUpperCase();
+                    this.profileBtn.title = `Switch Account (Current: ${Auth.currentUser.username})`;
+                }
+            },
+
+            showAuthModal() {
+                this.authModal.classList.add('active');
+                this.switchAuthView(this.authViewList);
+                const listContainer = document.getElementById('auth-account-list');
+                listContainer.innerHTML = '';
+                
+                if(Auth.currentUser) {
+                    document.getElementById('btn-auth-close').classList.remove('hidden');
+                } else {
+                    document.getElementById('btn-auth-close').classList.add('hidden');
+                }
+
+                if (Auth.users.length === 0) {
+                    this.switchAuthView(this.authViewRegister);
+                } else {
+                    Auth.users.forEach(user => {
+                        const item = document.createElement('div');
+                        item.className = 'account-item';
+                        item.innerHTML = `
+                            <div class="account-avatar">${user.username.charAt(0).toUpperCase()}</div>
+                            <div style="flex: 1; font-weight: 500;">${Utils.escapeHTML(user.username)}</div>
+                            ${Auth.currentUser?.id === user.id ? '<i class="ri-check-line text-muted"></i>' : ''}
+                        `;
+                        item.addEventListener('click', () => {
+                            if (Auth.currentUser?.id === user.id) {
+                                this.authModal.classList.remove('active'); 
+                                return;
+                            }
+                            Auth.selectedUserToLogin = user.username;
+                            document.getElementById('login-title').innerText = `Sign in as ${user.username}`;
+                            this.switchAuthView(this.authViewLogin);
+                            document.getElementById('login-password').focus();
+                        });
+                        listContainer.appendChild(item);
+                    });
+                }
+            },
+
+            switchAuthView(viewElement) {
+                this.authViewList.classList.add('hidden');
+                this.authViewLogin.classList.add('hidden');
+                this.authViewRegister.classList.add('hidden');
+                viewElement.classList.remove('hidden');
+            },
+            
+            renderFolders() {
+                const list = document.getElementById('dynamic-folder-list');
+                const mobList = document.getElementById('mobile-folder-list');
+                if(!list || !mobList) return;
+                
+                list.innerHTML = '';
+                mobList.innerHTML = '';
+                
+                if (AppState.folders.length === 0) {
+                    mobList.innerHTML = '<div class="text-muted" style="text-align:center; padding: 16px;">No folders created yet. Right click to create one!</div>';
+                }
+                
+                AppState.folders.forEach(f => {
+                    const folderViewId = 'folder_' + f.id;
+                    
+                    const el = document.createElement('div');
+                    el.className = `nav-item ${AppState.currentView === folderViewId ? 'active' : ''}`;
+                    el.dataset.folder = folderViewId;
+                    el.innerHTML = `<i class="ri-folder-line"></i> <span class="nav-label">${Utils.escapeHTML(f.name)}</span>`;
+                    el.addEventListener('click', () => { this.switchView(folderViewId); });
+                    list.appendChild(el);
+                    
+                    const mobEl = document.createElement('div');
+                    mobEl.className = 'account-item';
+                    mobEl.innerHTML = `<div class="account-avatar" style="background:var(--md-sys-color-primary-container); color:var(--md-sys-color-on-primary-container)"><i class="ri-folder-line"></i></div><div style="flex:1; font-weight:500;">${Utils.escapeHTML(f.name)}</div>`;
+                    mobEl.addEventListener('click', () => {
+                        this.switchView(folderViewId);
+                        document.getElementById('folder-modal').classList.remove('active');
+                    });
+                    mobList.appendChild(mobEl);
+                });
+            },
+
+            render() {
+                this.renderFolders();
+                const notes = AppState.getFilteredNotes();
+                this.gridPinned.innerHTML = '';
+                this.gridOthers.innerHTML = '';
+
+                const pinned = notes.filter(n => n.pinned);
+                const others = notes.filter(n => !n.pinned);
+
+                if (pinned.length > 0 && AppState.currentView === 'notes' && !AppState.searchQuery) {
+                    this.sectionPinned.style.display = 'block';
+                    this.othersTitle.style.display = 'block';
+                    pinned.forEach(n => this.gridPinned.appendChild(this.createNoteElement(n)));
+                } else {
+                    this.sectionPinned.style.display = 'none';
+                    this.othersTitle.style.display = 'none';
+                }
+
+                if (others.length === 0 && pinned.length === 0) {
+                    this.gridOthers.innerHTML = `<div style="padding: 40px; text-align: center; color: var(--md-sys-color-on-surface-variant); width: 100%; grid-column: 1 / -1;"><i class="ri-lightbulb-line" style="font-size: 48px; opacity: 0.5;"></i><br><br>No notes here.</div>`;
+                } else {
+                    const displayNotes = others.slice(0, 100); 
+                    displayNotes.forEach(n => this.gridOthers.appendChild(this.createNoteElement(n)));
+                }
+            }
+        };
+
+        const PWA = {
+            init() {
+                this.injectManifest();
+                this.registerSW();
+            },
+            injectManifest() {
+                const manifest = {
+                    name: "SanKeep — Smart Notes",
+                    short_name: "SanKeep",
+                    start_url: ".",
+                    display: "standalone",
+                    background_color: "#fbfdf9",
+                    theme_color: "#3f691e",
+                    icons: [
+                        { src: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%233f691e'%3E%3Cpath d='M12 22C6.477 22 2 17.523 2 12S6.477 2 12 2s10 4.477 10 10-4.477 10-10 10zm-1-11v6h2v-6h-2zm0-4v2h2V7h-2z'/%3E%3C/svg%3E", sizes: "192x192", type: "image/svg+xml" }
+                    ]
+                };
+                const stringManifest = JSON.stringify(manifest);
+                const blob = new Blob([stringManifest], {type: 'application/json'});
+                const manifestURL = URL.createObjectURL(blob);
+                const link = document.createElement('link');
+                link.rel = 'manifest';
+                link.href = manifestURL;
+                document.head.appendChild(link);
+            },
+            registerSW() {
+                const swCode = `
+                    const CACHE_NAME = 'sankeep-v1';
+                    self.addEventListener('install', event => {
+                        self.skipWaiting();
+                    });
+                    self.addEventListener('fetch', event => {
+                        event.respondWith(
+                            fetch(event.request).catch(() => {
+                                return caches.match(event.request);
+                            })
+                        );
+                    });
+                `;
+                const blob = new Blob([swCode], { type: 'application/javascript' });
+                const swUrl = URL.createObjectURL(blob);
+                if ('serviceWorker' in navigator) {
+                    navigator.serviceWorker.register(swUrl).catch(err => {});
+                }
+            }
+        };
+
+        window.addEventListener('DOMContentLoaded', async () => {
+            await db.init();
+            UI.init();
+            
+            if (!Auth.currentUser) {
+                UI.showAuthModal();
+            } else {
+                UI.updateProfileIcon();
+                await AppState.load();
+            }
+            
+            PWA.init();
+        });
+    </script>
+</body>
+</html>
