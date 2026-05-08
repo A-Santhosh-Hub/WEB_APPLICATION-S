@@ -1,0 +1,1541 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>LifeOS — Privacy & Productivity</title>
+    
+    <!-- Google Fonts for Brave Aesthetic (Inter + Playfair Display for big bold serif headings) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,600;0,700;0,800;1,600&display=swap" rel="stylesheet">
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        serif: ['Playfair Display', 'serif'],
+                    },
+                    colors: {
+                        'brave-orange': '#fb542b',
+                        'brave-orange-hover': '#e04520',
+                        'brave-dark': '#0b0b0b',
+                        'brave-card-dark': '#1a1a1a',
+                        'brave-light': '#ffffff',
+                        'brave-gray': '#f3f4f6',
+                        // Pastel card colors from Brave site
+                        'brave-blue': '#eef3f8',
+                        'brave-peach': '#fceadb',
+                        'brave-green': '#e8f3eb',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Custom Styles & Animations -->
+    <style>
+        body {
+            background-color: #ffffff;
+            color: #111111;
+        }
+        .dark body {
+            background-color: #0b0b0b;
+            color: #ffffff;
+        }
+        
+        /* Clean minimal scrollbar */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #d1d5db;
+            border-radius: 10px;
+        }
+        .dark .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #374151;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in {
+            animation: fadeIn 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+        }
+
+        /* News Sliding Animation */
+        @keyframes revealNews {
+            0%, 15% { left: 0%; transform: translateX(0%); }
+            85%, 100% { left: 100%; transform: translateX(-100%); }
+        }
+        .animate-reveal-news {
+            position: relative;
+            display: inline-block;
+            white-space: nowrap;
+            animation: revealNews 12s ease-in-out forwards;
+        }
+    </style>
+
+    <!-- Import maps for React and Lucide Icons -->
+    <script type="importmap">
+        {
+            "imports": {
+                "react": "https://esm.sh/react@18.2.0",
+                "react-dom/client": "https://esm.sh/react-dom@18.2.0/client",
+                "lucide-react": "https://esm.sh/lucide-react@0.294.0"
+            }
+        }
+    </script>
+    
+    <!-- Babel for in-browser JSX compilation -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+</head>
+<body class="transition-colors duration-300 selection:bg-brave-orange selection:text-white antialiased">
+    
+    <!-- App Entry Point -->
+    <div id="root"></div>
+
+    <script type="text/babel" data-type="module">
+        import React, { useState, useEffect } from 'react';
+        import { createRoot } from 'react-dom/client';
+        import { 
+          LayoutDashboard, Fingerprint, GraduationCap, Receipt, Plane, 
+          PhoneCall, ShoppingCart, BookOpen, CreditCard, FolderLock, 
+          Settings, Bell, Search, Sun, Moon, Eye, EyeOff, Menu, X,
+          Plus, Check, Download, Upload, Shield, Trash2, Calendar, MapPin, Pencil, Newspaper, ExternalLink, Activity, Globe, Link as LinkIcon, Briefcase, TrendingUp, ArrowRightLeft, DownloadCloud
+        } from 'lucide-react';
+
+        // --- CUSTOM HOOKS ---
+        function useLocalStorage(key, initialValue) {
+          const [storedValue, setStoredValue] = useState(() => {
+            try {
+              const item = window.localStorage.getItem(key);
+              return item ? JSON.parse(item) : initialValue;
+            } catch (error) {
+              console.error(error);
+              return initialValue;
+            }
+          });
+
+          const setValue = (value) => {
+            try {
+              const valueToStore = value instanceof Function ? value(storedValue) : value;
+              setStoredValue(valueToStore);
+              window.localStorage.setItem(key, JSON.stringify(valueToStore));
+            } catch (error) {
+              console.error(error);
+            }
+          };
+          return [storedValue, setValue];
+        }
+
+        // --- MOCK / INITIAL DATA ---
+        const INITIAL_DATA = {
+          tasks: [
+            { id: 1, title: 'Review LifeOS Code Architecture', completed: false, priority: 'high' },
+            { id: 2, title: 'Call Client for Freelance Project', completed: true, priority: 'medium' },
+            { id: 3, title: 'Buy Groceries', completed: false, priority: 'low' },
+          ],
+          bills: [
+            { id: 1, name: 'Electricity Bill', amount: 1250, dueDate: '2026-06-01', cycle: '1 Month', paid: false },
+            { id: 2, name: 'Mobile Recharge (Jio)', amount: 749, dueDate: '2026-05-15', cycle: '28 Days', paid: false },
+            { id: 3, name: 'Internet (Airtel)', amount: 999, dueDate: '2026-06-15', cycle: '1 Month', paid: false },
+          ],
+          identity: [
+            { id: 1, type: 'Aadhaar', number: '123456789012', name: 'Santhosh A' },
+            { id: 2, type: 'PAN Card', number: 'ABCDE1234F', name: 'Santhosh A' },
+          ],
+          learning: [
+            { id: 1, course: 'Advanced React Patterns', platform: 'Frontend Masters', progress: 75 },
+            { id: 2, course: 'System Design Interview', platform: 'AlgoExpert', progress: 30 },
+          ],
+          subscriptions: [
+            { id: 1, name: 'Netflix', cost: 199, cycle: 'Monthly' },
+            { id: 2, name: 'GitHub Copilot', cost: 850, cycle: 'Monthly' },
+          ],
+          education: [{ id: 1, degree: 'B.Tech Computer Science', institution: 'Anna University', year: '2024', mark: '8.5 CGPA', project: 'LifeOS Digital Dashboard', note: 'First Class with Distinction' }],
+          travel: [{ id: 1, destination: 'New York', date: '2026-06-15', type: 'Flight' }],
+          calls: [{ id: 1, name: 'Santhosh (Client)', number: '+91 9876543210', completed: false }],
+          shopping: [{ id: 1, item: 'Wireless Mouse', cost: 1500, budget: 2000, completed: false }],
+          documents: [{ id: 1, name: 'Passport', expiry: '2030-01-01' }],
+          links: [
+            { id: 1, title: 'GitHub Daily Commit', url: 'https://github.com', priority: 'high', completed: false },
+            { id: 2, title: 'University Portal', url: 'https://example.com', priority: 'normal', completed: true }
+          ],
+          quickLinks: [
+            { id: 1, name: 'YouTube', url: 'https://youtube.com' },
+            { id: 2, name: 'Google', url: 'https://google.com' },
+            { id: 3, name: 'GitHub', url: 'https://github.com' },
+            { id: 4, name: 'ChatGPT', url: 'https://chatgpt.com' }
+          ],
+          financeSummary: { balance: 45000, income: 60000, expense: 15000 }
+        };
+
+        // --- BRAVE STYLE COMPONENTS ---
+        const BraveCard = ({ children, className = "", colSpan = 1, rowSpan = 1, onClick, bgColor = "bg-white dark:bg-brave-card-dark" }) => {
+          const spanClasses = `col-span-1 md:col-span-${colSpan} row-span-${rowSpan}`;
+          return (
+            <div onClick={onClick} className={`rounded-[20px] border border-gray-200 dark:border-gray-800 shadow-sm transition-all duration-200 hover:shadow-md p-6 lg:p-8 flex flex-col ${bgColor} ${spanClasses} ${className} ${onClick ? 'cursor-pointer hover:-translate-y-1' : ''}`}>
+              {children}
+            </div>
+          );
+        };
+
+        const BraveButton = ({ children, onClick, variant = 'primary', className = '', disabled=false }) => {
+          const baseClasses = `px-6 py-2.5 rounded-full font-sans font-semibold transition-all duration-200 flex items-center justify-center gap-2 text-sm shadow-sm ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`;
+          const variants = {
+            primary: "bg-brave-orange text-white hover:bg-brave-orange-hover border border-transparent",
+            secondary: "bg-gray-100 text-gray-900 hover:bg-gray-200 border border-transparent dark:bg-[#2a2a2a] dark:text-white dark:hover:bg-[#333]",
+            outline: "bg-transparent text-gray-900 dark:text-white border border-gray-300 dark:border-gray-700 hover:border-gray-400 dark:hover:border-gray-500",
+            danger: "bg-red-50 text-red-600 hover:bg-red-100 border border-red-200 dark:bg-red-900/20 dark:border-red-800 dark:hover:bg-red-900/40"
+          };
+          return (
+            <button onClick={onClick} disabled={disabled} className={`${baseClasses} ${variants[variant]} ${className}`}>
+              {children}
+            </button>
+          );
+        };
+
+        const BraveInput = ({ ...props }) => (
+          <input 
+            {...props} 
+            className={`flex-1 bg-white dark:bg-[#1a1a1a] border border-gray-300 dark:border-gray-700 rounded-full px-5 py-3 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 outline-none focus:border-brave-orange focus:ring-1 focus:ring-brave-orange transition-all shadow-sm ${props.className || ''}`}
+          />
+        );
+
+        const Badge = ({ children, className="" }) => (
+          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${className}`}>
+            {children}
+          </span>
+        );
+
+        // --- MAIN APPLICATION ---
+        function App() {
+          const [activeTab, setActiveTab] = useState('dashboard');
+          const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+          const [isDarkMode, setIsDarkMode] = useLocalStorage('lifeos_theme', false); // Default to light mode for Brave feel
+          const [isPrivacyMode, setIsPrivacyMode] = useState(false);
+          const [isEditMode, setIsEditMode] = useLocalStorage('lifeos_edit_mode', false);
+          const [userName, setUserName] = useLocalStorage('lifeos_username', 'Santhosh');
+          const [appData, setAppData] = useLocalStorage('lifeos_user_data', INITIAL_DATA);
+          const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+          const [activeIframeUrl, setActiveIframeUrl] = useState(null);
+
+          useEffect(() => {
+            if (isDarkMode) document.documentElement.classList.add('dark');
+            else document.documentElement.classList.remove('dark');
+          }, [isDarkMode]);
+
+          const maskText = (text, type = 'default') => {
+            if (!isPrivacyMode) return text;
+            if (type === 'number') return 'XXXX XXXX ' + String(text).slice(-4);
+            if (type === 'amount') return '₹ **.**';
+            return '••••••••';
+          };
+
+          const checkDueStatus = (dateString) => {
+            const due = new Date(dateString);
+            const now = new Date();
+            const diffDays = Math.ceil((due - now) / (1000 * 60 * 60 * 24));
+            
+            if (diffDays < 0) return { status: 'overdue', text: 'Overdue', color: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400' };
+            if (diffDays <= 2) return { status: 'urgent', text: `${diffDays} days left`, color: 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400' };
+            return { status: 'normal', text: `In ${diffDays} days`, color: 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300' };
+          };
+
+          const getNotifications = () => {
+            const notifs = [];
+            (appData.bills || []).forEach(bill => {
+              if (!bill.paid) {
+                const status = checkDueStatus(bill.dueDate);
+                if (status.status !== 'normal') {
+                  notifs.push({ 
+                    id: `bill-${bill.id}`, 
+                    title: `Bill ${status.status}`, 
+                    message: `${bill.name} - ${maskText(bill.amount, 'amount')}`, 
+                    time: status.text, 
+                    color: status.status === 'overdue' ? 'text-red-500' : 'text-brave-orange', 
+                    icon: Receipt 
+                  });
+                }
+              }
+            });
+            (appData.tasks || []).forEach(task => {
+              if (!task.completed && task.priority === 'high') {
+                notifs.push({ 
+                  id: `task-${task.id}`, 
+                  title: 'High Priority Task', 
+                  message: task.title, 
+                  time: 'Pending', 
+                  color: 'text-blue-500', 
+                  icon: LayoutDashboard 
+                });
+              }
+            });
+            return notifs;
+          };
+
+          const notifications = getNotifications();
+
+          const navItems = [
+            { id: 'dashboard', icon: LayoutDashboard, label: 'Dashboard' },
+            { id: 'currency', icon: TrendingUp, label: 'Money Rates' },
+            { id: 'news', icon: Newspaper, label: 'Live News' },
+            { id: 'links', icon: Globe, label: 'Links & Tasks' },
+            { id: 'jobs', icon: Briefcase, label: 'IT Jobs' },
+            { id: 'identity', icon: Fingerprint, label: 'Identity Vault' },
+            { id: 'education', icon: GraduationCap, label: 'Education' },
+            { id: 'finance', icon: Receipt, label: 'Finance' },
+            { id: 'travel', icon: Plane, label: 'Travel' },
+            { id: 'calls', icon: PhoneCall, label: 'Contacts' },
+            { id: 'shopping', icon: ShoppingCart, label: 'Inventory' },
+            { id: 'learning', icon: BookOpen, label: 'Skills' },
+            { id: 'subscriptions', icon: CreditCard, label: 'Subscriptions' },
+            { id: 'documents', icon: FolderLock, label: 'Documents' },
+          ];
+
+          // ===============================
+          // --- MODULE COMPONENTS ---
+          // ===============================
+
+          const DashboardView = () => {
+            const pendingTasks = (appData.tasks || []).filter(t => !t.completed).length;
+            const urgentBills = (appData.bills || []).filter(b => !b.paid && checkDueStatus(b.dueDate).status !== 'normal').length;
+            const learningItems = appData.learning || [];
+            const avgLearning = learningItems.reduce((acc, curr) => acc + (curr.progress || 0), 0) / (learningItems.length || 1);
+
+            const [newTask, setNewTask] = useState('');
+            const [editTaskId, setEditTaskId] = useState(null);
+            const [isAddingQuickLink, setIsAddingQuickLink] = useState(false);
+            const [quickLinkData, setQuickLinkData] = useState({ name: '', url: '' });
+            const [isEditingFinance, setIsEditingFinance] = useState(false);
+            const [financeForm, setFinanceForm] = useState(appData.financeSummary || { balance: 0, income: 0, expense: 0 });
+            const [weatherTemp, setWeatherTemp] = useState('28');
+
+            const getGreeting = () => {
+              const hour = new Date().getHours();
+              if (hour < 12) return 'GOOD MORNING';
+              if (hour < 18) return 'GOOD AFTERNOON';
+              return 'GOOD EVENING';
+            };
+
+            const [newsList, setNewsList] = useState([]);
+            const [newsIndex, setNewsIndex] = useState(0);
+
+            useEffect(() => {
+              const fetchNews = async () => {
+                try {
+                  const rssUrl = encodeURIComponent('https://news.google.com/rss/search?q=தமிழ்நாடு&hl=ta&gl=IN&ceid=IN:ta');
+                  const res = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${rssUrl}`);
+                  const data = await res.json();
+                  if(data.status === 'ok' && data.items.length > 0) {
+                     setNewsList(data.items.map(item => item.title.split(' - ')[0]));
+                  }
+                } catch(e) {
+                  console.error("Failed to fetch Live News", e);
+                }
+              };
+              fetchNews();
+            }, []);
+
+            useEffect(() => {
+              if (newsList.length === 0) return;
+              const timer = setTimeout(() => {
+                setNewsIndex((prev) => (prev + 1) % newsList.length);
+              }, 6000);
+              return () => clearTimeout(timer);
+            }, [newsList, newsIndex]);
+
+            useEffect(() => {
+              const fetchWeather = async () => {
+                try {
+                  const res = await fetch('https://api.open-meteo.com/v1/forecast?latitude=11.1271&longitude=78.6569&current_weather=true');
+                  const data = await res.json();
+                  if (data.current_weather) {
+                    setWeatherTemp(Math.round(data.current_weather.temperature));
+                  }
+                } catch(e) {
+                  console.error('Weather fetch failed', e);
+                }
+              };
+              fetchWeather();
+            }, []);
+
+            const handleAddQuickLink = () => {
+              if(!quickLinkData.name || !quickLinkData.url) return;
+              let finalUrl = quickLinkData.url.startsWith('http') ? quickLinkData.url : `https://${quickLinkData.url}`;
+              const newObj = { id: Date.now(), name: quickLinkData.name, url: finalUrl };
+              setAppData({...appData, quickLinks: [...(appData.quickLinks || []), newObj]});
+              setIsAddingQuickLink(false);
+              setQuickLinkData({name:'', url:''});
+            };
+
+            const removeQuickLink = (id) => {
+              setAppData({...appData, quickLinks: (appData.quickLinks || []).filter(l => l.id !== id)});
+            };
+
+            const addTask = () => {
+              if(!newTask) return;
+              if (editTaskId) {
+                const newTasks = (appData.tasks || []).map(t => t.id === editTaskId ? {...t, title: newTask} : t);
+                setAppData({...appData, tasks: newTasks});
+                setEditTaskId(null);
+              } else {
+                const newObj = { id: Date.now(), title: newTask, completed: false, priority: 'normal' };
+                setAppData({...appData, tasks: [newObj, ...(appData.tasks || [])]});
+              }
+              setNewTask('');
+            };
+
+            const triggerEdit = (task) => {
+               setNewTask(task.title);
+               setEditTaskId(task.id);
+            };
+
+            return (
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-6 animate-fade-in">
+                
+                {/* Hero Greeting Card */}
+                <div className="col-span-1 md:col-span-4 mb-2 flex flex-col md:flex-row md:items-end justify-between gap-6">
+                    <div>
+                        <p className="text-sm font-bold text-gray-500 dark:text-gray-400 tracking-widest uppercase mb-2">
+                            {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
+                        </p>
+                        <h1 className="text-4xl md:text-5xl font-serif font-bold text-gray-900 dark:text-white leading-tight tracking-tight uppercase">
+                            {getGreeting()}, <span className="italic text-brave-orange">{userName}</span>
+                        </h1>
+                    </div>
+                    <div className="flex items-center gap-4 shrink-0 pb-2">
+                        <BraveButton onClick={() => setActiveTab('finance')} className="hidden md:flex">View Finance <ArrowRightLeft className="w-4 h-4 ml-1"/></BraveButton>
+                        <div className="flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-[#1a1a1a] rounded-full text-sm font-medium border border-gray-200 dark:border-gray-800 text-gray-800 dark:text-gray-200 shadow-sm">
+                            <Sun className="w-4 h-4 text-brave-orange" />
+                            {weatherTemp}°C Erode
+                        </div>
+                    </div>
+                </div>
+
+                {/* Live News Ticker */}
+                {newsList.length > 0 && (
+                    <div className="col-span-1 md:col-span-4 mb-2 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-800 rounded-full px-4 md:px-6 py-3 flex items-center gap-3 md:gap-4 shadow-sm overflow-hidden relative cursor-pointer hover:bg-gray-100 dark:hover:bg-[#222] transition-colors" onClick={() => setActiveTab('news')}>
+                        <Badge className="bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400 border border-orange-200 dark:border-orange-800/50 shrink-0 flex items-center gap-1">
+                          <Activity className="w-3 h-3 animate-pulse" /> <span className="hidden md:inline">Live TN News</span><span className="md:hidden">Live</span>
+                        </Badge>
+                        <div className="flex-1 overflow-hidden relative h-5 md:h-6">
+                            <div key={newsIndex} className="absolute inset-0 animate-fade-in flex items-center">
+                                <p className="text-xs md:text-sm font-medium text-gray-800 dark:text-gray-200 truncate w-full">
+                                    {newsList[newsIndex]}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                <BraveCard colSpan={2} bgColor="bg-brave-peach dark:bg-[#3d2a1d]">
+                  <div className="flex justify-between items-center mb-6">
+                     <h3 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                       Financial Overview
+                    </h3>
+                    {isEditMode && (
+                      <button 
+                        onClick={() => {
+                          setFinanceForm(appData.financeSummary || { balance: 0, income: 0, expense: 0 });
+                          setIsEditingFinance(!isEditingFinance);
+                        }} 
+                        className="text-gray-500 hover:text-gray-900 dark:hover:text-white transition-colors"
+                      >
+                        {isEditingFinance ? <X className="w-5 h-5" /> : <Pencil className="w-4 h-4" />}
+                      </button>
+                    )}
+                  </div>
+
+                  {isEditMode && isEditingFinance ? (
+                     <div className="grid grid-cols-1 gap-4 mb-2 bg-white/50 dark:bg-black/20 p-4 rounded-xl border border-gray-200 dark:border-gray-700/50">
+                       <BraveInput type="number" placeholder="Main Balance" value={financeForm.balance} onChange={e=>setFinanceForm({...financeForm, balance: Number(e.target.value)})} />
+                       <div className="flex gap-4">
+                           <BraveInput type="number" placeholder="Income" value={financeForm.income} onChange={e=>setFinanceForm({...financeForm, income: Number(e.target.value)})} />
+                           <BraveInput type="number" placeholder="Expense" value={financeForm.expense} onChange={e=>setFinanceForm({...financeForm, expense: Number(e.target.value)})} />
+                       </div>
+                       <BraveButton onClick={() => { setAppData({...appData, financeSummary: financeForm}); setIsEditingFinance(false); }}>
+                         Save Overview
+                       </BraveButton>
+                     </div>
+                  ) : (
+                    <div className="flex flex-col justify-between h-full">
+                       <div>
+                         <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Main Balance</p>
+                         <p className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-6">
+                           {isPrivacyMode ? maskText(appData.financeSummary?.balance || 0, 'amount') : `₹${(appData.financeSummary?.balance || 0).toLocaleString('en-IN')}`}
+                         </p>
+                       </div>
+                       <div className="grid grid-cols-2 gap-4 border-t border-gray-200 dark:border-gray-700/50 pt-6">
+                         <div>
+                           <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Monthly Income</p>
+                           <p className="text-xl font-bold text-green-600 dark:text-green-400">
+                             + {isPrivacyMode ? maskText(appData.financeSummary?.income || 0, 'amount') : `₹${(appData.financeSummary?.income || 0).toLocaleString('en-IN')}`}
+                           </p>
+                         </div>
+                         <div>
+                           <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Monthly Expense</p>
+                           <p className="text-xl font-bold text-red-600 dark:text-red-400">
+                             - {isPrivacyMode ? maskText(appData.financeSummary?.expense || 0, 'amount') : `₹${(appData.financeSummary?.expense || 0).toLocaleString('en-IN')}`}
+                           </p>
+                         </div>
+                       </div>
+                    </div>
+                  )}
+                </BraveCard>
+
+                <BraveCard colSpan={2} bgColor="bg-brave-blue dark:bg-[#162233]">
+                  <div className="flex justify-between items-center mb-6">
+                    <h3 className="text-2xl font-bold text-gray-900 dark:text-white">
+                      Objectives
+                    </h3>
+                  </div>
+                  
+                  {isEditMode && (
+                    <div className="flex flex-col sm:flex-row gap-2 mb-6">
+                       <BraveInput value={newTask} onChange={e=>setNewTask(e.target.value)} onKeyPress={e=>e.key==='Enter'&&addTask()} placeholder="Add a new objective..." />
+                       <div className="flex gap-2 w-full sm:w-auto shrink-0">
+                          {editTaskId && <BraveButton variant="secondary" onClick={() => {setEditTaskId(null); setNewTask('');}}><X className="w-4 h-4"/></BraveButton>}
+                          <BraveButton onClick={addTask}>{editTaskId ? <Check className="w-4 h-4" /> : <Plus className="w-4 h-4"/>}</BraveButton>
+                       </div>
+                    </div>
+                  )}
+
+                  <div className="space-y-3 flex-1 overflow-y-auto custom-scrollbar">
+                    {(appData.tasks || []).map(task => (
+                      <div key={task.id} className="flex items-center justify-between p-3 bg-white/60 dark:bg-black/20 border border-gray-200 dark:border-gray-700/50 rounded-xl hover:border-gray-400 dark:hover:border-gray-500 transition-colors group">
+                        <div className="flex items-center gap-3">
+                          <button 
+                            className={`w-5 h-5 shrink-0 rounded border flex items-center justify-center transition-colors ${task.completed ? 'bg-brave-orange border-brave-orange text-white' : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-transparent'}`}
+                            onClick={() => {
+                              const newTasks = (appData.tasks || []).map(t => t.id === task.id ? {...t, completed: !t.completed} : t);
+                              setAppData({...appData, tasks: newTasks});
+                            }}
+                          >
+                            {task.completed && <Check className="w-3 h-3" strokeWidth={3} />}
+                          </button>
+                          <span className={`text-sm font-medium ${task.completed ? 'text-gray-400 dark:text-gray-500 line-through' : 'text-gray-800 dark:text-gray-200'}`}>
+                            {task.title}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {task.priority === 'high' && <span className="w-2 h-2 rounded-full bg-brave-orange mr-2"></span>}
+                          {isEditMode && (
+                            <div className="opacity-0 group-hover:opacity-100 flex gap-1 transition-opacity">
+                              <button onClick={() => triggerEdit(task)} className="p-1.5 text-gray-400 hover:text-gray-900 dark:hover:text-white"><Pencil className="w-4 h-4"/></button>
+                              <button onClick={() => setAppData({...appData, tasks: (appData.tasks||[]).filter(t=>t.id!==task.id)})} className="p-1.5 text-red-400 hover:text-red-600"><Trash2 className="w-4 h-4"/></button>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                    {(appData.tasks || []).length === 0 && <p className="text-gray-500 py-2 text-sm text-center">No objectives found.</p>}
+                  </div>
+                </BraveCard>
+
+                <BraveCard colSpan={4} bgColor="bg-brave-green dark:bg-[#1a2e20]">
+                  <div className="flex justify-between items-center mb-6">
+                     <h3 className="text-2xl font-bold text-gray-900 dark:text-white">
+                      Built-in Access Dock
+                    </h3>
+                    <p className="text-sm text-gray-600 dark:text-gray-300">Get answers & tools, right here.</p>
+                  </div>
+
+                  {isEditMode && isAddingQuickLink && (
+                     <div className="flex flex-col sm:flex-row gap-3 mb-6 bg-white/50 dark:bg-black/20 p-4 rounded-xl border border-gray-200 dark:border-gray-700/50">
+                       <BraveInput placeholder="Site Name (e.g., Netflix)" value={quickLinkData.name} onChange={e=>setQuickLinkData({...quickLinkData, name: e.target.value})} />
+                       <BraveInput placeholder="URL (e.g., netflix.com)" value={quickLinkData.url} onChange={e=>setQuickLinkData({...quickLinkData, url: e.target.value})} />
+                       <div className="flex gap-2">
+                          <BraveButton onClick={handleAddQuickLink}><Check className="w-4 h-4"/> Add</BraveButton>
+                          <BraveButton variant="secondary" onClick={()=>setIsAddingQuickLink(false)}><X className="w-4 h-4"/></BraveButton>
+                       </div>
+                     </div>
+                  )}
+
+                  <div className="flex gap-4 md:gap-8 overflow-x-auto custom-scrollbar pb-4 items-start">
+                     {(appData.quickLinks || []).map(link => {
+                        let domain = 'example.com';
+                        try { domain = new URL(link.url).hostname; } catch(e) {}
+                        
+                        return (
+                          <div key={link.id} className="relative group flex flex-col items-center gap-3 shrink-0 w-20">
+                             {isEditMode && (
+                               <button onClick={() => removeQuickLink(link.id)} className="absolute -top-2 -right-2 z-20 p-1.5 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600 shadow-sm">
+                                  <X className="w-3 h-3" />
+                               </button>
+                             )}
+                             <a href={link.url} target="_blank" rel="noopener noreferrer" className="w-16 h-16 md:w-20 md:h-20 rounded-2xl bg-white dark:bg-[#222] border border-gray-200 dark:border-gray-700 flex items-center justify-center hover:border-gray-400 dark:hover:border-gray-400 transition-all overflow-hidden relative shadow-sm group-hover:shadow-md group-hover:-translate-y-1">
+                                <img src={`https://www.google.com/s2/favicons?domain=${domain}&sz=128`} alt={link.name} className="w-8 h-8 md:w-10 md:h-10 object-contain" />
+                             </a>
+                             <span className="text-xs font-medium text-gray-700 dark:text-gray-300 text-center w-full truncate">{link.name}</span>
+                          </div>
+                        );
+                     })}
+                     
+                     {isEditMode && (
+                       <div className="flex flex-col items-center gap-3 shrink-0 w-20 group">
+                          <button onClick={() => setIsAddingQuickLink(true)} className="w-16 h-16 md:w-20 md:h-20 rounded-2xl bg-white/50 dark:bg-[#222]/50 border border-dashed border-gray-400 dark:border-gray-600 flex items-center justify-center hover:border-brave-orange hover:bg-brave-orange/5 text-gray-500 transition-all shadow-sm group-hover:shadow-md group-hover:-translate-y-1">
+                             <Plus className="w-8 h-8" />
+                          </button>
+                          <span className="text-xs font-medium text-gray-600 dark:text-gray-400 text-center">Add Site</span>
+                       </div>
+                     )}
+                  </div>
+                </BraveCard>
+              </div>
+            );
+          };
+
+          // --- GENERIC LIST VIEW BUILDER (BRAVE THEMED) ---
+          const GenericListView = ({ title, description, dataKey, fields, renderCard }) => {
+            const [formData, setFormData] = useState({});
+            const [editId, setEditId] = useState(null);
+            const items = appData[dataKey] || [];
+            
+            const handleAdd = () => {
+              if(!formData[fields[0].key]) return;
+              const payload = { ...formData };
+              fields.forEach(f => {
+                if (f.type === 'select' && !payload[f.key]) payload[f.key] = f.options[0].value;
+              });
+
+              if (editId) {
+                setAppData({...appData, [dataKey]: items.map(i => i.id === editId ? {...i, ...payload} : i)});
+                setEditId(null);
+              } else {
+                const newObj = { id: Date.now(), ...payload };
+                if (dataKey === 'bills' && !newObj.hasOwnProperty('paid')) newObj.paid = false;
+                setAppData({...appData, [dataKey]: [newObj, ...items]});
+              }
+              setFormData({});
+            };
+
+            const handleEdit = (item) => {
+              setFormData(item);
+              setEditId(item.id);
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            };
+
+            const remove = (id) => setAppData({...appData, [dataKey]: items.filter(i => i.id !== id)});
+
+            return (
+              <div className="space-y-8 animate-fade-in">
+                <div className="max-w-3xl">
+                    <h2 className="text-4xl md:text-5xl font-serif font-bold text-gray-900 dark:text-white tracking-tight">{title}</h2>
+                    {description && <p className="mt-4 text-lg text-gray-600 dark:text-gray-400 font-medium">{description}</p>}
+                </div>
+                
+                {isEditMode && (
+                  <BraveCard bgColor="bg-gray-50 dark:bg-[#222]">
+                    <div className="flex flex-col lg:flex-row gap-4">
+                      <div className="flex flex-wrap gap-4 w-full">
+                         {fields.map(f => {
+                           if (f.type === 'select') {
+                             return (
+                               <select key={f.key} value={formData[f.key]||f.options[0].value} onChange={e=>setFormData({...formData, [f.key]: e.target.value})} className="flex-auto min-w-[200px] bg-white dark:bg-[#1a1a1a] border border-gray-300 dark:border-gray-700 rounded-full px-5 py-3 text-gray-900 dark:text-white outline-none focus:border-brave-orange focus:ring-1 transition-all shadow-sm">
+                                 {f.options.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
+                               </select>
+                             )
+                           }
+                           return <BraveInput key={f.key} type={f.type||'text'} value={formData[f.key]||''} onChange={e=>setFormData({...formData, [f.key]: e.target.value})} placeholder={f.placeholder} className="flex-auto min-w-[200px]" />
+                         })}
+                      </div>
+                      <div className="flex gap-2 w-full lg:w-auto shrink-0">
+                         <BraveButton onClick={handleAdd}>
+                           {editId ? <><Check className="w-5 h-5"/> Update</> : <><Plus className="w-5 h-5"/> Add</>}
+                         </BraveButton>
+                         {editId && (
+                            <BraveButton variant="outline" onClick={() => {setEditId(null); setFormData({});}}>Cancel</BraveButton>
+                         )}
+                      </div>
+                    </div>
+                  </BraveCard>
+                )}
+
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {items.map(item => (
+                    <div key={item.id} className="relative group h-full">
+                       {renderCard(item)}
+                       {isEditMode && (
+                         <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity z-20">
+                            <button onClick={() => handleEdit(item)} className="p-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:text-brave-orange rounded-full shadow-sm"><Pencil className="w-4 h-4"/></button>
+                            <button onClick={() => remove(item.id)} className="p-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-red-500 hover:text-red-600 rounded-full shadow-sm"><Trash2 className="w-4 h-4"/></button>
+                         </div>
+                       )}
+                    </div>
+                  ))}
+                  {items.length === 0 && <div className="col-span-full py-12 text-center text-gray-500 bg-gray-50 dark:bg-[#1a1a1a] rounded-3xl border border-dashed border-gray-300 dark:border-gray-700 font-medium">No records found. {isEditMode ? '' : 'Enable edit mode in settings to add.'}</div>}
+                </div>
+              </div>
+            );
+          };
+
+          // --- SPECIFIC VIEWS ---
+          const FinanceView = () => {
+             const calculateNextDate = (currentDateStr, cycle) => {
+                let date = currentDateStr ? new Date(currentDateStr) : new Date();
+                if (isNaN(date.getTime())) date = new Date(); 
+                date.setHours(12, 0, 0, 0);
+                if (cycle === '28 Days') date.setDate(date.getDate() + 28);
+                else if (cycle === '1 Month') date.setMonth(date.getMonth() + 1);
+                else if (cycle === '3 Months') date.setMonth(date.getMonth() + 3);
+                else if (cycle === '1 Year') date.setFullYear(date.getFullYear() + 1);
+                return date.toISOString().split('T')[0];
+             };
+
+             return <GenericListView 
+              title="Financial Ledger" description="Track your bills and recurring payments privately." dataKey="bills"
+              fields={[
+                {key:'name', placeholder:'Billing Entity'}, 
+                {key:'amount', type:'number', placeholder:'Amount (₹)'}, 
+                {key:'dueDate', type:'date', placeholder:'Due Date'},
+                {key:'cycle', type:'select', options: [
+                  {value: 'None', label: 'One-Time'},
+                  {value: '28 Days', label: '28 Days'},
+                  {value: '1 Month', label: 'Monthly'},
+                  {value: '3 Months', label: 'Quarterly'},
+                  {value: '1 Year', label: 'Yearly'}
+                ]}
+              ]}
+              renderCard={(item) => {
+                const dueStatus = checkDueStatus(item.dueDate);
+                return (
+                  <BraveCard className={`transition-opacity ${item.paid ? 'opacity-60' : ''}`}>
+                    <div className="flex justify-between items-start mb-4">
+                      <div className="p-2.5 bg-gray-100 dark:bg-gray-800 rounded-xl text-gray-600 dark:text-gray-300">
+                        <Receipt className="w-5 h-5" />
+                      </div>
+                      {!item.paid ? (
+                        <Badge className={dueStatus.color}>{dueStatus.text}</Badge>
+                      ) : (
+                         <Badge className="bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">Cleared</Badge>
+                      )}
+                    </div>
+                    <h3 className="text-xl font-bold text-gray-900 dark:text-white">{item.name}</h3>
+                    <p className="text-3xl font-bold text-gray-900 dark:text-white mt-2 mb-1">
+                      {maskText(item.amount, 'amount')}
+                    </p>
+                    {item.cycle && item.cycle !== 'None' && (
+                      <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                        {item.cycle} Cycle
+                      </span>
+                    )}
+                    <div className="mt-auto pt-6">
+                      <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-3">
+                        Due: {new Date(item.dueDate).toLocaleDateString()}
+                      </p>
+                      {!item.paid && (
+                        <BraveButton 
+                          variant="secondary"
+                          className="w-full justify-center"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            let newBills;
+                            if (item.cycle && item.cycle !== 'None') {
+                              const nextDate = calculateNextDate(item.dueDate, item.cycle);
+                              newBills = (appData.bills||[]).map(b => b.id === item.id ? {...b, dueDate: nextDate, paid: false} : b);
+                            } else {
+                              newBills = (appData.bills||[]).map(b => b.id === item.id ? {...b, paid: true} : b);
+                            }
+                            setAppData({...appData, bills: newBills});
+                          }}
+                        >
+                          {item.cycle && item.cycle !== 'None' ? 'Mark Paid & Extend' : 'Mark as Cleared'}
+                        </BraveButton>
+                      )}
+                    </div>
+                  </BraveCard>
+                )
+              }}
+            />
+          }
+
+          const LinksView = () => {
+            const [newLink, setNewLink] = useState({ title: '', url: '', priority: 'normal' });
+            const [editId, setEditId] = useState(null);
+
+            const addLink = () => {
+              if(!newLink.title || !newLink.url) return;
+              let finalUrl = newLink.url.startsWith('http') ? newLink.url : `https://${newLink.url}`;
+              if (editId) {
+                setAppData({...appData, links: (appData.links||[]).map(l => l.id === editId ? {...l, title: newLink.title, url: finalUrl, priority: newLink.priority} : l)});
+                setEditId(null);
+              } else {
+                const newObj = { id: Date.now(), title: newLink.title, url: finalUrl, priority: newLink.priority, completed: false };
+                setAppData({...appData, links: [newObj, ...(appData.links || [])]});
+              }
+              setNewLink({ title: '', url: '', priority: 'normal' });
+            };
+
+            const toggle = (id) => setAppData({...appData, links: (appData.links||[]).map(i => i.id === id ? {...i, completed: !i.completed} : i)});
+            const remove = (id) => setAppData({...appData, links: (appData.links||[]).filter(i => i.id !== id)});
+
+            return (
+              <div className="space-y-8 animate-fade-in">
+                <div className="max-w-3xl">
+                    <h2 className="text-4xl md:text-5xl font-serif font-bold text-gray-900 dark:text-white tracking-tight">Commlinks</h2>
+                    <p className="mt-4 text-lg text-gray-600 dark:text-gray-400 font-medium">Manage important tasks and web references.</p>
+                </div>
+                
+                {isEditMode && (
+                  <BraveCard bgColor="bg-gray-50 dark:bg-[#222]">
+                    <div className="flex flex-col lg:flex-row gap-4">
+                      <BraveInput value={newLink.title} onChange={e=>setNewLink({...newLink, title: e.target.value})} placeholder="Task/Activity Name" />
+                      <BraveInput value={newLink.url} onChange={e=>setNewLink({...newLink, url: e.target.value})} placeholder="URL (e.g., github.com)" />
+                      <select 
+                        value={newLink.priority} 
+                        onChange={e=>setNewLink({...newLink, priority: e.target.value})} 
+                        className="bg-white dark:bg-[#1a1a1a] border border-gray-300 dark:border-gray-700 rounded-full px-5 py-3 text-gray-900 dark:text-white outline-none focus:border-brave-orange"
+                      >
+                        <option value="normal">Normal Priority</option>
+                        <option value="high">Must Do (High)</option>
+                      </select>
+                      <div className="flex gap-2 shrink-0">
+                         <BraveButton onClick={addLink}>
+                           {editId ? 'Update' : 'Add Link'}
+                         </BraveButton>
+                         {editId && <BraveButton variant="outline" onClick={() => {setEditId(null); setNewLink({ title: '', url: '', priority: 'normal' });}}>Cancel</BraveButton>}
+                      </div>
+                    </div>
+                  </BraveCard>
+                )}
+
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                  {(appData.links || []).map(item => {
+                    const urlHostname = item.url.replace(/^(?:https?:\/\/)?(?:www\.)?/i, "").split('/')[0];
+                    return (
+                      <BraveCard key={item.id} className="relative group flex flex-col justify-between">
+                        <div className="flex items-start justify-between mb-6">
+                          <div className="flex gap-4">
+                            <button 
+                              onClick={() => toggle(item.id)} 
+                              className={`mt-1 w-6 h-6 shrink-0 rounded border flex items-center justify-center transition-colors ${item.completed ? 'bg-brave-orange border-brave-orange text-white' : 'border-gray-300 dark:border-gray-600 hover:border-gray-400 bg-white dark:bg-[#1a1a1a]'}`}
+                            >
+                              {item.completed && <Check className="w-4 h-4" strokeWidth={3} />}
+                            </button>
+                            <div>
+                              <h3 className={`font-bold text-lg leading-tight ${item.completed ? 'text-gray-400 line-through' : 'text-gray-900 dark:text-white'}`}>
+                                {item.title}
+                              </h3>
+                              <div className="flex items-center gap-2 mt-2">
+                                {item.priority === 'high' && !item.completed && (
+                                  <Badge className="bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400">High Priority</Badge>
+                                )}
+                                <span className="text-sm text-gray-500 font-medium flex items-center gap-1">
+                                  <LinkIcon className="w-3 h-3"/> {urlHostname}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                          
+                          {isEditMode && (
+                            <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <button onClick={() => {setNewLink(item); setEditId(item.id); window.scrollTo({top:0, behavior:'smooth'})}} className="p-2 text-gray-400 hover:text-gray-900 dark:hover:text-white"><Pencil className="w-4 h-4"/></button>
+                              <button onClick={() => remove(item.id)} className="p-2 text-red-400 hover:text-red-600"><Trash2 className="w-4 h-4"/></button>
+                            </div>
+                          )}
+                        </div>
+
+                        <BraveButton 
+                          variant={item.completed ? 'outline' : 'secondary'}
+                          onClick={() => setActiveIframeUrl(item.url)}
+                          className="w-full mt-auto"
+                        >
+                          <Globe className="w-4 h-4"/> Open Embedded
+                        </BraveButton>
+                      </BraveCard>
+                    )
+                  })}
+                  {(appData.links || []).length === 0 && <div className="col-span-full py-12 text-center text-gray-500 bg-gray-50 dark:bg-[#1a1a1a] rounded-3xl border border-dashed border-gray-300 dark:border-gray-700 font-medium">No links assigned.</div>}
+                </div>
+              </div>
+            );
+          };
+
+          const NewsView = () => {
+            const [newsItems, setNewsItems] = useState([]);
+            const [loading, setLoading] = useState(true);
+            const [category, setCategory] = useState('TN');
+
+            const categories = {
+              'TN': { label: 'Tamil Nadu', query: 'தமிழ்நாடு' },
+              'IN': { label: 'India', query: 'இந்தியா' },
+              'WRLD': { label: 'World', query: 'உலகம்' },
+              'TECH': { label: 'Technology', query: 'technology' }
+            };
+
+            useEffect(() => {
+              const fetchNews = async () => {
+                setLoading(true);
+                try {
+                  const rssUrl = encodeURIComponent(`https://news.google.com/rss/search?q=${categories[category].query}&hl=en-IN&gl=IN&ceid=IN:en`);
+                  const res = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${rssUrl}`);
+                  const data = await res.json();
+                  if(data.status === 'ok') setNewsItems(data.items);
+                } catch(e) {
+                  console.error("Failed to fetch Live News", e);
+                }
+                setLoading(false);
+              };
+              fetchNews();
+            }, [category]);
+
+            return (
+              <div className="space-y-8 animate-fade-in">
+                <div className="max-w-3xl">
+                    <h2 className="text-4xl md:text-5xl font-serif font-bold text-gray-900 dark:text-white tracking-tight">Live News</h2>
+                    <p className="mt-4 text-lg text-gray-600 dark:text-gray-400 font-medium">Stay updated without the annoyances. Clean, fast reading.</p>
+                </div>
+                
+                <div className="flex gap-3 overflow-x-auto custom-scrollbar pb-2">
+                  {Object.entries(categories).map(([key, {label}]) => (
+                    <button 
+                      key={key}
+                      onClick={() => setCategory(key)}
+                      className={`whitespace-nowrap px-6 py-2.5 rounded-full font-semibold transition-all text-sm ${category === key ? 'bg-gray-900 text-white dark:bg-white dark:text-gray-900' : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700'}`}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+
+                {loading ? (
+                   <div className="flex flex-col items-center justify-center py-24 text-brave-orange animate-pulse">
+                      <Activity className="w-12 h-12 mb-4" />
+                      <p className="font-semibold text-lg text-gray-600 dark:text-gray-400">Fetching latest stories...</p>
+                   </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                    {newsItems.map((item, idx) => {
+                      const parts = item.title.split(' - ');
+                      const source = parts.length > 1 ? parts.pop() : 'News Feed';
+                      const title = parts.join(' - ');
+                      
+                      return (
+                        <BraveCard key={idx} className="flex flex-col justify-between h-full group">
+                          <div>
+                            <div className="flex justify-between items-center mb-4">
+                              <Badge className="bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300 border border-gray-200 dark:border-gray-700">
+                                {source}
+                              </Badge>
+                              <span className="text-xs text-gray-500 font-medium">
+                                {new Date(item.pubDate).toLocaleDateString(undefined, {month:'short', day:'numeric'})}
+                              </span>
+                            </div>
+                            <h3 className="text-xl font-bold text-gray-900 dark:text-white leading-snug mb-4 group-hover:text-brave-orange transition-colors line-clamp-3">
+                               {title}
+                            </h3>
+                          </div>
+                          
+                          <a href={item.link} target="_blank" rel="noopener noreferrer" className="mt-4 flex items-center text-sm font-semibold text-brave-orange hover:text-brave-orange-hover">
+                            Read full article <ArrowRightLeft className="w-4 h-4 ml-1 rotate-45"/>
+                          </a>
+                        </BraveCard>
+                      )
+                    })}
+                  </div>
+                )}
+              </div>
+            );
+          };
+
+          const CurrencyView = () => {
+            const [rates, setRates] = useState({});
+            const [date, setDate] = useState('');
+            const [baseCurrency, setBaseCurrency] = useState('USD');
+            const [targetCurrency, setTargetCurrency] = useState('INR');
+            const [amount, setAmount] = useState(1);
+
+            const CURRENCIES = {
+              USD: { name: 'United States Dollar', flag: '🇺🇸' },
+              INR: { name: 'Indian Rupee', flag: '🇮🇳' },
+              EUR: { name: 'Euro', flag: '🇪🇺' },
+              GBP: { name: 'British Pound', flag: '🇬🇧' },
+              JPY: { name: 'Japanese Yen', flag: '🇯🇵' },
+            };
+
+            useEffect(() => {
+              const fetchRates = async () => {
+                try {
+                  const res = await fetch(`https://open.er-api.com/v6/latest/${baseCurrency}`);
+                  const data = await res.json();
+                  if (data && data.rates) {
+                    setRates(data.rates);
+                    setDate(data.time_last_update_utc ? new Date(data.time_last_update_utc).toLocaleDateString() : new Date().toLocaleDateString());
+                  }
+                } catch(e) {
+                  console.error("Failed to fetch rates", e);
+                  setRates({ USD: 1, INR: 83.50, EUR: 0.92, GBP: 0.79, JPY: 153.80 });
+                }
+              };
+              fetchRates();
+            }, [baseCurrency]);
+
+            const convertedAmount = (amount * (rates[targetCurrency] || 1)).toFixed(2);
+
+            return (
+              <div className="space-y-8 animate-fade-in max-w-4xl">
+                 <div className="max-w-3xl">
+                    <h2 className="text-4xl md:text-5xl font-serif font-bold text-gray-900 dark:text-white tracking-tight">Market Rates</h2>
+                    <p className="mt-4 text-lg text-gray-600 dark:text-gray-400 font-medium">Fast, reliable currency conversion.</p>
+                </div>
+                
+                <BraveCard>
+                   <div className="flex flex-col md:flex-row items-center gap-6 mb-8">
+                     <div className="flex-1 w-full">
+                        <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">You Send</label>
+                        <div className="flex gap-2">
+                           <BraveInput type="number" value={amount} onChange={(e) => setAmount(Number(e.target.value) || 0)} className="text-xl font-medium w-2/3" />
+                           <select value={baseCurrency} onChange={(e) => setBaseCurrency(e.target.value)} className="w-1/3 bg-gray-50 dark:bg-[#222] border border-gray-300 dark:border-gray-700 rounded-full px-4 text-gray-900 dark:text-white font-medium outline-none focus:border-brave-orange">
+                             {Object.keys(CURRENCIES).map(c => <option key={c} value={c}>{c}</option>)}
+                           </select>
+                        </div>
+                     </div>
+                     <button onClick={() => {setBaseCurrency(targetCurrency); setTargetCurrency(baseCurrency);}} className="p-3 mt-6 bg-gray-100 dark:bg-gray-800 rounded-full text-gray-600 dark:text-gray-300 hover:text-brave-orange transition-colors">
+                        <ArrowRightLeft className="w-5 h-5" />
+                     </button>
+                     <div className="flex-1 w-full">
+                        <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">They Receive</label>
+                        <div className="flex gap-2">
+                           <BraveInput readOnly value={convertedAmount} className="text-xl font-bold text-brave-orange w-2/3" />
+                           <select value={targetCurrency} onChange={(e) => setTargetCurrency(e.target.value)} className="w-1/3 bg-gray-50 dark:bg-[#222] border border-gray-300 dark:border-gray-700 rounded-full px-4 text-gray-900 dark:text-white font-medium outline-none focus:border-brave-orange">
+                             {Object.keys(CURRENCIES).map(c => <option key={c} value={c}>{c}</option>)}
+                           </select>
+                        </div>
+                     </div>
+                   </div>
+                   <div className="p-6 bg-gray-50 dark:bg-[#111] rounded-2xl flex justify-between items-center border border-gray-200 dark:border-gray-800">
+                     <div>
+                        <p className="text-sm text-gray-500 font-medium">Exchange Rate</p>
+                        <p className="text-xl font-bold text-gray-900 dark:text-white">1 {baseCurrency} = {rates[targetCurrency]} {targetCurrency}</p>
+                     </div>
+                     <Badge className="bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 border border-green-200 dark:border-green-800/50">Live Market</Badge>
+                   </div>
+                </BraveCard>
+              </div>
+            );
+          };
+
+          // Simple Wrappers for other generic views
+          const SettingsView = () => {
+            const [wipeStep, setWipeStep] = useState(0);
+            return (
+            <div className="max-w-3xl space-y-8 animate-fade-in">
+              <div>
+                  <h2 className="text-4xl md:text-5xl font-serif font-bold text-gray-900 dark:text-white tracking-tight">Settings</h2>
+                  <p className="mt-4 text-lg text-gray-600 dark:text-gray-400 font-medium">Configure your environment and privacy controls.</p>
+              </div>
+              <BraveCard>
+                <div className="space-y-6 divide-y divide-gray-200 dark:divide-gray-800">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-6 gap-4">
+                    <div>
+                      <p className="font-bold text-gray-900 dark:text-white text-lg">System Access Level</p>
+                      <p className="text-sm text-gray-500 mt-1">Unlock edit, add, & delete capabilities.</p>
+                    </div>
+                    <button 
+                      onClick={() => setIsEditMode(!isEditMode)}
+                      className={`relative w-14 h-8 rounded-full transition-colors ${isEditMode ? 'bg-brave-orange' : 'bg-gray-300 dark:bg-gray-600'}`}
+                    >
+                      <div className={`absolute left-1 top-1 w-6 h-6 rounded-full bg-white transition-transform ${isEditMode ? 'translate-x-6' : 'translate-x-0'}`}></div>
+                    </button>
+                  </div>
+
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between py-6 gap-4">
+                    <div>
+                      <p className="font-bold text-gray-900 dark:text-white text-lg">Theme Appearance</p>
+                      <p className="text-sm text-gray-500 mt-1">Toggle light or dark environment.</p>
+                    </div>
+                    <button 
+                      onClick={() => setIsDarkMode(!isDarkMode)}
+                      className={`relative w-14 h-8 rounded-full transition-colors ${isDarkMode ? 'bg-gray-800' : 'bg-gray-300'}`}
+                    >
+                      <div className={`absolute left-1 top-1 w-6 h-6 rounded-full bg-white transition-transform ${isDarkMode ? 'translate-x-6' : 'translate-x-0'} flex items-center justify-center`}>
+                        {isDarkMode ? <Moon className="w-3 h-3 text-gray-800"/> : <Sun className="w-3 h-3 text-gray-400"/>}
+                      </div>
+                    </button>
+                  </div>
+
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between py-6 gap-4">
+                    <div className="flex-1">
+                      <p className="font-bold text-gray-900 dark:text-white text-lg">User Alias</p>
+                      <p className="text-sm text-gray-500 mt-1">Your display name.</p>
+                    </div>
+                    <BraveInput 
+                      type="text" value={userName} onChange={(e) => setUserName(e.target.value)}
+                      className="w-full sm:max-w-[250px]" disabled={!isEditMode}
+                    />
+                  </div>
+
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between py-6 gap-4">
+                     <div>
+                      <p className="font-bold text-gray-900 dark:text-white text-lg">Data Backup</p>
+                      <p className="text-sm text-gray-500 mt-1">Export your encrypted JSON state.</p>
+                    </div>
+                    <div className="flex gap-3">
+                      <BraveButton variant="secondary" onClick={() => {
+                        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(appData));
+                        const dn = document.createElement('a'); dn.setAttribute("href", dataStr); dn.setAttribute("download", "lifeos_backup.json");
+                        document.body.appendChild(dn); dn.click(); dn.remove();
+                      }}>Export JSON</BraveButton>
+                    </div>
+                  </div>
+
+                  {isEditMode && (
+                    <div className="pt-6">
+                      <BraveButton 
+                        variant="danger"
+                        onClick={() => {
+                          if (wipeStep === 0) {
+                            setWipeStep(1); setTimeout(() => setWipeStep(0), 3000);
+                          } else {
+                            setAppData(INITIAL_DATA); setWipeStep(0);
+                          }
+                        }}
+                        className="w-full"
+                      >
+                        <Trash2 className="w-4 h-4" /> {wipeStep === 0 ? 'Wipe Database' : 'Confirm Wipe (Tap Again)'}
+                      </BraveButton>
+                    </div>
+                  )}
+                  
+                  <div className="pt-6 text-center">
+                    <p className="text-xs font-bold text-gray-500 uppercase tracking-widest">
+                      Dev By <a href="https://sanstudio-hub.github.io/in/" target="_blank" rel="noopener noreferrer" className="text-brave-orange hover:text-brave-orange-hover transition-colors">SanStudio</a>
+                    </p>
+                  </div>
+                </div>
+              </BraveCard>
+            </div>
+            );
+          };
+
+          // Basic map for generic list views to save repetitive code in this updated structure
+          const IdentityVaultView = () => <GenericListView title="Identity Vault" description="Securely store your identification numbers." dataKey="identity" fields={[{key:'type', placeholder:'Doc Type'}, {key:'number', placeholder:'Number'}, {key:'name', placeholder:'Name'}]} renderCard={(item) => (
+             <BraveCard>
+                 <div className="flex justify-between items-start mb-4">
+                     <Badge className="bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400 border border-purple-200 dark:border-purple-800">{item.type}</Badge>
+                     <Fingerprint className="w-6 h-6 text-gray-400" />
+                 </div>
+                 <h3 className="text-2xl font-mono font-bold text-gray-900 dark:text-white mt-2 break-all">{maskText(item.number, 'number')}</h3>
+                 <p className="mt-4 text-sm font-medium text-gray-500">Holder: {maskText(item.name)}</p>
+             </BraveCard>
+          )} />;
+
+          const TravelView = () => <GenericListView title="Travel Waypoints" dataKey="travel" fields={[{key:'destination', placeholder:'Destination'}, {key:'date', type:'date'}, {key:'type', placeholder:'Mode'}]} renderCard={(item) => (
+             <BraveCard>
+                 <Badge className="bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400 w-max mb-4">{item.type || 'Mission'}</Badge>
+                 <h3 className="font-bold text-2xl text-gray-900 dark:text-white">{item.destination}</h3>
+                 <p className="text-gray-500 font-medium mt-2">ETA: {item.date ? new Date(item.date).toLocaleDateString() : 'TBD'}</p>
+             </BraveCard>
+          )} />;
+
+          const CallsView = () => <GenericListView title="Contacts" description="Secure address book." dataKey="calls" fields={[{key:'name', placeholder:'Name'}, {key:'number', placeholder:'Phone Number'}]} renderCard={(item) => (
+             <BraveCard>
+                 <h3 className="font-bold text-xl text-gray-900 dark:text-white truncate">{item.name}</h3>
+                 <p className="text-gray-500 font-mono mt-2 font-medium">{item.number}</p>
+             </BraveCard>
+          )} />;
+
+          const ShoppingView = () => <GenericListView title="Inventory & Wishlist" description="Manage purchases and track budgets." dataKey="shopping" fields={[{key:'item', placeholder:'Item Name'}, {key:'cost', type:'number', placeholder:'Cost (₹)'}, {key:'budget', type:'number', placeholder:'Budget (₹)'}]} renderCard={(item) => {
+             const cost = Number(item.cost) || 0;
+             const budget = Number(item.budget) || 0;
+             const isFunded = budget >= cost;
+             const percent = cost > 0 ? Math.min((budget / cost) * 100, 100) : (budget > 0 ? 100 : 0);
+
+             return (
+               <BraveCard className="flex flex-col justify-between">
+                   <div>
+                      <div className="flex justify-between items-start mb-3">
+                         <div className="p-2 bg-pink-50 text-pink-600 dark:bg-pink-900/20 dark:text-pink-400 rounded-xl"><ShoppingCart className="w-5 h-5"/></div>
+                         <Badge className={isFunded ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 border border-green-200 dark:border-green-800' : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400 border border-red-200 dark:border-red-800'}>
+                           {isFunded ? 'Funded' : `Need ₹${cost - budget}`}
+                         </Badge>
+                      </div>
+                      <h3 className="font-bold text-xl text-gray-900 dark:text-white leading-tight mt-4">{item.item}</h3>
+                      
+                      <div className="mt-4 grid grid-cols-2 gap-4 border-t border-gray-100 dark:border-gray-800 pt-4">
+                        <div>
+                          <p className="text-xs text-gray-500 font-medium mb-1">Cost</p>
+                          <p className="text-gray-900 dark:text-gray-100 font-bold">₹{cost}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-500 font-medium mb-1">Budget</p>
+                          <p className="text-gray-900 dark:text-gray-100 font-bold">₹{budget}</p>
+                        </div>
+                      </div>
+                      
+                      <div className="mt-6">
+                         <div className="flex justify-between text-xs font-medium mb-2">
+                           <span className="text-gray-500">Progress</span>
+                           <span className={isFunded ? 'text-green-600 dark:text-green-400' : 'text-brave-orange'}>{Math.round(percent)}%</span>
+                         </div>
+                         <div className="w-full bg-gray-100 dark:bg-gray-800 rounded-full h-2 overflow-hidden">
+                           <div className={`h-full transition-all duration-1000 ${isFunded ? 'bg-green-500' : 'bg-brave-orange'}`} style={{ width: `${percent}%` }}></div>
+                         </div>
+                      </div>
+                   </div>
+               </BraveCard>
+             );
+          }} />;
+
+          const EducationView = () => <GenericListView title="Education & Certs" description="Academic timeline and achievements." dataKey="education" fields={[{key:'degree', placeholder:'Degree/Cert'}, {key:'institution', placeholder:'Institution'}, {key:'year', placeholder:'Year'}, {key:'mark', placeholder:'Grade/CGPA'}, {key:'project', placeholder:'Project'}, {key:'note', placeholder:'Notes'}]} renderCard={(item) => (
+             <BraveCard>
+                 <div className="flex justify-between items-start mb-3">
+                    <div className="p-2.5 bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400 rounded-xl"><GraduationCap className="w-5 h-5"/></div>
+                    {item.mark && <Badge className="bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300 border border-gray-200 dark:border-gray-700">{item.mark}</Badge>}
+                 </div>
+                 <h3 className="font-bold text-xl text-gray-900 dark:text-white leading-tight mt-3">{item.degree}</h3>
+                 <p className="text-gray-600 dark:text-gray-400 font-medium text-sm mt-1">{item.institution}</p>
+                 
+                 {(item.project || item.note) && (
+                   <div className="mt-5 space-y-3">
+                     {item.project && (
+                       <div className="bg-gray-50 dark:bg-[#1a1a1a] p-3 rounded-xl border border-gray-100 dark:border-gray-800">
+                         <p className="text-xs text-gray-500 font-semibold mb-1">Project</p>
+                         <p className="text-sm text-gray-800 dark:text-gray-200">{item.project}</p>
+                       </div>
+                     )}
+                     {item.note && (
+                       <div className="bg-gray-50 dark:bg-[#1a1a1a] p-3 rounded-xl border border-gray-100 dark:border-gray-800">
+                         <p className="text-xs text-gray-500 font-semibold mb-1">Notes</p>
+                         <p className="text-sm text-gray-800 dark:text-gray-200">{item.note}</p>
+                       </div>
+                     )}
+                   </div>
+                 )}
+                 <div className="mt-6 pt-4 border-t border-gray-100 dark:border-gray-800">
+                    <p className="text-sm text-gray-500 font-medium">Class of {item.year}</p>
+                 </div>
+             </BraveCard>
+          )} />;
+
+          const LearningView = () => <GenericListView title="Skill Acquisition" description="Track your learning progress." dataKey="learning" fields={[{key:'course', placeholder:'Skill/Course'}, {key:'platform', placeholder:'Platform'}, {key:'progress', type:'number', placeholder:'Progress %'}]} renderCard={(item) => (
+             <BraveCard>
+                 <h3 className="font-bold text-xl text-gray-900 dark:text-white leading-tight">{item.course}</h3>
+                 <p className="text-gray-500 text-sm font-medium mt-1">{item.platform}</p>
+                 <div className="mt-8">
+                    <div className="flex justify-between text-xs font-semibold mb-2 text-gray-700 dark:text-gray-300">
+                       <span>Progress</span>
+                       <span>{item.progress || 0}%</span>
+                    </div>
+                    <div className="w-full bg-gray-100 dark:bg-gray-800 rounded-full h-2 overflow-hidden">
+                       <div className="bg-brave-orange h-full transition-all duration-1000" style={{ width: `${Math.min(100, Math.max(0, item.progress || 0))}%` }}></div>
+                    </div>
+                 </div>
+             </BraveCard>
+          )} />;
+
+          const SubscriptionsView = () => <GenericListView title="Subscriptions" description="Manage active plans and recurring costs." dataKey="subscriptions" fields={[{key:'name', placeholder:'Service'}, {key:'cost', type:'number', placeholder:'Cost (₹)'}, {key:'cycle', placeholder:'Billing Cycle'}]} renderCard={(item) => (
+             <BraveCard className="flex flex-row justify-between items-center">
+                 <div>
+                    <h3 className="font-bold text-xl text-gray-900 dark:text-white">{item.name}</h3>
+                    <p className="text-gray-500 text-sm font-medium mt-1">{item.cycle || 'Auto-Debit'}</p>
+                 </div>
+                 <div className="text-right">
+                    <p className="text-2xl font-bold text-gray-900 dark:text-white">{maskText(item.cost, 'amount')}</p>
+                 </div>
+             </BraveCard>
+          )} />;
+
+          const DocumentsView = () => <GenericListView title="Documents" description="Keep track of expiration dates." dataKey="documents" fields={[{key:'name', placeholder:'Document Name'}, {key:'expiry', type:'date', placeholder:'Expiry Date'}]} renderCard={(item) => (
+             <BraveCard className="flex flex-row items-center gap-5">
+                 <div className="p-3 bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 rounded-2xl shrink-0"><FolderLock className="w-6 h-6"/></div>
+                 <div className="overflow-hidden w-full">
+                    <h3 className="font-bold text-gray-900 dark:text-white truncate text-xl">{item.name}</h3>
+                    <p className="text-gray-500 text-sm font-medium mt-1">Expires: {item.expiry ? new Date(item.expiry).toLocaleDateString() : 'Never'}</p>
+                 </div>
+             </BraveCard>
+          )} />;
+
+          const JobsView = () => {
+            const [jobs, setJobs] = useState([]);
+            const [loading, setLoading] = useState(true);
+
+            useEffect(() => {
+              const fetchJobs = async () => {
+                setLoading(true);
+                try {
+                  const res = await fetch('https://www.arbeitnow.com/api/job-board-api');
+                  const json = await res.json();
+                  if (json && json.data) {
+                     setJobs(json.data.slice(0, 30)); 
+                  }
+                } catch(e) {
+                  console.error("Failed to fetch jobs", e);
+                }
+                setLoading(false);
+              };
+              fetchJobs();
+            }, []);
+
+            return (
+              <div className="space-y-8 animate-fade-in">
+                <div className="max-w-3xl">
+                    <h2 className="text-4xl md:text-5xl font-serif font-bold text-gray-900 dark:text-white tracking-tight">Career Network</h2>
+                    <p className="mt-4 text-lg text-gray-600 dark:text-gray-400 font-medium">Browse active IT and remote job listings safely.</p>
+                </div>
+                
+                {loading ? (
+                   <div className="flex flex-col items-center justify-center py-20 text-brave-orange animate-pulse">
+                      <Briefcase className="w-12 h-12 mb-4" />
+                      <p className="font-semibold text-lg text-gray-600 dark:text-gray-400">Scanning job market...</p>
+                   </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                    {jobs.map((job, idx) => (
+                      <BraveCard key={idx} className="flex flex-col justify-between h-full group">
+                        <div>
+                          <div className="flex justify-between items-start mb-4">
+                            <Badge className="bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300 max-w-[60%] truncate border border-gray-200 dark:border-gray-700">
+                              {job.company_name}
+                            </Badge>
+                            <span className={`text-xs font-bold uppercase tracking-wide ${job.remote ? 'text-green-600 dark:text-green-400' : 'text-gray-500'}`}>
+                              {job.remote ? 'Remote' : job.location}
+                            </span>
+                          </div>
+                          <h3 className="text-xl font-bold text-gray-900 dark:text-white leading-snug mb-5 group-hover:text-brave-orange transition-colors">
+                             {job.title}
+                          </h3>
+                          <div className="flex flex-wrap gap-2 mb-6">
+                            {(job.tags || []).slice(0, 3).map(tag => (
+                               <Badge key={tag} className="bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-300 border border-blue-100 dark:border-blue-800/50">
+                                 {tag}
+                               </Badge>
+                            ))}
+                          </div>
+                        </div>
+                        
+                        <BraveButton 
+                          variant="outline"
+                          onClick={() => window.open(job.url, '_blank')}
+                          className="w-full mt-auto"
+                        >
+                          View Details <ExternalLink className="w-4 h-4 ml-1"/>
+                        </BraveButton>
+                      </BraveCard>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          };
+
+          // Mapping views
+          const renderContent = () => {
+            switch (activeTab) {
+              case 'dashboard': return <DashboardView />;
+              case 'currency': return <CurrencyView />;
+              case 'news': return <NewsView />;
+              case 'links': return <LinksView />;
+              case 'identity': return <IdentityVaultView />;
+              case 'finance': return <FinanceView />;
+              case 'travel': return <TravelView />;
+              case 'jobs': return <JobsView />;
+              case 'calls': return <CallsView />;
+              case 'shopping': return <ShoppingView />;
+              case 'education': return <EducationView />;
+              case 'learning': return <LearningView />;
+              case 'subscriptions': return <SubscriptionsView />;
+              case 'documents': return <DocumentsView />;
+              case 'settings': return <SettingsView />;
+              default: return <DashboardView />;
+            }
+          };
+
+          return (
+            <div className="min-h-screen flex overflow-hidden bg-white dark:bg-[#0b0b0b]">
+              
+              {/* SIDEBAR */}
+              <aside className={`fixed md:static inset-y-0 left-0 z-50 w-72 bg-gray-50 dark:bg-[#111111] border-r border-gray-200 dark:border-gray-800 transform transition-transform duration-300 ease-in-out ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'} flex flex-col`}>
+                <div className="p-6 md:p-8 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-brave-orange text-white flex items-center justify-center shadow-md">
+                      <Shield className="w-6 h-6" fill="currentColor" strokeWidth={0}/>
+                    </div>
+                    <h1 className="text-2xl font-serif font-bold text-gray-900 dark:text-white tracking-tight">Life<span className="text-brave-orange">OS</span></h1>
+                  </div>
+                  <button className="md:hidden p-2 text-gray-500 hover:text-gray-900 dark:hover:text-white" onClick={() => setIsSidebarOpen(false)}>
+                    <X className="w-6 h-6" />
+                  </button>
+                </div>
+
+                <nav className="flex-1 overflow-y-auto py-4 px-4 space-y-1.5 custom-scrollbar">
+                  {navItems.map((item) => {
+                    const Icon = item.icon;
+                    const isActive = activeTab === item.id;
+                    return (
+                      <button
+                        key={item.id}
+                        onClick={() => { setActiveTab(item.id); setIsSidebarOpen(false); }}
+                        className={`w-full flex items-center gap-3 px-4 py-3 rounded-full transition-all duration-200 font-medium text-sm ${
+                          isActive 
+                          ? 'bg-gray-200 text-gray-900 dark:bg-[#222] dark:text-white font-semibold' 
+                          : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-[#1a1a1a] dark:hover:text-white'
+                        }`}
+                      >
+                        <Icon className={`w-5 h-5 ${isActive ? 'text-brave-orange' : ''}`} />
+                        {item.label}
+                      </button>
+                    );
+                  })}
+                </nav>
+
+                <div className="p-4 mt-auto">
+                   <button
+                     onClick={() => { setActiveTab('settings'); setIsSidebarOpen(false); }}
+                     className={`w-full flex items-center gap-3 px-4 py-3 rounded-full transition-all font-medium text-sm ${activeTab === 'settings' ? 'bg-gray-200 text-gray-900 dark:bg-[#222] dark:text-white font-semibold' : 'text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-[#1a1a1a]'}`}
+                   >
+                     <Settings className="w-5 h-5" /> Settings
+                   </button>
+                </div>
+              </aside>
+
+              {/* MAIN CONTENT AREA */}
+              <main className="flex-1 flex flex-col h-screen overflow-hidden relative">
+                {isSidebarOpen && <div className="fixed inset-0 bg-gray-900/20 backdrop-blur-sm z-40 md:hidden animate-fade-in" onClick={() => setIsSidebarOpen(false)}></div>}
+
+                {/* Top Navbar */}
+                <header className="h-20 px-4 md:px-8 flex items-center justify-between sticky top-0 z-30 bg-white/80 dark:bg-[#0b0b0b]/80 backdrop-blur-md border-b border-gray-200 dark:border-gray-800">
+                  <div className="flex items-center gap-4">
+                    <button className="md:hidden p-2 text-gray-600 dark:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800" onClick={() => setIsSidebarOpen(true)}>
+                      <Menu className="w-6 h-6" />
+                    </button>
+                    <div className="hidden md:flex items-center bg-gray-100 dark:bg-[#1a1a1a] border border-transparent dark:border-gray-800 px-5 py-2.5 rounded-full w-80 focus-within:border-gray-300 dark:focus-within:border-gray-600 focus-within:bg-white dark:focus-within:bg-[#222] transition-all shadow-sm">
+                      <Search className="w-4 h-4 text-gray-500" />
+                      <input type="text" placeholder="Search LifeOS..." className="bg-transparent border-none outline-none ml-3 w-full text-sm font-medium text-gray-900 dark:text-white placeholder-gray-500" />
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-3 md:gap-5">
+                    {isEditMode && <Badge className="hidden md:flex bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400 border border-orange-200 dark:border-orange-800">Admin Mode</Badge>}
+                    
+                    <button onClick={() => setIsPrivacyMode(!isPrivacyMode)} className="hidden md:flex items-center gap-2 px-4 py-2 rounded-full border border-gray-200 dark:border-gray-700 text-sm font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-[#1a1a1a] transition-all">
+                      {isPrivacyMode ? <Shield className="w-4 h-4 text-brave-orange" /> : <Eye className="w-4 h-4" />}
+                      {isPrivacyMode ? 'Private' : 'Public'}
+                    </button>
+                    
+                    <div className="relative">
+                      <button onClick={() => setIsNotificationsOpen(!isNotificationsOpen)} className="relative p-2.5 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors">
+                        <Bell className="w-5 h-5" />
+                        {notifications.length > 0 && <span className="absolute top-2 right-2 w-2.5 h-2.5 bg-brave-orange rounded-full border-2 border-white dark:border-[#0b0b0b]"></span>}
+                      </button>
+
+                      {isNotificationsOpen && (
+                        <>
+                          <div className="fixed inset-0 cursor-default" onClick={() => setIsNotificationsOpen(false)}></div>
+                          <div className="absolute right-0 mt-3 w-80 bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-800 rounded-2xl shadow-xl z-50 overflow-hidden animate-fade-in origin-top-right">
+                            <div className="p-4 border-b border-gray-200 dark:border-gray-800 flex justify-between items-center bg-gray-50 dark:bg-[#111]">
+                              <h3 className="font-bold text-gray-900 dark:text-white text-sm">Notifications</h3>
+                              <Badge className="bg-gray-200 text-gray-800 dark:bg-gray-700 dark:text-white">{notifications.length}</Badge>
+                            </div>
+                            <div className="max-h-[60vh] overflow-y-auto custom-scrollbar">
+                              {notifications.length === 0 ? (
+                                <div className="p-8 text-center text-gray-500 font-medium text-sm">You're all caught up.</div>
+                              ) : (
+                                notifications.map(notif => {
+                                  const NIcon = notif.icon;
+                                  return (
+                                    <div key={notif.id} className="p-4 border-b border-gray-100 dark:border-gray-800/50 hover:bg-gray-50 dark:hover:bg-[#222] transition-colors flex gap-4 cursor-pointer" onClick={() => setIsNotificationsOpen(false)}>
+                                      <div className="mt-1"><NIcon className={`w-5 h-5 ${notif.color}`} /></div>
+                                      <div>
+                                        <p className="text-sm font-bold text-gray-900 dark:text-white leading-tight mb-1">{notif.message}</p>
+                                        <p className="text-xs font-medium text-gray-500">{notif.title} • {notif.time}</p>
+                                      </div>
+                                    </div>
+                                  )
+                                })
+                              )}
+                            </div>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                    
+                    <div className="w-10 h-10 rounded-full bg-brave-orange text-white flex items-center justify-center font-bold text-lg shadow-sm">
+                      {userName.charAt(0).toUpperCase()}
+                    </div>
+                  </div>
+                </header>
+
+                {/* Scrollable Content */}
+                <div className="flex-1 overflow-y-auto p-4 md:p-8 lg:px-12 lg:py-10 pb-28 md:pb-20 custom-scrollbar relative z-10">
+                  <div className="max-w-[1200px] mx-auto">
+                    {renderContent()}
+                  </div>
+                </div>
+              </main>
+
+              {/* MOBILE BOTTOM NAVIGATION */}
+              <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white/90 dark:bg-[#0b0b0b]/90 backdrop-blur-lg border-t border-gray-200 dark:border-gray-800 pb-safe">
+                <div className="flex items-center justify-around p-2">
+                  {[
+                    { id: 'dashboard', icon: LayoutDashboard, label: 'Hub' },
+                    { id: 'links', icon: Globe, label: 'Tasks' },
+                    { id: 'news', icon: Newspaper, label: 'News' },
+                    { id: 'finance', icon: Receipt, label: 'Funds' },
+                    { id: 'settings', icon: Settings, label: 'Sys' }
+                  ].map(item => {
+                    const Icon = item.icon;
+                    const isActive = activeTab === item.id;
+                    return (
+                      <button key={item.id} onClick={() => setActiveTab(item.id)} className={`flex flex-1 flex-col items-center justify-center py-2 transition-colors ${isActive ? 'text-brave-orange' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'}`}>
+                        <Icon className="w-6 h-6 mb-1" />
+                        <span className="text-[10px] font-medium">{item.label}</span>
+                      </button>
+                    )
+                  })}
+                </div>
+              </nav>
+
+              {/* IFRAME MODAL */}
+              {activeIframeUrl && (
+                <div className="fixed inset-0 z-[100] bg-white dark:bg-[#0b0b0b] flex flex-col animate-fade-in">
+                  <div className="h-16 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between px-4 bg-gray-50 dark:bg-[#111] z-10">
+                    <div className="flex items-center gap-3 overflow-hidden">
+                      <Shield className="w-5 h-5 text-brave-orange shrink-0" fill="currentColor" strokeWidth={0}/>
+                      <span className="text-gray-900 dark:text-white font-medium truncate text-sm">{activeIframeUrl}</span>
+                    </div>
+                    <div className="flex items-center gap-3 shrink-0 pl-4">
+                      <a href={activeIframeUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-xs font-semibold text-gray-700 dark:text-gray-300 bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 px-4 py-2 rounded-full transition-colors">
+                        <ExternalLink className="w-4 h-4"/> <span className="hidden md:inline">Open in App</span>
+                      </a>
+                      <button onClick={() => setActiveIframeUrl(null)} className="p-2 text-gray-500 hover:bg-gray-200 dark:hover:bg-gray-800 rounded-full transition-colors">
+                        <X className="w-5 h-5"/>
+                      </button>
+                    </div>
+                  </div>
+                  <div className="flex-1 w-full h-full relative bg-gray-100 dark:bg-gray-900">
+                    <div className="absolute inset-0 flex flex-col items-center justify-center p-8 text-center z-0">
+                      <Globe className="w-16 h-16 text-gray-300 dark:text-gray-700 mb-4"/>
+                      <p className="text-gray-900 dark:text-white font-semibold text-lg mb-2">Connecting to secure frame...</p>
+                      <p className="text-gray-500 text-sm max-w-md">If the target database refuses the embedded connection, please utilize the "Open in App" action above.</p>
+                    </div>
+                    <iframe 
+                      src={activeIframeUrl} 
+                      className="absolute inset-0 w-full h-full border-none z-10 bg-white dark:bg-transparent" 
+                      sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
+                      title="Internal Web Viewer"
+                    ></iframe>
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        }
+
+        const root = createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
