@@ -40,7 +40,7 @@
 
 # 16. SanKeep Notes - Like a Google Keep Notes -- [https://a-santhosh-hub.github.io/in/Project/SanKeep/in.html]
 
-# 17. Smart Daily Life Dashboard -- [https://a-santhosh-hub.github.io/WEB_APPLICATION-S/Smart%20Daily%20Life%20Dashboard/in.html]
+# 17. Smart Daily Life Dashboard -- [https://a-santhosh-hub.github.io/WEB_APPLICATION-S/LifeOS/in]
 
 The SanStudio is Now working, wait 🫸 for Update!!!
 
