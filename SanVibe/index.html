@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Sanvibe - Local Music Player</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #000;
+            color: #e5e7eb;
+            overflow: hidden; 
+        }
+
+        /* Custom Scrollbar */
+        .scrollbar-hide::-webkit-scrollbar {
+            display: none;
+        }
+        .scrollbar-hide {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        /* Range Slider Styling */
+        input[type=range] {
+            -webkit-appearance: none;
+            width: 100%;
+            background: transparent;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 12px;
+            width: 12px;
+            border-radius: 50%;
+            background: #ffffff;
+            cursor: pointer;
+            margin-top: -4px;
+            box-shadow: 0 0 10px rgba(255,255,255,0.5);
+            opacity: 0;
+            transition: opacity 0.2s, transform 0.2s;
+        }
+        input[type=range]:hover::-webkit-slider-thumb {
+            opacity: 1;
+            transform: scale(1.2);
+        }
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 4px;
+            cursor: pointer;
+            background: #374151;
+            border-radius: 9999px;
+        }
+        
+        /* Dynamic Range Track Color */
+        .range-slider-container {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+        .range-fill {
+            position: absolute;
+            height: 4px;
+            background: linear-gradient(to right, #06b6d4, #a855f7); 
+            border-radius: 9999px;
+            pointer-events: none;
+        }
+        .volume-fill {
+            position: absolute;
+            height: 4px;
+            background: #ffffff;
+            border-radius: 9999px;
+            pointer-events: none;
+            transition: background 0.3s;
+        }
+        .volume-container:hover .volume-fill {
+            background: #22d3ee;
+        }
+
+        /* Glassmorphism utility */
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        /* Animations */
+        @keyframes pulse-slow {
+            0%, 100% { opacity: 0.4; transform: scale(1); }
+            50% { opacity: 0.7; transform: scale(1.05); }
+        }
+        .animate-aurora {
+            animation: pulse-slow infinite alternate;
+        }
+
+        .waveform-bar {
+            width: 4px;
+            background-color: #22d3ee;
+            border-radius: 2px 2px 0 0;
+            animation: bounce 1s infinite alternate;
+        }
+        @keyframes bounce {
+            0% { height: 4px; }
+            100% { height: 100%; }
+        }
+    </style>
+</head>
+<body class="h-screen w-full flex flex-col selection:bg-cyan-500/30 text-gray-200">
+
+    <div class="fixed inset-0 z-0 overflow-hidden pointer-events-none">
+        <div class="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-purple-900/40 rounded-full blur-[120px] mix-blend-screen animate-aurora" style="animation-duration: 8s"></div>
+        <div class="absolute bottom-[-10%] right-[-10%] w-[60%] h-[60%] bg-cyan-900/30 rounded-full blur-[150px] mix-blend-screen animate-aurora" style="animation-duration: 12s; animation-delay: 2s"></div>
+        <div class="absolute top-[40%] left-[30%] w-[30%] h-[30%] bg-pink-900/20 rounded-full blur-[100px] mix-blend-screen animate-aurora" style="animation-duration: 10s; animation-delay: 1s"></div>
+        <div class="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4IiBoZWlnaHQ9IjgiPgo8cmVjdCB3aWR0aD0iOCIgaGVpZ2h0PSI4IiBmaWxsPSIjZmZmIiBmaWxsLW9wYWNpdHk9IjAuMDIiLz4KPHBhdGggZD0iTTAgMEw4IDhaTTAgOEw4IDBaIiBzdHJva2U9IiMwMDAiIHN0cm9rZS1vcGFjaXR5PSIwLjA1Ii8+Cjwvc3ZnPg==')] opacity-50 mix-blend-overlay"></div>
+    </div>
+
+    <div class="flex flex-1 overflow-hidden z-10 relative">
+        
+        <!-- Sidebar (Desktop) -->
+        <aside class="w-64 flex-shrink-0 hidden md:flex flex-col h-full bg-black/40 backdrop-blur-3xl border-r border-white/5 pb-24">
+            <div class="p-6 flex-1 overflow-y-auto scrollbar-hide">
+                <!-- Logo -->
+                <div class="flex items-center gap-3 mb-10 cursor-pointer group">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-500 to-purple-600 flex items-center justify-center shadow-lg shadow-cyan-500/20 group-hover:shadow-cyan-500/40 transition-all">
+                        <i data-lucide="activity" class="text-white w-6 h-6"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-2xl font-black tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-white to-gray-400">
+                            Sanvibe
+                        </h1>
+                        <p class="text-[10px] text-cyan-400 tracking-widest uppercase font-bold">Offline Player</p>
+                    </div>
+                </div>
+
+                <!-- Nav -->
+                <nav class="space-y-2 mb-10">
+                    <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4 px-3">Menu</p>
+                    <button class="nav-btn w-full flex items-center gap-4 px-3 py-3 rounded-xl transition-all font-medium bg-white/10 text-white shadow-[0_0_20px_rgba(255,255,255,0.05)] border border-white/10">
+                        <i data-lucide="hard-drive" class="w-5 h-5 text-cyan-400"></i> My Library
+                    </button>
+                </nav>
+            </div>
+
+            <!-- Developer Branding -->
+            <div class="p-6 mt-auto">
+                <div class="mt-4 text-center">
+                    <a href="https://sanstudio-hub.github.io/in/" target="_blank" rel="noopener noreferrer" class="text-xs text-gray-500 hover:text-cyan-400 transition-colors font-medium">
+                        Developed By SanStudio
+                    </a>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="flex-1 flex flex-col relative z-10 bg-black/20 backdrop-blur-[2px] h-full pb-24 md:pb-24">
+            <header class="h-20 flex-shrink-0 flex items-center justify-between px-4 md:px-8 z-20 sticky top-0 bg-gradient-to-b from-black/80 to-transparent backdrop-blur-sm">
+                <div class="text-white font-bold text-xl tracking-tight hidden md:block">Local Music</div>
+            </header>
+
+            <div id="view-container" class="flex-1 overflow-y-auto scrollbar-hide px-4 md:px-8 pt-4 pb-12">
+                <!-- Library Content injected by JS -->
+            </div>
+        </main>
+    </div>
+
+    <div class="fixed bottom-0 left-0 right-0 h-24 bg-black/80 backdrop-blur-3xl border-t border-white/10 z-50 flex items-center justify-between px-4 md:px-8 hidden" id="player-bar">
+        
+        <!-- Now Playing Info -->
+        <div class="flex items-center gap-4 w-1/3 min-w-[150px] md:min-w-[200px]">
+            <div class="relative group w-12 h-12 md:w-14 md:h-14 rounded-lg overflow-hidden flex-shrink-0 bg-gray-800 flex items-center justify-center border border-white/10">
+                <i data-lucide="music" class="w-6 h-6 text-cyan-400/50"></i>
+            </div>
+            <div class="flex flex-col truncate">
+                <span id="player-title" class="text-white font-semibold text-sm truncate">Title</span>
+                <span id="player-artist" class="text-gray-400 text-xs truncate">Artist</span>
+            </div>
+        </div>
+
+        <!-- Controls & Progress -->
+        <div class="flex flex-col items-center flex-1 max-w-2xl px-2 md:px-4">
+            <div class="flex items-center gap-4 md:gap-6 mb-2">
+                <button onclick="toggleShuffle()" id="btn-shuffle" class="hidden sm:block text-gray-400 hover:text-white transition-colors"><i data-lucide="shuffle" class="w-4 h-4"></i></button>
+                <button onclick="playPrev()" class="text-gray-400 hover:text-white transition-colors"><i data-lucide="skip-back" class="w-5 h-5"></i></button>
+                
+                <button onclick="togglePlay()" class="w-10 h-10 flex items-center justify-center bg-white text-black rounded-full hover:scale-105 hover:shadow-[0_0_20px_rgba(255,255,255,0.4)] transition-all">
+                    <!-- Icons replaced dynamically in JS to prevent losing SVG bindings -->
+                    <div id="play-pause-container">
+                        <i data-lucide="play" class="w-5 h-5 ml-1 fill-black"></i>
+                    </div>
+                </button>
+                
+                <button onclick="playNext()" class="text-gray-400 hover:text-white transition-colors"><i data-lucide="skip-forward" class="w-5 h-5"></i></button>
+                <button onclick="toggleRepeat()" id="btn-repeat" class="hidden sm:block text-gray-400 hover:text-white transition-colors"><i data-lucide="repeat" class="w-4 h-4"></i></button>
+            </div>
+            
+            <div class="flex items-center gap-3 w-full text-xs text-gray-400 font-medium font-mono">
+                <span id="time-current" class="w-10 text-right">0:00</span>
+                <div class="range-slider-container flex-1">
+                    <div id="progress-fill" class="range-fill w-0"></div>
+                    <input type="range" id="progress-bar" min="0" max="100" value="0" step="0.1">
+                </div>
+                <span id="time-total" class="w-10">0:00</span>
+            </div>
+        </div>
+
+        <!-- Volume & Extras -->
+        <div class="hidden md:flex items-center justify-end gap-3 w-1/3 min-w-[150px]">
+            <div id="waveform" class="flex items-end space-x-[2px] h-4 w-6 mr-4 opacity-0 transition-opacity">
+                <div class="waveform-bar" style="animation-duration: 0.4s"></div>
+                <div class="waveform-bar" style="animation-duration: 0.7s"></div>
+                <div class="waveform-bar" style="animation-duration: 0.5s"></div>
+                <div class="waveform-bar" style="animation-duration: 0.8s"></div>
+            </div>
+            <div class="flex items-center gap-2 w-28 group volume-container ml-2">
+                <button onclick="toggleMute()" id="btn-volume" class="text-gray-400 hover:text-white">
+                    <i data-lucide="volume-2" class="w-4 h-4"></i>
+                </button>
+                <div class="range-slider-container flex-1">
+                    <div id="volume-fill" class="volume-fill w-[80%]"></div>
+                    <input type="range" id="volume-bar" min="0" max="100" value="80">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hidden File Inputs -->
+    <input type="file" id="file-upload" accept="audio/*" multiple class="hidden">
+    <input type="file" id="folder-upload" accept="audio/*" webkitdirectory directory multiple class="hidden">
+
+    <script>
+        const DATABASE = {
+            localSongs: []
+        };
+
+        const state = {
+            queue: [],
+            currentIndex: -1,
+            isPlaying: false,
+            volume: 0.8,
+            isMuted: false,
+            shuffle: false,
+            repeat: false,
+            duration: 0
+        };
+
+        const audio = new Audio();
+
+        const els = {
+            viewContainer: document.getElementById('view-container'),
+            playerBar: document.getElementById('player-bar'),
+            title: document.getElementById('player-title'),
+            artist: document.getElementById('player-artist'),
+            timeCurrent: document.getElementById('time-current'),
+            timeTotal: document.getElementById('time-total'),
+            progressBar: document.getElementById('progress-bar'),
+            progressFill: document.getElementById('progress-fill'),
+            volumeBar: document.getElementById('volume-bar'),
+            volumeFill: document.getElementById('volume-fill'),
+            waveform: document.getElementById('waveform'),
+            fileUpload: document.getElementById('file-upload'),
+            folderUpload: document.getElementById('folder-upload')
+        };
+
+        const formatTime = (seconds) => {
+            if (!seconds || isNaN(seconds)) return '0:00';
+            const m = Math.floor(seconds / 60);
+            const s = Math.floor(seconds % 60);
+            return `${m}:${s < 10 ? '0' : ''}${s}`;
+        };
+
+        const updateIcons = () => {
+            if (window.lucide) {
+                window.lucide.createIcons();
+            }
+        };
+
+        const processLocalFiles = (files) => {
+            const audioFiles = Array.from(files).filter(file => file.type.startsWith('audio/'));
+            if (audioFiles.length === 0) return;
+
+            const newSongs = audioFiles.map((file, i) => {
+                // Attempt to extract artist and title from filename (e.g. "Artist - Title.mp3")
+                let rawName = file.name.replace(/\.[^/.]+$/, "");
+                let title = rawName;
+                let artist = "Local Music";
+                
+                if (rawName.includes(" - ")) {
+                    const parts = rawName.split(" - ");
+                    artist = parts[0].trim();
+                    title = parts.slice(1).join(" - ").trim();
+                }
+
+                return {
+                    id: 'local-' + Date.now() + '-' + i,
+                    title: title,
+                    artist: artist,
+                    duration: 0, 
+                    audioUrl: URL.createObjectURL(file) 
+                };
+            });
+
+            DATABASE.localSongs = [...DATABASE.localSongs, ...newSongs];
+            renderLibrary();
+        };
+
+        // File Input Listeners
+        els.fileUpload.addEventListener('change', (e) => processLocalFiles(e.target.files));
+        els.folderUpload.addEventListener('change', (e) => processLocalFiles(e.target.files));
+
+        const triggerFileUpload = () => els.fileUpload.click();
+        const triggerFolderUpload = () => els.folderUpload.click();
+
+        const renderLibrary = () => {
+            if (DATABASE.localSongs.length === 0) {
+                // Empty State UI
+                els.viewContainer.innerHTML = `
+                    <div class="animate-fade-in flex flex-col items-center justify-center h-full mt-10 md:mt-20 text-center px-4">
+                        <div class="w-20 h-20 bg-white/5 rounded-full flex items-center justify-center mb-6 shadow-[0_0_30px_rgba(255,255,255,0.05)]">
+                            <i data-lucide="hard-drive" class="w-10 h-10 text-cyan-400"></i>
+                        </div>
+                        <h2 class="text-2xl md:text-3xl font-bold text-white mb-3">Your Local Library</h2>
+                        <p class="text-gray-400 text-sm max-w-md mb-8">Import your own downloaded music folders or files directly into Sanvibe. Files stay safely on your device and play locally without internet.</p>
+                        <div class="flex flex-col sm:flex-row gap-4">
+                            <button onclick="triggerFolderUpload()" class="bg-cyan-500 hover:bg-cyan-400 text-white font-bold py-3 px-6 rounded-full transition-all shadow-[0_0_20px_rgba(6,182,212,0.4)] flex items-center gap-2 justify-center">
+                                <i data-lucide="folder-open" class="w-5 h-5"></i> Import Folder
+                            </button>
+                            <button onclick="triggerFileUpload()" class="bg-white/10 hover:bg-white/20 border border-white/20 text-white font-bold py-3 px-6 rounded-full transition-all flex items-center gap-2 justify-center">
+                                <i data-lucide="file-audio" class="w-5 h-5"></i> Select Files
+                            </button>
+                        </div>
+                    </div>
+                `;
+            } else {
+                // List State UI
+                const listHtml = DATABASE.localSongs.map((song, i) => {
+                    const isActive = state.currentIndex !== -1 && state.queue[state.currentIndex]?.id === song.id;
+                    return `
+                    <div onclick="playSong('${song.id}')" class="flex items-center gap-3 md:gap-4 p-2 md:p-3 rounded-xl transition-all cursor-pointer group ${isActive ? 'bg-white/10' : 'hover:bg-white/5'}">
+                        <div class="w-6 md:w-8 text-center text-gray-500 text-xs md:text-sm font-medium relative">
+                            ${isActive 
+                                ? `<i data-lucide="volume-2" class="w-4 h-4 text-cyan-400 mx-auto"></i>` 
+                                : `<span class="group-hover:hidden">${i + 1}</span><i data-lucide="play" class="w-3 h-3 md:w-4 md:h-4 hidden group-hover:block mx-auto text-white"></i>`
+                            }
+                        </div>
+                        <div class="w-8 h-8 md:w-10 md:h-10 bg-gradient-to-br from-gray-800 to-black rounded-md shadow-sm flex items-center justify-center flex-shrink-0 border border-white/10">
+                            <i data-lucide="music" class="w-4 h-4 text-cyan-400/50"></i>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <p class="text-sm font-bold truncate ${isActive ? 'text-cyan-400' : 'text-white'}">${song.title}</p>
+                        </div>
+                        <div class="hidden md:block flex-1 text-sm text-gray-400 truncate">${song.artist}</div>
+                        <div class="text-xs md:text-sm text-gray-400 font-mono text-right w-10 md:w-12">${song.duration ? formatTime(song.duration) : '--:--'}</div>
+                    </div>
+                    `;
+                }).join('');
+
+                els.viewContainer.innerHTML = `
+                    <div class="animate-fade-in pb-10">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+                            <div>
+                                <h2 class="text-2xl md:text-3xl font-bold text-white tracking-tight flex items-center gap-3">
+                                    <i data-lucide="hard-drive" class="text-cyan-400 w-6 h-6"></i> Local Library
+                                </h2>
+                                <p class="text-gray-400 text-sm mt-1">${DATABASE.localSongs.length} tracks ready to play</p>
+                            </div>
+                            <div class="flex gap-3">
+                                <button onclick="playLocalQueue()" class="bg-cyan-500 hover:bg-cyan-400 text-white font-bold py-2 px-6 rounded-full transition-all shadow-[0_0_15px_rgba(6,182,212,0.4)] flex items-center gap-2 text-sm">
+                                    <i data-lucide="play" class="w-4 h-4 fill-white"></i> Play All
+                                </button>
+                                <button onclick="triggerFileUpload()" class="bg-white/10 hover:bg-white/20 border border-white/20 text-white font-bold py-2 px-4 rounded-full transition-all flex items-center gap-2 text-sm">
+                                    <i data-lucide="plus" class="w-4 h-4"></i> Add More
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="glass-panel p-2 md:p-4 rounded-2xl">
+                            <div class="flex text-xs font-bold text-gray-400 uppercase tracking-widest border-b border-white/10 pb-3 mb-2 px-2 md:px-3">
+                                <div class="w-8 md:w-10">#</div>
+                                <div class="flex-1">Title</div>
+                                <div class="hidden md:block flex-1">Artist</div>
+                                <div class="w-12 md:w-16 text-right md:mr-4"><i data-lucide="clock" class="w-4 h-4 ml-auto"></i></div>
+                            </div>
+                            <div class="space-y-1">
+                                ${listHtml}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+            updateIcons();
+        };
+
+        const playSong = (songId) => {
+            state.queue = [...DATABASE.localSongs];
+            const index = state.queue.findIndex(s => s.id === songId);
+            if (index !== -1) {
+                state.currentIndex = index;
+                loadAndPlayCurrent();
+            }
+        };
+
+        const playLocalQueue = () => {
+            if (DATABASE.localSongs.length === 0) return;
+            state.queue = [...DATABASE.localSongs];
+            state.currentIndex = 0;
+            loadAndPlayCurrent();
+        };
+
+        const loadAndPlayCurrent = () => {
+            if (state.currentIndex === -1) return;
+            const song = state.queue[state.currentIndex];
+            
+            els.playerBar.classList.remove('hidden');
+            document.querySelector('main').classList.add('pb-24');
+
+            els.title.textContent = song.title;
+            els.artist.textContent = song.artist;
+            
+            renderLibrary(); // Re-render to show active speaker icon
+
+            audio.src = song.audioUrl;
+            audio.volume = state.isMuted ? 0 : state.volume;
+            audio.play().then(() => {
+                state.isPlaying = true;
+                updatePlayPauseUI();
+                els.waveform.style.opacity = '1';
+            }).catch(e => console.log("Audio play prevented:", e));
+        };
+
+        const togglePlay = () => {
+            if (state.currentIndex === -1 && state.queue.length > 0) {
+                state.currentIndex = 0;
+                loadAndPlayCurrent();
+                return;
+            }
+            if (state.currentIndex === -1) return; // Nothing to play
+
+            if (state.isPlaying) {
+                audio.pause();
+                state.isPlaying = false;
+                els.waveform.style.opacity = '0';
+            } else {
+                audio.play();
+                state.isPlaying = true;
+                els.waveform.style.opacity = '1';
+            }
+            updatePlayPauseUI();
+        };
+
+        const playNext = () => {
+            if (state.queue.length === 0) return;
+            if (state.shuffle) {
+                let nextIdx;
+                do { nextIdx = Math.floor(Math.random() * state.queue.length); } 
+                while (nextIdx === state.currentIndex && state.queue.length > 1);
+                state.currentIndex = nextIdx;
+            } else {
+                state.currentIndex = (state.currentIndex + 1) % state.queue.length;
+            }
+            loadAndPlayCurrent();
+        };
+
+        const playPrev = () => {
+            if (state.queue.length === 0) return;
+            if (audio.currentTime > 3) {
+                audio.currentTime = 0;
+            } else {
+                state.currentIndex = (state.currentIndex - 1 + state.queue.length) % state.queue.length;
+                loadAndPlayCurrent();
+            }
+        };
+
+        const updatePlayPauseUI = () => {
+            const container = document.getElementById('play-pause-container');
+            if(container) {
+                if (state.isPlaying) {
+                    container.innerHTML = `<i data-lucide="pause" class="w-5 h-5 fill-black"></i>`;
+                } else {
+                    container.innerHTML = `<i data-lucide="play" class="w-5 h-5 ml-1 fill-black"></i>`;
+                }
+                updateIcons();
+            }
+        };
+
+        const toggleShuffle = () => {
+            state.shuffle = !state.shuffle;
+            const btn = document.getElementById('btn-shuffle');
+            if(btn) {
+                btn.classList.toggle('text-cyan-400', state.shuffle);
+                btn.classList.toggle('text-gray-400', !state.shuffle);
+            }
+        };
+
+        const toggleRepeat = () => {
+            state.repeat = !state.repeat;
+            const btn = document.getElementById('btn-repeat');
+            if(btn) {
+                btn.classList.toggle('text-cyan-400', state.repeat);
+                btn.classList.toggle('text-gray-400', !state.repeat);
+            }
+        };
+
+        const toggleMute = () => {
+            state.isMuted = !state.isMuted;
+            audio.volume = state.isMuted ? 0 : state.volume;
+            
+            const btn = document.getElementById('btn-volume');
+            if(btn) {
+                const isMutedIcon = state.isMuted || state.volume === 0 ? 'volume-x' : 'volume-2';
+                btn.innerHTML = `<i data-lucide="${isMutedIcon}" class="w-4 h-4"></i>`;
+                updateIcons();
+            }
+
+            els.volumeBar.value = state.isMuted ? 0 : state.volume * 100;
+            updateVolumeFill();
+        };
+
+        audio.addEventListener('loadedmetadata', () => {
+            state.duration = audio.duration;
+            els.timeTotal.textContent = formatTime(state.duration);
+            els.progressBar.max = state.duration;
+
+            if (state.queue[state.currentIndex] && !state.queue[state.currentIndex].duration) {
+                state.queue[state.currentIndex].duration = audio.duration;
+                const dbSong = DATABASE.localSongs.find(s => s.id === state.queue[state.currentIndex].id);
+                if (dbSong) dbSong.duration = audio.duration;
+                // re-render library softly to update time but don't interrupt play
+                renderLibrary();
+            }
+        });
+
+        audio.addEventListener('timeupdate', () => {
+            if (!state.duration) return;
+            els.timeCurrent.textContent = formatTime(audio.currentTime);
+            els.progressBar.value = audio.currentTime;
+            
+            const percentage = (audio.currentTime / state.duration) * 100;
+            els.progressFill.style.width = `${percentage}%`;
+        });
+
+        audio.addEventListener('ended', () => {
+            if (state.repeat) {
+                audio.currentTime = 0;
+                audio.play();
+            } else {
+                playNext();
+            }
+        });
+
+        els.progressBar.addEventListener('input', (e) => {
+            const val = parseFloat(e.target.value);
+            audio.currentTime = val;
+            const percentage = (val / state.duration) * 100;
+            els.progressFill.style.width = `${percentage}%`;
+        });
+
+        const updateVolumeFill = () => {
+            const val = els.volumeBar.value;
+            els.volumeFill.style.width = `${val}%`;
+        };
+
+        els.volumeBar.addEventListener('input', (e) => {
+            const val = parseFloat(e.target.value);
+            state.volume = val / 100;
+            if (state.isMuted) {
+                state.isMuted = false;
+                const btn = document.getElementById('btn-volume');
+                if(btn) {
+                    btn.innerHTML = `<i data-lucide="volume-2" class="w-4 h-4"></i>`;
+                    updateIcons();
+                }
+            }
+            audio.volume = state.volume;
+            updateVolumeFill();
+        });
+
+        document.addEventListener('DOMContentLoaded', () => {
+            renderLibrary();
+            updateVolumeFill();
+            updateIcons();
+        });
+
+    </script>
+</body>
+</html>
