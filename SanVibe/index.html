@@ -17,7 +17,7 @@
     <style>
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #000;
+            background-color: #0a0a0a;
             color: #e5e7eb;
             overflow: hidden; 
         }
@@ -39,19 +39,20 @@
         }
         input[type=range]::-webkit-slider-thumb {
             -webkit-appearance: none;
-            height: 12px;
-            width: 12px;
+            height: 14px;
+            width: 14px;
             border-radius: 50%;
             background: #ffffff;
             cursor: pointer;
-            margin-top: -4px;
-            box-shadow: 0 0 10px rgba(255,255,255,0.5);
+            margin-top: -5px;
+            box-shadow: 0 0 10px rgba(255,255,255,0.8);
             opacity: 0;
             transition: opacity 0.2s, transform 0.2s;
         }
-        input[type=range]:hover::-webkit-slider-thumb {
+        /* Make thumb visible on parent hover (for both mini and fs player) */
+        .range-slider-container:hover input[type=range]::-webkit-slider-thumb {
             opacity: 1;
-            transform: scale(1.2);
+            transform: scale(1.1);
         }
         input[type=range]::-webkit-slider-runnable-track {
             width: 100%;
@@ -66,6 +67,7 @@
             position: relative;
             display: flex;
             align-items: center;
+            width: 100%;
         }
         .range-fill {
             position: absolute;
@@ -88,16 +90,16 @@
 
         /* Glassmorphism utility */
         .glass-panel {
-            background: rgba(255, 255, 255, 0.05);
+            background: rgba(255, 255, 255, 0.03);
             backdrop-filter: blur(24px);
             -webkit-backdrop-filter: blur(24px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.05);
         }
 
         /* Animations */
         @keyframes pulse-slow {
-            0%, 100% { opacity: 0.4; transform: scale(1); }
-            50% { opacity: 0.7; transform: scale(1.05); }
+            0%, 100% { opacity: 0.3; transform: scale(1); }
+            50% { opacity: 0.6; transform: scale(1.05); }
         }
         .animate-aurora {
             animation: pulse-slow infinite alternate;
@@ -113,14 +115,33 @@
             0% { height: 4px; }
             100% { height: 100%; }
         }
+
+        /* Lyrics Fade Mask */
+        .mask-image-gradient {
+            -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 15%, black 85%, transparent 100%);
+            mask-image: linear-gradient(to bottom, transparent 0%, black 15%, black 85%, transparent 100%);
+        }
+
+        .lyric-line {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            transform-origin: center;
+            opacity: 0.4;
+            filter: blur(1px);
+        }
+        .lyric-line.active {
+            opacity: 1;
+            filter: blur(0px);
+            transform: scale(1.1);
+            text-shadow: 0 0 15px rgba(6, 182, 212, 0.5);
+            color: #fff;
+        }
     </style>
 </head>
 <body class="h-screen w-full flex flex-col selection:bg-cyan-500/30 text-gray-200">
 
     <div class="fixed inset-0 z-0 overflow-hidden pointer-events-none">
-        <div class="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-purple-900/40 rounded-full blur-[120px] mix-blend-screen animate-aurora" style="animation-duration: 8s"></div>
-        <div class="absolute bottom-[-10%] right-[-10%] w-[60%] h-[60%] bg-cyan-900/30 rounded-full blur-[150px] mix-blend-screen animate-aurora" style="animation-duration: 12s; animation-delay: 2s"></div>
-        <div class="absolute top-[40%] left-[30%] w-[30%] h-[30%] bg-pink-900/20 rounded-full blur-[100px] mix-blend-screen animate-aurora" style="animation-duration: 10s; animation-delay: 1s"></div>
+        <div class="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-purple-900/30 rounded-full blur-[120px] mix-blend-screen animate-aurora" style="animation-duration: 8s"></div>
+        <div class="absolute bottom-[-10%] right-[-10%] w-[60%] h-[60%] bg-cyan-900/20 rounded-full blur-[150px] mix-blend-screen animate-aurora" style="animation-duration: 12s; animation-delay: 2s"></div>
         <div class="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4IiBoZWlnaHQ9IjgiPgo8cmVjdCB3aWR0aD0iOCIgaGVpZ2h0PSI4IiBmaWxsPSIjZmZmIiBmaWxsLW9wYWNpdHk9IjAuMDIiLz4KPHBhdGggZD0iTTAgMEw4IDhaTTAgOEw4IDBaIiBzdHJva2U9IiMwMDAiIHN0cm9rZS1vcGFjaXR5PSIwLjA1Ii8+Cjwvc3ZnPg==')] opacity-50 mix-blend-overlay"></div>
     </div>
 
@@ -173,16 +194,20 @@
         </main>
     </div>
 
-    <div class="fixed bottom-0 left-0 right-0 h-24 bg-black/80 backdrop-blur-3xl border-t border-white/10 z-50 flex items-center justify-between px-4 md:px-8 hidden" id="player-bar">
+    <div class="fixed bottom-0 left-0 right-0 h-24 bg-[#111111] backdrop-blur-3xl border-t border-white/10 z-50 flex items-center justify-between px-4 md:px-8 hidden transform translate-y-0 transition-transform duration-300" id="player-bar">
         
-        <!-- Now Playing Info -->
-        <div class="flex items-center gap-4 w-1/3 min-w-[150px] md:min-w-[200px]">
-            <div class="relative group w-12 h-12 md:w-14 md:h-14 rounded-lg overflow-hidden flex-shrink-0 bg-gray-800 flex items-center justify-center border border-white/10">
-                <i data-lucide="music" class="w-6 h-6 text-cyan-400/50"></i>
+        <!-- Now Playing Info (Clickable to open Fullscreen) -->
+        <div onclick="toggleFullScreen()" class="flex items-center gap-4 w-1/3 min-w-[150px] md:min-w-[200px] cursor-pointer group hover:bg-white/5 p-2 rounded-xl transition-colors">
+            <div class="relative w-12 h-12 md:w-14 md:h-14 rounded-lg overflow-hidden flex-shrink-0 bg-gray-800 flex items-center justify-center border border-white/10 shadow-lg">
+                <i data-lucide="music" class="w-6 h-6 text-gray-400 group-hover:scale-110 transition-transform"></i>
+                <!-- Overlay hint -->
+                <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                    <i data-lucide="maximize-2" class="w-5 h-5 text-white"></i>
+                </div>
             </div>
-            <div class="flex flex-col truncate">
-                <span id="player-title" class="text-white font-semibold text-sm truncate">Title</span>
-                <span id="player-artist" class="text-gray-400 text-xs truncate">Artist</span>
+            <div class="flex flex-col truncate pr-2">
+                <span id="player-title" class="text-white font-semibold text-sm md:text-base truncate group-hover:text-cyan-400 transition-colors">Title</span>
+                <span id="player-artist" class="text-gray-400 text-xs md:text-sm truncate">Artist</span>
             </div>
         </div>
 
@@ -193,8 +218,7 @@
                 <button onclick="playPrev()" class="text-gray-400 hover:text-white transition-colors"><i data-lucide="skip-back" class="w-5 h-5"></i></button>
                 
                 <button onclick="togglePlay()" class="w-10 h-10 flex items-center justify-center bg-white text-black rounded-full hover:scale-105 hover:shadow-[0_0_20px_rgba(255,255,255,0.4)] transition-all">
-                    <!-- Icons replaced dynamically in JS to prevent losing SVG bindings -->
-                    <div id="play-pause-container">
+                    <div class="play-pause-container flex items-center justify-center">
                         <i data-lucide="play" class="w-5 h-5 ml-1 fill-black"></i>
                     </div>
                 </button>
@@ -204,12 +228,12 @@
             </div>
             
             <div class="flex items-center gap-3 w-full text-xs text-gray-400 font-medium font-mono">
-                <span id="time-current" class="w-10 text-right">0:00</span>
-                <div class="range-slider-container flex-1">
-                    <div id="progress-fill" class="range-fill w-0"></div>
-                    <input type="range" id="progress-bar" min="0" max="100" value="0" step="0.1">
+                <span class="time-current w-10 text-right">0:00</span>
+                <div class="range-slider-container flex-1 group">
+                    <div class="progress-fill range-fill w-0 group-hover:from-cyan-400 group-hover:to-purple-400"></div>
+                    <input type="range" class="progress-bar" min="0" max="100" value="0" step="0.1">
                 </div>
-                <span id="time-total" class="w-10">0:00</span>
+                <span class="time-total w-10">0:00</span>
             </div>
         </div>
 
@@ -222,12 +246,107 @@
                 <div class="waveform-bar" style="animation-duration: 0.8s"></div>
             </div>
             <div class="flex items-center gap-2 w-28 group volume-container ml-2">
-                <button onclick="toggleMute()" id="btn-volume" class="text-gray-400 hover:text-white">
+                <button onclick="toggleMute()" class="btn-volume text-gray-400 hover:text-white transition-colors">
                     <i data-lucide="volume-2" class="w-4 h-4"></i>
                 </button>
                 <div class="range-slider-container flex-1">
-                    <div id="volume-fill" class="volume-fill w-[80%]"></div>
-                    <input type="range" id="volume-bar" min="0" max="100" value="80">
+                    <div class="volume-fill w-[80%]"></div>
+                    <input type="range" class="volume-bar" min="0" max="100" value="80">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="fs-player" class="fixed inset-0 z-[100] bg-[#1a1a1a]/95 backdrop-blur-3xl flex flex-col transform translate-y-full transition-transform duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]">
+        
+        <!-- Top Bar -->
+        <div class="p-6 md:p-8 flex justify-between items-center w-full absolute top-0 z-30">
+            <button onclick="toggleFullScreen()" class="text-white hover:text-cyan-400 bg-white/5 hover:bg-white/10 p-3 md:p-4 rounded-full backdrop-blur-md transition-all shadow-lg group">
+                <i data-lucide="chevron-down" class="w-6 h-6 group-hover:translate-y-1 transition-transform"></i>
+            </button>
+            <div class="text-xs font-bold tracking-widest text-gray-500 uppercase">Now Playing</div>
+            <button onclick="toggleLyrics()" id="btn-toggle-lyrics" class="text-gray-400 hover:text-cyan-400 p-3 md:p-4 rounded-full backdrop-blur-md transition-all shadow-lg group">
+                <i data-lucide="mic-2" class="w-6 h-6"></i>
+            </button>
+        </div>
+
+        <!-- Center Area (Visualizer + Art) -->
+        <div class="flex-1 relative flex flex-col justify-end w-full overflow-hidden">
+            <!-- Audio Visualizer Canvas -->
+            <canvas id="visualizer" class="absolute inset-0 w-full h-full opacity-80 z-0 transition-opacity duration-500"></canvas>
+            
+            <!-- Large Cover Art (Bottom left aligned to match image) -->
+            <div id="fs-cover-art" class="relative z-10 px-8 md:px-16 mb-8 mt-auto flex flex-col justify-end transition-all duration-500">
+                <div class="w-48 h-48 md:w-64 md:h-64 bg-[#111111] rounded-2xl shadow-2xl border border-white/5 flex items-center justify-center relative overflow-hidden group">
+                    <div class="absolute inset-0 bg-gradient-to-br from-gray-800 to-black opacity-50"></div>
+                    <i data-lucide="music" class="w-20 h-20 md:w-24 md:h-24 text-gray-700 relative z-10 drop-shadow-lg"></i>
+                </div>
+            </div>
+
+            <!-- Lyrics Container -->
+            <div id="lyrics-container" class="absolute inset-0 z-20 flex flex-col items-center justify-start pt-16 pb-16 px-4 md:px-16 overflow-y-auto scrollbar-hide hidden opacity-0 transition-opacity duration-500 mask-image-gradient pointer-events-none">
+                <div id="lyrics-text" class="text-xl md:text-3xl font-bold text-white/60 whitespace-pre-wrap text-center max-w-3xl mx-auto leading-relaxed md:leading-loose transition-all duration-300 pointer-events-auto relative pt-[30vh] pb-[40vh] w-full">
+                    <!-- Lyrics dynamically injected here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Bottom Controls Area (Matching reference image) -->
+        <div class="w-full px-8 md:px-16 pb-12 pt-6 bg-gradient-to-t from-[#111111] via-[#111111]/90 to-transparent z-10 relative">
+            
+            <!-- FS Title & Artist -->
+            <div class="mb-8 flex items-center justify-between">
+                <div>
+                    <h2 id="fs-title" class="text-3xl md:text-4xl font-black text-white tracking-tight drop-shadow-md truncate max-w-2xl">Title</h2>
+                    <p id="fs-artist" class="text-lg md:text-xl text-gray-400 mt-1 font-medium truncate max-w-2xl">Artist</p>
+                </div>
+                <button class="text-gray-400 hover:text-cyan-400 transition-colors hidden sm:block p-2">
+                    <i data-lucide="heart" class="w-6 h-6"></i>
+                </button>
+            </div>
+
+            <!-- FS Progress Bar -->
+            <div class="flex items-center gap-4 w-full text-sm text-gray-400 font-medium font-mono mb-8">
+                <span class="time-current w-12 text-right">0:00</span>
+                <div class="range-slider-container flex-1 group">
+                    <div class="progress-fill range-fill w-0 group-hover:from-cyan-400 group-hover:to-purple-400 h-1.5 md:h-2"></div>
+                    <input type="range" class="progress-bar" min="0" max="100" value="0" step="0.1">
+                </div>
+                <span class="time-total w-12">0:00</span>
+            </div>
+
+            <!-- FS Control Buttons (Centered) -->
+            <div class="flex items-center justify-between w-full">
+                <!-- Left secondary controls -->
+                <div class="flex items-center gap-6 w-1/4">
+                    <button onclick="toggleShuffle()" id="fs-btn-shuffle" class="text-gray-400 hover:text-white transition-colors p-2"><i data-lucide="shuffle" class="w-5 h-5"></i></button>
+                </div>
+
+                <!-- Center Main Controls -->
+                <div class="flex items-center justify-center gap-6 md:gap-10 flex-1">
+                    <button onclick="playPrev()" class="text-gray-300 hover:text-white transition-colors p-2 hover:scale-110"><i data-lucide="skip-back" class="w-8 h-8 fill-current"></i></button>
+                    
+                    <button onclick="togglePlay()" class="w-16 h-16 md:w-20 md:h-20 flex items-center justify-center bg-white text-black rounded-full hover:scale-105 hover:shadow-[0_0_40px_rgba(255,255,255,0.3)] transition-all">
+                        <div class="play-pause-container flex items-center justify-center">
+                            <i data-lucide="play" class="w-8 h-8 ml-2 fill-black"></i>
+                        </div>
+                    </button>
+                    
+                    <button onclick="playNext()" class="text-gray-300 hover:text-white transition-colors p-2 hover:scale-110"><i data-lucide="skip-forward" class="w-8 h-8 fill-current"></i></button>
+                </div>
+
+                <!-- Right secondary controls (Volume/Repeat) -->
+                <div class="flex items-center justify-end gap-6 w-1/4">
+                    <button onclick="toggleRepeat()" id="fs-btn-repeat" class="text-gray-400 hover:text-white transition-colors p-2"><i data-lucide="repeat" class="w-5 h-5"></i></button>
+                    <div class="hidden sm:flex items-center gap-3 w-32 group volume-container">
+                        <button onclick="toggleMute()" class="btn-volume text-gray-400 hover:text-white transition-colors">
+                            <i data-lucide="volume-2" class="w-5 h-5"></i>
+                        </button>
+                        <div class="range-slider-container flex-1">
+                            <div class="volume-fill w-[80%] h-1.5 bg-gray-400 group-hover:bg-white"></div>
+                            <input type="range" class="volume-bar" min="0" max="100" value="80">
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -250,27 +369,56 @@
             isMuted: false,
             shuffle: false,
             repeat: false,
-            duration: 0
+            duration: 0,
+            isFullScreen: false,
+            audioContextInitialized: false,
+            showLyrics: false,
+            lyrics: [],
+            hasSyncedLyrics: false,
+            currentLyricIndex: -1
         };
 
         const audio = new Audio();
 
+        // DOM Elements
         const els = {
             viewContainer: document.getElementById('view-container'),
             playerBar: document.getElementById('player-bar'),
+            fsPlayer: document.getElementById('fs-player'),
+            
+            // Text Elements
             title: document.getElementById('player-title'),
             artist: document.getElementById('player-artist'),
-            timeCurrent: document.getElementById('time-current'),
-            timeTotal: document.getElementById('time-total'),
-            progressBar: document.getElementById('progress-bar'),
-            progressFill: document.getElementById('progress-fill'),
-            volumeBar: document.getElementById('volume-bar'),
-            volumeFill: document.getElementById('volume-fill'),
+            fsTitle: document.getElementById('fs-title'),
+            fsArtist: document.getElementById('fs-artist'),
+            
+            // Multiple elements with same class for Syncing Mini and FS player
+            timeCurrent: document.querySelectorAll('.time-current'),
+            timeTotal: document.querySelectorAll('.time-total'),
+            progressBars: document.querySelectorAll('.progress-bar'),
+            progressFills: document.querySelectorAll('.progress-fill'),
+            volumeBars: document.querySelectorAll('.volume-bar'),
+            volumeFills: document.querySelectorAll('.volume-fill'),
+            playPauseContainers: document.querySelectorAll('.play-pause-container'),
+            btnVolumes: document.querySelectorAll('.btn-volume'),
+            
             waveform: document.getElementById('waveform'),
             fileUpload: document.getElementById('file-upload'),
-            folderUpload: document.getElementById('folder-upload')
+            folderUpload: document.getElementById('folder-upload'),
+            
+            // Visualizer & Lyrics
+            canvas: document.getElementById('visualizer'),
+            fsCoverArt: document.getElementById('fs-cover-art'),
+            lyricsContainer: document.getElementById('lyrics-container'),
+            lyricsText: document.getElementById('lyrics-text'),
+            btnToggleLyrics: document.getElementById('btn-toggle-lyrics')
         };
 
+        // Web Audio API Variables
+        let audioCtx, analyser, dataArray, source;
+        const canvasCtx = els.canvas.getContext('2d');
+
+        // Helper: Format Time
         const formatTime = (seconds) => {
             if (!seconds || isNaN(seconds)) return '0:00';
             const m = Math.floor(seconds / 60);
@@ -278,18 +426,212 @@
             return `${m}:${s < 10 ? '0' : ''}${s}`;
         };
 
+        // Helper: Update Icons globally
         const updateIcons = () => {
             if (window.lucide) {
                 window.lucide.createIcons();
             }
         };
 
+        // --- FULLSCREEN LOGIC ---
+        const toggleFullScreen = () => {
+            state.isFullScreen = !state.isFullScreen;
+            if (state.isFullScreen) {
+                els.fsPlayer.classList.remove('translate-y-full');
+                // Ensure canvas size is correct after animation
+                setTimeout(resizeCanvas, 500); 
+            } else {
+                els.fsPlayer.classList.add('translate-y-full');
+            }
+        };
+
+        // --- LYRICS LOGIC ---
+        const toggleLyrics = () => {
+            state.showLyrics = !state.showLyrics;
+            
+            if (state.showLyrics) {
+                // Hide Cover Art & Dim Visualizer
+                els.fsCoverArt.classList.add('opacity-0', 'scale-95', 'pointer-events-none');
+                els.canvas.classList.replace('opacity-80', 'opacity-30'); 
+                
+                // Show Lyrics
+                els.lyricsContainer.classList.remove('hidden');
+                // Small delay to allow display:block to apply before animating opacity
+                setTimeout(() => els.lyricsContainer.classList.replace('opacity-0', 'opacity-100'), 50);
+                
+                els.btnToggleLyrics.classList.add('text-cyan-400');
+                els.btnToggleLyrics.classList.remove('text-gray-400');
+            } else {
+                // Hide Lyrics
+                els.lyricsContainer.classList.replace('opacity-100', 'opacity-0');
+                els.canvas.classList.replace('opacity-30', 'opacity-80'); 
+                
+                // Show Cover art after fade out
+                setTimeout(() => {
+                    els.lyricsContainer.classList.add('hidden');
+                    els.fsCoverArt.classList.remove('opacity-0', 'scale-95', 'pointer-events-none');
+                }, 500);
+                
+                els.btnToggleLyrics.classList.remove('text-cyan-400');
+                els.btnToggleLyrics.classList.add('text-gray-400');
+            }
+        };
+
+        const parseSyncedLyrics = (lrcString) => {
+            const lines = lrcString.split('\n');
+            const regex = /\[(\d{2}):(\d{2})\.(\d{2,3}|\d{2})\](.*)/;
+            state.lyrics = lines.map(line => {
+                const match = regex.exec(line);
+                if (match) {
+                    const min = parseInt(match[1]);
+                    const sec = parseInt(match[2]);
+                    const ms = parseInt(match[3]);
+                    // Handle [00:00.00] (centiseconds) and [00:00.000] (milliseconds) formats
+                    const msMultiplier = match[3].length === 2 ? 10 : 1;
+                    const time = (min * 60) + sec + (ms * msMultiplier) / 1000;
+                    const text = match[4].trim();
+                    return { time, text };
+                }
+                return null;
+            }).filter(item => item !== null && item.text !== ''); // Remove empty lines
+        };
+
+        const renderSyncedLyrics = () => {
+            els.lyricsText.innerHTML = state.lyrics.map((line, index) => 
+                `<div id="lyric-${index}" class="lyric-line py-2 md:py-3 cursor-pointer hover:text-white transition-colors" onclick="seekLyric(${line.time})">${line.text || '♪'}</div>`
+            ).join('');
+        };
+        
+        window.seekLyric = (time) => {
+            audio.currentTime = time;
+            if(!state.isPlaying) togglePlay();
+        };
+
+        const fetchLyrics = async (title, artist) => {
+            els.lyricsText.innerHTML = '<div class="animate-pulse text-gray-400 text-lg flex items-center justify-center h-full">Searching the web for lyrics...</div>';
+            
+            state.lyrics = [];
+            state.hasSyncedLyrics = false;
+            state.currentLyricIndex = -1;
+            
+            if (!navigator.onLine) {
+                els.lyricsText.innerHTML = '<div class="text-gray-500 text-lg flex flex-col items-center gap-2 justify-center h-full"><i data-lucide="wifi-off" class="w-8 h-8"></i> No internet connection. Lyrics unavailable offline.</div>';
+                updateIcons();
+                return;
+            }
+
+            try {
+                // Clean up title (remove common tags like "(Official Video)" to improve search)
+                let cleanTitle = title.replace(/\(.*\)|\[.*\]/g, '').trim();
+                let query = encodeURIComponent(`${cleanTitle} ${artist !== 'Local Music' ? artist : ''}`.trim());
+                
+                const res = await fetch(`https://lrclib.net/api/search?q=${query}`);
+                if (!res.ok) throw new Error('Network response was not ok');
+                
+                const data = await res.json();
+                
+                if (data && data.length > 0) {
+                    const track = data[0];
+                    if (track.syncedLyrics) {
+                        state.hasSyncedLyrics = true;
+                        parseSyncedLyrics(track.syncedLyrics);
+                        renderSyncedLyrics();
+                    } else if (track.plainLyrics) {
+                        els.lyricsText.innerHTML = `<div class="whitespace-pre-wrap opacity-80">${track.plainLyrics}</div>`;
+                    } else {
+                        els.lyricsText.innerHTML = '<div class="text-gray-500 text-lg flex items-center justify-center h-full">Lyrics not found in database.</div>';
+                    }
+                } else {
+                    els.lyricsText.innerHTML = '<div class="text-gray-500 text-lg flex items-center justify-center h-full">Could not find lyrics for this track.</div>';
+                }
+            } catch (e) {
+                console.error("Lyrics fetch error:", e);
+                els.lyricsText.innerHTML = '<div class="text-gray-500 text-lg flex items-center justify-center h-full">Failed to connect to lyrics server.</div>';
+            }
+        };
+
+        // --- VISUALIZER LOGIC ---
+        const initVisualizer = () => {
+            if (state.audioContextInitialized) return;
+            
+            try {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                analyser = audioCtx.createAnalyser();
+                
+                // IMPORTANT: createMediaElementSource can only be called once per audio element
+                source = audioCtx.createMediaElementSource(audio);
+                source.connect(analyser);
+                analyser.connect(audioCtx.destination);
+                
+                analyser.fftSize = 256; // Defines number of bars
+                const bufferLength = analyser.frequencyBinCount;
+                dataArray = new Uint8Array(bufferLength);
+                
+                state.audioContextInitialized = true;
+                drawVisualizer();
+            } catch (e) {
+                console.error("Audio Context initialization failed:", e);
+            }
+        };
+
+        const resizeCanvas = () => {
+            els.canvas.width = els.canvas.clientWidth;
+            els.canvas.height = els.canvas.clientHeight;
+        };
+        window.addEventListener('resize', resizeCanvas);
+
+        const drawVisualizer = () => {
+            requestAnimationFrame(drawVisualizer);
+            
+            if (!state.isPlaying && state.audioContextInitialized) {
+                // Keep drawing but it will slowly fade out to 0
+            }
+
+            analyser.getByteFrequencyData(dataArray);
+
+            canvasCtx.clearRect(0, 0, els.canvas.width, els.canvas.height);
+
+            const bufferLength = analyser.frequencyBinCount;
+            // Leave some gap between bars
+            const barWidth = (els.canvas.width / bufferLength) * 2.5; 
+            let barHeight;
+            let x = 0;
+
+            for(let i = 0; i < bufferLength; i++) {
+                // Scale height based on canvas height (dataArray max is 255)
+                barHeight = (dataArray[i] / 255) * (els.canvas.height * 0.7);
+
+                // Create Aurora Gradient for bars
+                const gradient = canvasCtx.createLinearGradient(0, els.canvas.height, 0, els.canvas.height - barHeight);
+                gradient.addColorStop(0, '#06b6d4'); // Cyan
+                gradient.addColorStop(1, '#a855f7'); // Purple
+
+                canvasCtx.fillStyle = gradient;
+                
+                // Draw rounded rect (simplified simulation via arc/fillRect combination)
+                const yPos = els.canvas.height - barHeight;
+                const radius = Math.min(barWidth / 2, barHeight / 2);
+                
+                if (barHeight > 0) {
+                    canvasCtx.beginPath();
+                    canvasCtx.moveTo(x, els.canvas.height);
+                    canvasCtx.lineTo(x, yPos + radius);
+                    canvasCtx.quadraticCurveTo(x, yPos, x + radius, yPos);
+                    canvasCtx.quadraticCurveTo(x + barWidth, yPos, x + barWidth, yPos + radius);
+                    canvasCtx.lineTo(x + barWidth, els.canvas.height);
+                    canvasCtx.fill();
+                }
+
+                x += barWidth + 2; // Spacing
+            }
+        };
+
+        // --- FILE PROCESSING ---
         const processLocalFiles = (files) => {
             const audioFiles = Array.from(files).filter(file => file.type.startsWith('audio/'));
             if (audioFiles.length === 0) return;
 
             const newSongs = audioFiles.map((file, i) => {
-                // Attempt to extract artist and title from filename (e.g. "Artist - Title.mp3")
                 let rawName = file.name.replace(/\.[^/.]+$/, "");
                 let title = rawName;
                 let artist = "Local Music";
@@ -313,23 +655,22 @@
             renderLibrary();
         };
 
-        // File Input Listeners
         els.fileUpload.addEventListener('change', (e) => processLocalFiles(e.target.files));
         els.folderUpload.addEventListener('change', (e) => processLocalFiles(e.target.files));
 
         const triggerFileUpload = () => els.fileUpload.click();
         const triggerFolderUpload = () => els.folderUpload.click();
 
+        // --- RENDER UI ---
         const renderLibrary = () => {
             if (DATABASE.localSongs.length === 0) {
-                // Empty State UI
                 els.viewContainer.innerHTML = `
                     <div class="animate-fade-in flex flex-col items-center justify-center h-full mt-10 md:mt-20 text-center px-4">
                         <div class="w-20 h-20 bg-white/5 rounded-full flex items-center justify-center mb-6 shadow-[0_0_30px_rgba(255,255,255,0.05)]">
                             <i data-lucide="hard-drive" class="w-10 h-10 text-cyan-400"></i>
                         </div>
                         <h2 class="text-2xl md:text-3xl font-bold text-white mb-3">Your Local Library</h2>
-                        <p class="text-gray-400 text-sm max-w-md mb-8">Import your own downloaded music folders or files directly into Sanvibe. Files stay safely on your device and play locally without internet.</p>
+                        <p class="text-gray-400 text-sm max-w-md mb-8">Import your downloaded music folders or files directly. Play instantly without internet.</p>
                         <div class="flex flex-col sm:flex-row gap-4">
                             <button onclick="triggerFolderUpload()" class="bg-cyan-500 hover:bg-cyan-400 text-white font-bold py-3 px-6 rounded-full transition-all shadow-[0_0_20px_rgba(6,182,212,0.4)] flex items-center gap-2 justify-center">
                                 <i data-lucide="folder-open" class="w-5 h-5"></i> Import Folder
@@ -341,7 +682,6 @@
                     </div>
                 `;
             } else {
-                // List State UI
                 const listHtml = DATABASE.localSongs.map((song, i) => {
                     const isActive = state.currentIndex !== -1 && state.queue[state.currentIndex]?.id === song.id;
                     return `
@@ -371,14 +711,14 @@
                                 <h2 class="text-2xl md:text-3xl font-bold text-white tracking-tight flex items-center gap-3">
                                     <i data-lucide="hard-drive" class="text-cyan-400 w-6 h-6"></i> Local Library
                                 </h2>
-                                <p class="text-gray-400 text-sm mt-1">${DATABASE.localSongs.length} tracks ready to play</p>
+                                <p class="text-gray-400 text-sm mt-1">${DATABASE.localSongs.length} tracks ready</p>
                             </div>
                             <div class="flex gap-3">
                                 <button onclick="playLocalQueue()" class="bg-cyan-500 hover:bg-cyan-400 text-white font-bold py-2 px-6 rounded-full transition-all shadow-[0_0_15px_rgba(6,182,212,0.4)] flex items-center gap-2 text-sm">
                                     <i data-lucide="play" class="w-4 h-4 fill-white"></i> Play All
                                 </button>
                                 <button onclick="triggerFileUpload()" class="bg-white/10 hover:bg-white/20 border border-white/20 text-white font-bold py-2 px-4 rounded-full transition-all flex items-center gap-2 text-sm">
-                                    <i data-lucide="plus" class="w-4 h-4"></i> Add More
+                                    <i data-lucide="plus" class="w-4 h-4"></i> Add
                                 </button>
                             </div>
                         </div>
@@ -390,9 +730,7 @@
                                 <div class="hidden md:block flex-1">Artist</div>
                                 <div class="w-12 md:w-16 text-right md:mr-4"><i data-lucide="clock" class="w-4 h-4 ml-auto"></i></div>
                             </div>
-                            <div class="space-y-1">
-                                ${listHtml}
-                            </div>
+                            <div class="space-y-1">${listHtml}</div>
                         </div>
                     </div>
                 `;
@@ -400,6 +738,7 @@
             updateIcons();
         };
 
+        // --- PLAYBACK ENGINE ---
         const playSong = (songId) => {
             state.queue = [...DATABASE.localSongs];
             const index = state.queue.findIndex(s => s.id === songId);
@@ -420,20 +759,36 @@
             if (state.currentIndex === -1) return;
             const song = state.queue[state.currentIndex];
             
+            // Show player bar
             els.playerBar.classList.remove('hidden');
-            document.querySelector('main').classList.add('pb-24');
-
+            
+            // Update Text (Mini and FS)
             els.title.textContent = song.title;
             els.artist.textContent = song.artist;
+            els.fsTitle.textContent = song.title;
+            els.fsArtist.textContent = song.artist;
             
-            renderLibrary(); // Re-render to show active speaker icon
+            renderLibrary(); 
 
             audio.src = song.audioUrl;
             audio.volume = state.isMuted ? 0 : state.volume;
+            
+            // Fetch Lyrics for new song from the internet
+            fetchLyrics(song.title, song.artist);
+            
+            // Required for Web Audio API context initialization
+            initVisualizer();
+            
+            // Play
             audio.play().then(() => {
                 state.isPlaying = true;
                 updatePlayPauseUI();
                 els.waveform.style.opacity = '1';
+                
+                // Ensure audio context is running (browsers suspend it sometimes)
+                if(audioCtx && audioCtx.state === 'suspended') {
+                    audioCtx.resume();
+                }
             }).catch(e => console.log("Audio play prevented:", e));
         };
 
@@ -443,16 +798,18 @@
                 loadAndPlayCurrent();
                 return;
             }
-            if (state.currentIndex === -1) return; // Nothing to play
+            if (state.currentIndex === -1) return;
 
             if (state.isPlaying) {
                 audio.pause();
                 state.isPlaying = false;
                 els.waveform.style.opacity = '0';
             } else {
+                initVisualizer();
                 audio.play();
                 state.isPlaying = true;
                 els.waveform.style.opacity = '1';
+                if(audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
             }
             updatePlayPauseUI();
         };
@@ -481,71 +838,112 @@
         };
 
         const updatePlayPauseUI = () => {
-            const container = document.getElementById('play-pause-container');
-            if(container) {
+            els.playPauseContainers.forEach(container => {
                 if (state.isPlaying) {
-                    container.innerHTML = `<i data-lucide="pause" class="w-5 h-5 fill-black"></i>`;
+                    container.innerHTML = `<i data-lucide="pause" class="w-${container.closest('#fs-player') ? '8 h-8' : '5 h-5'} fill-black"></i>`;
                 } else {
-                    container.innerHTML = `<i data-lucide="play" class="w-5 h-5 ml-1 fill-black"></i>`;
+                    container.innerHTML = `<i data-lucide="play" class="w-${container.closest('#fs-player') ? '8 h-8 ml-2' : '5 h-5 ml-1'} fill-black"></i>`;
                 }
-                updateIcons();
-            }
+            });
+            updateIcons();
         };
 
         const toggleShuffle = () => {
             state.shuffle = !state.shuffle;
-            const btn = document.getElementById('btn-shuffle');
-            if(btn) {
-                btn.classList.toggle('text-cyan-400', state.shuffle);
-                btn.classList.toggle('text-gray-400', !state.shuffle);
-            }
+            ['btn-shuffle', 'fs-btn-shuffle'].forEach(id => {
+                const btn = document.getElementById(id);
+                if(btn) {
+                    btn.classList.toggle('text-cyan-400', state.shuffle);
+                    btn.classList.toggle('text-gray-400', !state.shuffle);
+                }
+            });
         };
 
         const toggleRepeat = () => {
             state.repeat = !state.repeat;
-            const btn = document.getElementById('btn-repeat');
-            if(btn) {
-                btn.classList.toggle('text-cyan-400', state.repeat);
-                btn.classList.toggle('text-gray-400', !state.repeat);
-            }
+            ['btn-repeat', 'fs-btn-repeat'].forEach(id => {
+                const btn = document.getElementById(id);
+                if(btn) {
+                    btn.classList.toggle('text-cyan-400', state.repeat);
+                    btn.classList.toggle('text-gray-400', !state.repeat);
+                }
+            });
         };
 
         const toggleMute = () => {
             state.isMuted = !state.isMuted;
             audio.volume = state.isMuted ? 0 : state.volume;
             
-            const btn = document.getElementById('btn-volume');
-            if(btn) {
-                const isMutedIcon = state.isMuted || state.volume === 0 ? 'volume-x' : 'volume-2';
-                btn.innerHTML = `<i data-lucide="${isMutedIcon}" class="w-4 h-4"></i>`;
-                updateIcons();
-            }
+            const isMutedIcon = state.isMuted || state.volume === 0 ? 'volume-x' : 'volume-2';
+            els.btnVolumes.forEach(btn => {
+                const sizeClass = btn.closest('#fs-player') ? 'w-5 h-5' : 'w-4 h-4';
+                btn.innerHTML = `<i data-lucide="${isMutedIcon}" class="${sizeClass}"></i>`;
+            });
+            updateIcons();
 
-            els.volumeBar.value = state.isMuted ? 0 : state.volume * 100;
+            const val = state.isMuted ? 0 : state.volume * 100;
+            els.volumeBars.forEach(bar => bar.value = val);
             updateVolumeFill();
         };
 
+        // --- AUDIO EVENTS ---
         audio.addEventListener('loadedmetadata', () => {
             state.duration = audio.duration;
-            els.timeTotal.textContent = formatTime(state.duration);
-            els.progressBar.max = state.duration;
+            const timeStr = formatTime(state.duration);
+            
+            els.timeTotal.forEach(el => el.textContent = timeStr);
+            els.progressBars.forEach(bar => bar.max = state.duration);
 
             if (state.queue[state.currentIndex] && !state.queue[state.currentIndex].duration) {
                 state.queue[state.currentIndex].duration = audio.duration;
                 const dbSong = DATABASE.localSongs.find(s => s.id === state.queue[state.currentIndex].id);
                 if (dbSong) dbSong.duration = audio.duration;
-                // re-render library softly to update time but don't interrupt play
                 renderLibrary();
             }
         });
 
         audio.addEventListener('timeupdate', () => {
             if (!state.duration) return;
-            els.timeCurrent.textContent = formatTime(audio.currentTime);
-            els.progressBar.value = audio.currentTime;
-            
+            const timeStr = formatTime(audio.currentTime);
             const percentage = (audio.currentTime / state.duration) * 100;
-            els.progressFill.style.width = `${percentage}%`;
+
+            els.timeCurrent.forEach(el => el.textContent = timeStr);
+            els.progressBars.forEach(bar => bar.value = audio.currentTime);
+            els.progressFills.forEach(fill => fill.style.width = `${percentage}%`);
+
+            if (state.hasSyncedLyrics && state.showLyrics) {
+                const currentTime = audio.currentTime;
+                let newIndex = -1;
+                
+                // Add 0.3s offset so lyrics pop slightly before they are actually sung
+                for (let i = 0; i < state.lyrics.length; i++) {
+                    if (currentTime >= state.lyrics[i].time - 0.3) {
+                        newIndex = i;
+                    } else {
+                        break;
+                    }
+                }
+
+                if (newIndex !== state.currentLyricIndex && newIndex !== -1) {
+                    if (state.currentLyricIndex !== -1) {
+                        const oldEl = document.getElementById(`lyric-${state.currentLyricIndex}`);
+                        if (oldEl) oldEl.classList.remove('active', 'text-cyan-400');
+                    }
+                    
+                    const newEl = document.getElementById(`lyric-${newIndex}`);
+                    if (newEl) {
+                        newEl.classList.add('active', 'text-cyan-400');
+                        
+                        // Auto-scroll logic
+                        const container = els.lyricsContainer;
+                        // Determine the position of the new active lyric line relative to its scroll container
+                        const offset = newEl.offsetTop - (container.clientHeight / 2) + (newEl.clientHeight / 2);
+                        
+                        container.scrollTo({ top: Math.max(0, offset), behavior: 'smooth' });
+                    }
+                    state.currentLyricIndex = newIndex;
+                }
+            }
         });
 
         audio.addEventListener('ended', () => {
@@ -557,37 +955,52 @@
             }
         });
 
-        els.progressBar.addEventListener('input', (e) => {
-            const val = parseFloat(e.target.value);
-            audio.currentTime = val;
-            const percentage = (val / state.duration) * 100;
-            els.progressFill.style.width = `${percentage}%`;
+        // --- INPUT SYNCING ---
+        els.progressBars.forEach(bar => {
+            bar.addEventListener('input', (e) => {
+                const val = parseFloat(e.target.value);
+                audio.currentTime = val;
+                const percentage = (val / state.duration) * 100;
+                
+                els.progressBars.forEach(b => b.value = val);
+                els.progressFills.forEach(fill => fill.style.width = `${percentage}%`);
+            });
         });
 
         const updateVolumeFill = () => {
-            const val = els.volumeBar.value;
-            els.volumeFill.style.width = `${val}%`;
+            const val = els.volumeBars[0].value; // get from any, they sync
+            els.volumeFills.forEach(fill => fill.style.width = `${val}%`);
         };
 
-        els.volumeBar.addEventListener('input', (e) => {
-            const val = parseFloat(e.target.value);
-            state.volume = val / 100;
-            if (state.isMuted) {
-                state.isMuted = false;
-                const btn = document.getElementById('btn-volume');
-                if(btn) {
-                    btn.innerHTML = `<i data-lucide="volume-2" class="w-4 h-4"></i>`;
+        els.volumeBars.forEach(bar => {
+            bar.addEventListener('input', (e) => {
+                const val = parseFloat(e.target.value);
+                state.volume = val / 100;
+                
+                // Unmute if changing volume while muted
+                if (state.isMuted) {
+                    state.isMuted = false;
+                    els.btnVolumes.forEach(btn => {
+                        const sizeClass = btn.closest('#fs-player') ? 'w-5 h-5' : 'w-4 h-4';
+                        btn.innerHTML = `<i data-lucide="volume-2" class="${sizeClass}"></i>`;
+                    });
                     updateIcons();
                 }
-            }
-            audio.volume = state.volume;
-            updateVolumeFill();
+                
+                audio.volume = state.volume;
+                
+                // Sync all volume bars
+                els.volumeBars.forEach(b => b.value = val);
+                updateVolumeFill();
+            });
         });
 
+        // Initialize UI
         document.addEventListener('DOMContentLoaded', () => {
             renderLibrary();
             updateVolumeFill();
             updateIcons();
+            resizeCanvas();
         });
 
     </script>
