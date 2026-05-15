@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Sanvibe - Local Music Player</title>
+    <title>Sanvibe - Local Music Player with AI</title>
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -25,6 +25,9 @@
         /* Mobile Safe Areas */
         .pb-safe {
             padding-bottom: env(safe-area-inset-bottom);
+        }
+        .pt-safe {
+            padding-top: env(safe-area-inset-top);
         }
 
         /* Custom Scrollbar */
@@ -147,6 +150,15 @@
             transform: scale(1.1);
             text-shadow: 0 0 15px rgba(6, 182, 212, 0.5);
             color: #fff;
+        }
+
+        /* AI Sparkle Animation */
+        @keyframes sparkle {
+            0%, 100% { opacity: 1; transform: scale(1) rotate(0deg); }
+            50% { opacity: 0.8; transform: scale(1.1) rotate(5deg); }
+        }
+        .animate-sparkle {
+            animation: sparkle 2s infinite;
         }
     </style>
 </head>
@@ -301,9 +313,17 @@
                 <i data-lucide="chevron-down" class="w-6 h-6 md:w-7 md:h-7 group-hover:translate-y-1 transition-transform"></i>
             </button>
             <div class="text-xs md:text-sm font-bold tracking-widest text-gray-400 uppercase">Now Playing</div>
-            <button onclick="toggleLyrics()" id="btn-toggle-lyrics" class="text-gray-400 hover:text-cyan-400 p-3 md:p-4 rounded-full backdrop-blur-md transition-all shadow-lg active:scale-95 group bg-white/5">
-                <i data-lucide="mic-2" class="w-6 h-6 md:w-7 md:h-7"></i>
-            </button>
+            
+            <div class="flex gap-2 md:gap-4">
+                <!-- AI Button -->
+                <button onclick="toggleAI()" id="btn-toggle-ai" class="text-purple-400 hover:text-purple-300 p-3 md:p-4 rounded-full backdrop-blur-md transition-all shadow-lg active:scale-95 group bg-purple-900/20 border border-purple-500/30">
+                    <i data-lucide="sparkles" class="w-6 h-6 md:w-7 md:h-7 animate-sparkle"></i>
+                </button>
+                <!-- Lyrics Button -->
+                <button onclick="toggleLyrics()" id="btn-toggle-lyrics" class="text-gray-400 hover:text-cyan-400 p-3 md:p-4 rounded-full backdrop-blur-md transition-all shadow-lg active:scale-95 group bg-white/5">
+                    <i data-lucide="mic-2" class="w-6 h-6 md:w-7 md:h-7"></i>
+                </button>
+            </div>
         </div>
 
         <!-- Center Area (Visualizer + Art) -->
@@ -323,6 +343,39 @@
             <div id="lyrics-container" class="absolute inset-0 z-20 flex flex-col items-center justify-start pt-10 pb-20 px-4 md:px-16 overflow-y-auto scrollbar-hide hidden opacity-0 transition-opacity duration-500 mask-image-gradient pointer-events-none">
                 <div id="lyrics-text" class="text-2xl md:text-4xl font-bold text-white/50 whitespace-pre-wrap text-center max-w-3xl mx-auto leading-relaxed md:leading-loose transition-all duration-300 pointer-events-auto relative pt-[30vh] pb-[40vh] w-full">
                     <!-- Lyrics dynamically injected here -->
+                </div>
+            </div>
+
+            <!-- AI Overlay Container -->
+            <div id="ai-container" class="absolute inset-0 z-20 flex flex-col items-center justify-center p-4 md:p-8 hidden opacity-0 transition-opacity duration-500">
+                <div class="glass-panel w-full max-w-2xl bg-black/60 rounded-3xl border border-purple-500/30 p-6 md:p-8 flex flex-col shadow-[0_0_50px_rgba(168,85,247,0.15)] relative overflow-hidden">
+                    <!-- Background AI Glow -->
+                    <div class="absolute top-0 right-0 w-64 h-64 bg-purple-600/20 rounded-full blur-[80px] pointer-events-none"></div>
+                    
+                    <div class="flex items-center gap-3 mb-6 relative z-10">
+                        <div class="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-cyan-500 flex items-center justify-center">
+                            <i data-lucide="sparkles" class="w-5 h-5 text-white"></i>
+                        </div>
+                        <h3 class="text-xl md:text-2xl font-bold text-white">Sanvibe AI Analyst</h3>
+                    </div>
+
+                    <div id="ai-output" class="text-gray-300 text-sm md:text-base leading-relaxed mb-6 flex-1 overflow-y-auto scrollbar-hide min-h-[150px] relative z-10">
+                        <!-- AI content will go here -->
+                        <div class="flex flex-col items-center justify-center h-full text-center space-y-4 text-gray-400">
+                            <i data-lucide="bot" class="w-12 h-12 opacity-50"></i>
+                            <p>I am your AI Music Analyst.</p>
+                            <button onclick="requestTrackAnalysis()" class="bg-purple-600/30 hover:bg-purple-600/50 text-purple-200 border border-purple-500/50 px-6 py-2 rounded-full transition-all text-sm font-medium">
+                                Analyze Current Track ✨
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="relative z-10 flex gap-2">
+                        <input type="text" id="ai-input" placeholder="Ask AI about this song..." class="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-purple-500/50 transition-colors" onkeypress="if(event.key === 'Enter') sendAIChat()">
+                        <button onclick="sendAIChat()" class="bg-purple-600 hover:bg-purple-500 text-white p-3 rounded-xl transition-all flex items-center justify-center">
+                            <i data-lucide="send" class="w-5 h-5"></i>
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -386,6 +439,9 @@
     <input type="file" id="folder-upload" accept="audio/*" webkitdirectory directory multiple class="hidden">
 
     <script>
+        // --- GEMINI API CONFIGURATION ---
+        const apiKey = ""; // API Key provided by execution environment
+        
         const DATABASE = {
             localSongs: []
         };
@@ -402,6 +458,7 @@
             isFullScreen: false,
             audioContextInitialized: false,
             showLyrics: false,
+            showAI: false,
             lyrics: [],
             hasSyncedLyrics: false,
             currentLyricIndex: -1
@@ -415,13 +472,11 @@
             playerBar: document.getElementById('player-bar'),
             fsPlayer: document.getElementById('fs-player'),
             
-            // Text Elements
             title: document.getElementById('player-title'),
             artist: document.getElementById('player-artist'),
             fsTitle: document.getElementById('fs-title'),
             fsArtist: document.getElementById('fs-artist'),
             
-            // Multiple elements with same class for Syncing Mini and FS player
             timeCurrent: document.querySelectorAll('.time-current'),
             timeTotal: document.querySelectorAll('.time-total'),
             progressBars: document.querySelectorAll('.progress-bar'),
@@ -435,19 +490,24 @@
             fileUpload: document.getElementById('file-upload'),
             folderUpload: document.getElementById('folder-upload'),
             
-            // Visualizer & Lyrics
             canvas: document.getElementById('visualizer'),
             fsCoverArt: document.getElementById('fs-cover-art'),
+            
+            // Lyrics
             lyricsContainer: document.getElementById('lyrics-container'),
             lyricsText: document.getElementById('lyrics-text'),
-            btnToggleLyrics: document.getElementById('btn-toggle-lyrics')
+            btnToggleLyrics: document.getElementById('btn-toggle-lyrics'),
+
+            // AI
+            aiContainer: document.getElementById('ai-container'),
+            aiOutput: document.getElementById('ai-output'),
+            aiInput: document.getElementById('ai-input'),
+            btnToggleAI: document.getElementById('btn-toggle-ai')
         };
 
-        // Web Audio API Variables
         let audioCtx, analyser, dataArray, source;
         const canvasCtx = els.canvas.getContext('2d');
 
-        // Helper: Format Time
         const formatTime = (seconds) => {
             if (!seconds || isNaN(seconds)) return '0:00';
             const m = Math.floor(seconds / 60);
@@ -455,11 +515,138 @@
             return `${m}:${s < 10 ? '0' : ''}${s}`;
         };
 
-        // Helper: Update Icons globally
         const updateIcons = () => {
             if (window.lucide) {
                 window.lucide.createIcons();
             }
+        };
+
+        // --- GEMINI API CALL (With Exponential Backoff) ---
+        const callGemini = async (prompt) => {
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+            const payload = {
+                contents: [{ parts: [{ text: prompt }] }]
+            };
+
+            const maxRetries = 5;
+            const delays = [1000, 2000, 4000, 8000, 16000];
+
+            for (let i = 0; i < maxRetries; i++) {
+                try {
+                    const response = await fetch(url, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    
+                    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                    
+                    const data = await response.json();
+                    return data.candidates?.[0]?.content?.parts?.[0]?.text || "I couldn't generate a response.";
+                } catch (err) {
+                    if (i === maxRetries - 1) {
+                        return "API Error: Unable to reach Sanvibe AI. Please try again later.";
+                    }
+                    await new Promise(resolve => setTimeout(resolve, delays[i]));
+                }
+            }
+        };
+
+        // --- AI LOGIC ---
+        const toggleAI = () => {
+            state.showAI = !state.showAI;
+            
+            if (state.showAI) {
+                // If lyrics are open, close them
+                if (state.showLyrics) toggleLyrics();
+
+                els.fsCoverArt.classList.add('opacity-0', 'scale-95', 'pointer-events-none');
+                els.canvas.classList.replace('opacity-80', 'opacity-20'); 
+                
+                els.aiContainer.classList.remove('hidden');
+                setTimeout(() => els.aiContainer.classList.replace('opacity-0', 'opacity-100'), 50);
+                
+                els.btnToggleAI.classList.add('text-white', 'bg-purple-600/50');
+                els.btnToggleAI.classList.remove('text-purple-400', 'bg-purple-900/20');
+            } else {
+                els.aiContainer.classList.replace('opacity-100', 'opacity-0');
+                els.canvas.classList.replace('opacity-20', 'opacity-80'); 
+                
+                setTimeout(() => {
+                    els.aiContainer.classList.add('hidden');
+                    if (!state.showLyrics) {
+                        els.fsCoverArt.classList.remove('opacity-0', 'scale-95', 'pointer-events-none');
+                    }
+                }, 500);
+                
+                els.btnToggleAI.classList.remove('text-white', 'bg-purple-600/50');
+                els.btnToggleAI.classList.add('text-purple-400', 'bg-purple-900/20');
+            }
+        };
+
+        const requestTrackAnalysis = async () => {
+            if (state.currentIndex === -1) return;
+            const song = state.queue[state.currentIndex];
+            
+            els.aiOutput.innerHTML = `
+                <div class="flex flex-col items-center justify-center h-full space-y-4">
+                    <i data-lucide="loader-2" class="w-8 h-8 text-purple-400 animate-spin"></i>
+                    <p class="text-purple-200">Analyzing "${song.title}"...</p>
+                </div>
+            `;
+            updateIcons();
+
+            const prompt = `You are the Sanvibe AI Music Expert DJ. The user is playing a local audio file named "${song.title}" by "${song.artist}". 
+            Please provide a 3-sentence exciting analysis of this track. Guess its vibe or genre based on the title, and share one interesting fun fact about the artist or song if it's a known track. If it looks like an unknown local file, just make a fun, positive comment about its potential vibe. Use a couple of cool emojis.`;
+
+            const result = await callGemini(prompt);
+            
+            // Format basic markdown from gemini (bolding)
+            const formattedResult = result.replace(/\*\*(.*?)\*\*/g, '<span class="text-purple-300 font-bold">$1</span>');
+
+            els.aiOutput.innerHTML = `
+                <div class="bg-purple-900/20 rounded-xl p-4 border border-purple-500/20">
+                    <h4 class="text-purple-300 font-bold mb-2 flex items-center gap-2">
+                        <i data-lucide="music-4" class="w-4 h-4"></i> Track Analysis
+                    </h4>
+                    <p class="text-gray-200 leading-relaxed">${formattedResult}</p>
+                </div>
+            `;
+            updateIcons();
+        };
+
+        const sendAIChat = async () => {
+            const question = els.aiInput.value.trim();
+            if (!question || state.currentIndex === -1) return;
+            
+            const song = state.queue[state.currentIndex];
+            
+            els.aiOutput.innerHTML += `
+                <div class="mt-4 bg-white/5 rounded-xl p-3 border border-white/10 ml-8 text-right">
+                    <p class="text-white text-sm">${question}</p>
+                </div>
+                <div id="ai-loading" class="mt-2 text-purple-400 text-xs flex items-center gap-2">
+                    <i data-lucide="loader-2" class="w-3 h-3 animate-spin"></i> AI is typing...
+                </div>
+            `;
+            els.aiInput.value = '';
+            els.aiOutput.scrollTop = els.aiOutput.scrollHeight;
+            updateIcons();
+
+            const prompt = `You are Sanvibe AI, a helpful music assistant. The user is currently playing "${song.title}" by "${song.artist}". 
+            They ask you this question: "${question}".
+            Answer concisely, knowledgeably, and warmly in 1 or 2 short paragraphs. Keep it focused on the music.`;
+
+            const result = await callGemini(prompt);
+            
+            document.getElementById('ai-loading')?.remove();
+            
+            els.aiOutput.innerHTML += `
+                <div class="mt-2 bg-purple-900/20 rounded-xl p-3 border border-purple-500/20 mr-8">
+                    <p class="text-purple-100 text-sm leading-relaxed">${result.replace(/\*\*(.*?)\*\*/g, '<span class="font-bold text-white">$1</span>')}</p>
+                </div>
+            `;
+            els.aiOutput.scrollTop = els.aiOutput.scrollHeight;
         };
 
         // --- FULLSCREEN LOGIC ---
@@ -478,25 +665,26 @@
             state.showLyrics = !state.showLyrics;
             
             if (state.showLyrics) {
-                // Hide Cover Art & Dim Visualizer
+                // If AI is open, close it
+                if (state.showAI) toggleAI();
+
                 els.fsCoverArt.classList.add('opacity-0', 'scale-95', 'pointer-events-none');
                 els.canvas.classList.replace('opacity-80', 'opacity-20'); 
                 
-                // Show Lyrics
                 els.lyricsContainer.classList.remove('hidden');
                 setTimeout(() => els.lyricsContainer.classList.replace('opacity-0', 'opacity-100'), 50);
                 
                 els.btnToggleLyrics.classList.add('text-cyan-400', 'bg-cyan-400/10');
                 els.btnToggleLyrics.classList.remove('text-gray-400', 'bg-white/5');
             } else {
-                // Hide Lyrics
                 els.lyricsContainer.classList.replace('opacity-100', 'opacity-0');
                 els.canvas.classList.replace('opacity-20', 'opacity-80'); 
                 
-                // Show Cover art after fade out
                 setTimeout(() => {
                     els.lyricsContainer.classList.add('hidden');
-                    els.fsCoverArt.classList.remove('opacity-0', 'scale-95', 'pointer-events-none');
+                    if (!state.showAI) {
+                        els.fsCoverArt.classList.remove('opacity-0', 'scale-95', 'pointer-events-none');
+                    }
                 }, 500);
                 
                 els.btnToggleLyrics.classList.remove('text-cyan-400', 'bg-cyan-400/10');
@@ -610,7 +798,7 @@
             let x = 0;
 
             for(let i = 0; i < bufferLength; i++) {
-                barHeight = (dataArray[i] / 255) * (els.canvas.height * 0.6); // Adjusted for mobile screen real estate
+                barHeight = (dataArray[i] / 255) * (els.canvas.height * 0.6);
 
                 const gradient = canvasCtx.createLinearGradient(0, els.canvas.height, 0, els.canvas.height - barHeight);
                 gradient.addColorStop(0, '#06b6d4'); 
@@ -675,11 +863,11 @@
             if (DATABASE.localSongs.length === 0) {
                 els.viewContainer.innerHTML = `
                     <div class="animate-fade-in flex flex-col items-center justify-center h-full mt-10 md:mt-20 text-center px-4">
-                        <div class="w-20 h-20 bg-white/5 rounded-full flex items-center justify-center mb-6 shadow-[0_0_30px_rgba(255,255,255,0.05)]">
+                        <div class="w-20 h-20 bg-white/5 rounded-full flex items-center justify-center mb-6 shadow-[0_0_30px_rgba(255,255,255,0.05)] border border-purple-500/20">
                             <i data-lucide="hard-drive" class="w-10 h-10 text-cyan-400"></i>
                         </div>
                         <h2 class="text-2xl md:text-3xl font-bold text-white mb-3">Your Local Library</h2>
-                        <p class="text-gray-400 text-sm max-w-md mb-8">Import your downloaded music folders or files directly. Play instantly without internet.</p>
+                        <p class="text-gray-400 text-sm max-w-md mb-8">Import your downloaded music folders or files directly. Play instantly, analyze with AI, all offline (AI needs connection).</p>
                         <div class="flex flex-col w-full sm:w-auto sm:flex-row gap-4">
                             <button onclick="triggerFolderUpload()" class="bg-cyan-500 hover:bg-cyan-400 text-white font-bold py-3 px-6 rounded-full transition-all shadow-[0_0_20px_rgba(6,182,212,0.4)] flex items-center gap-2 justify-center w-full sm:w-auto">
                                 <i data-lucide="folder-open" class="w-5 h-5"></i> Import Folder
@@ -694,7 +882,7 @@
                 const listHtml = DATABASE.localSongs.map((song, i) => {
                     const isActive = state.currentIndex !== -1 && state.queue[state.currentIndex]?.id === song.id;
                     return `
-                    <div onclick="playSong('${song.id}')" class="flex items-center gap-3 md:gap-4 py-3 px-2 md:p-3 rounded-xl transition-all cursor-pointer group ${isActive ? 'bg-white/10' : 'hover:bg-white/5 active:bg-white/10'}">
+                    <div onclick="playSong('${song.id}')" class="flex items-center gap-3 md:gap-4 py-3 px-2 md:p-3 rounded-xl transition-all cursor-pointer group ${isActive ? 'bg-white/10 border border-purple-500/30' : 'hover:bg-white/5 active:bg-white/10 border border-transparent'}">
                         <div class="w-6 md:w-8 text-center text-gray-500 text-sm font-medium relative">
                             ${isActive 
                                 ? `<i data-lucide="volume-2" class="w-4 h-4 text-cyan-400 mx-auto"></i>` 
@@ -721,7 +909,7 @@
                                 <h2 class="text-2xl md:text-3xl font-bold text-white tracking-tight flex items-center gap-3">
                                     <i data-lucide="folder-music" class="text-cyan-400 w-6 h-6"></i> Local Tracks
                                 </h2>
-                                <p class="text-gray-400 text-sm mt-1">${DATABASE.localSongs.length} tracks ready</p>
+                                <p class="text-gray-400 text-sm mt-1">${DATABASE.localSongs.length} tracks ready • AI Enabled</p>
                             </div>
                             <div class="flex gap-3">
                                 <button onclick="playLocalQueue()" class="bg-cyan-500 hover:bg-cyan-400 text-white font-bold py-2 md:py-3 px-6 rounded-full transition-all shadow-[0_0_15px_rgba(6,182,212,0.4)] flex items-center justify-center gap-2 text-sm flex-1 sm:flex-none">
@@ -733,14 +921,15 @@
                             </div>
                         </div>
 
-                        <div class="glass-panel p-2 md:p-4 rounded-2xl">
-                            <div class="flex text-xs font-bold text-gray-400 uppercase tracking-widest border-b border-white/10 pb-3 mb-2 px-2 md:px-3">
+                        <div class="glass-panel p-2 md:p-4 rounded-2xl relative overflow-hidden">
+                            <div class="absolute top-0 right-0 w-32 h-32 bg-purple-500/10 blur-3xl pointer-events-none"></div>
+                            <div class="flex text-xs font-bold text-gray-400 uppercase tracking-widest border-b border-white/10 pb-3 mb-2 px-2 md:px-3 relative z-10">
                                 <div class="w-8 md:w-10">#</div>
                                 <div class="flex-1">Title</div>
                                 <div class="hidden md:block flex-1">Artist</div>
                                 <div class="w-12 text-right"><i data-lucide="clock" class="w-4 h-4 ml-auto"></i></div>
                             </div>
-                            <div class="space-y-1">${listHtml}</div>
+                            <div class="space-y-1 relative z-10">${listHtml}</div>
                         </div>
                     </div>
                 `;
@@ -775,6 +964,19 @@
             els.artist.textContent = song.artist;
             els.fsTitle.textContent = song.title;
             els.fsArtist.textContent = song.artist;
+            
+            // Reset AI window if open to prepare for new song
+            if (state.showAI) {
+                els.aiOutput.innerHTML = `
+                    <div class="flex flex-col items-center justify-center h-full text-center space-y-4 text-gray-400">
+                        <i data-lucide="bot" class="w-12 h-12 opacity-50"></i>
+                        <p>New track loaded.</p>
+                        <button onclick="requestTrackAnalysis()" class="bg-purple-600/30 hover:bg-purple-600/50 text-purple-200 border border-purple-500/50 px-6 py-2 rounded-full transition-all text-sm font-medium">
+                            Analyze "${song.title}" ✨
+                        </button>
+                    </div>
+                `;
+            }
             
             renderLibrary(); 
 
@@ -839,7 +1041,6 @@
 
         const updatePlayPauseUI = () => {
             els.playPauseContainers.forEach(container => {
-                // Determine styling based on context (Mobile Mini, Desktop Mini, or FS)
                 const isFS = container.closest('#fs-player');
                 const isMobileMini = container.closest('.md\\:hidden'); 
                 
@@ -847,7 +1048,7 @@
                 if (isFS) {
                     iconClass += "w-8 h-8 md:w-10 md:h-10 ";
                 } else if (isMobileMini) {
-                    iconClass += "w-6 h-6 fill-white text-white "; // Mobile mini player is transparent button with white icon
+                    iconClass += "w-6 h-6 fill-white text-white ";
                 } else {
                     iconClass += "w-5 h-5 ";
                 }
