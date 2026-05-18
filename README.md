@@ -42,7 +42,7 @@
 
 # 17. Smart Daily Life Dashboard -- [https://a-santhosh-hub.github.io/WEB_APPLICATION-S/LifeOS/in]
 
-# 18. SanVibe ---> [ https://a-santhosh-hub.github.io/WEB_APPLICATION-S/SanVibe/index.html ]
+# 18. SanVibe ---> [ https://a-santhosh-hub.github.io/WEB_APPLICATION-S/SanVibe/test.html ]
 
 
 The SanStudio is Now working, wait 🫸 for Update!!!
