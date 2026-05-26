@@ -699,11 +699,13 @@ document.addEventListener('DOMContentLoaded', () => {
     // ============================================
     const tabUpcoming = document.getElementById('tab-upcoming');
     const tabCustomAi = document.getElementById('tab-custom-ai');
+    const tabFrameworks = document.getElementById('tab-frameworks');
     const panelUpcoming = document.getElementById('panel-upcoming');
     const panelCustomAi = document.getElementById('panel-custom-ai');
+    const panelFrameworks = document.getElementById('panel-frameworks');
 
     // Tab Navigation Logic
-    if (tabUpcoming && tabCustomAi && panelUpcoming && panelCustomAi) {
+    if (tabUpcoming && tabCustomAi && tabFrameworks && panelUpcoming && panelCustomAi && panelFrameworks) {
         tabUpcoming.addEventListener('click', () => {
             tabUpcoming.classList.add('active');
             tabUpcoming.style.color = 'var(--gold)';
@@ -713,8 +715,13 @@ document.addEventListener('DOMContentLoaded', () => {
             tabCustomAi.style.color = 'var(--text-secondary)';
             tabCustomAi.style.borderColor = 'transparent';
 
+            tabFrameworks.classList.remove('active');
+            tabFrameworks.style.color = 'var(--text-secondary)';
+            tabFrameworks.style.borderColor = 'transparent';
+
             panelUpcoming.style.display = 'block';
             panelCustomAi.style.display = 'none';
+            panelFrameworks.style.display = 'none';
         });
 
         tabCustomAi.addEventListener('click', () => {
@@ -726,8 +733,187 @@ document.addEventListener('DOMContentLoaded', () => {
             tabUpcoming.style.color = 'var(--text-secondary)';
             tabUpcoming.style.borderColor = 'transparent';
 
+            tabFrameworks.classList.remove('active');
+            tabFrameworks.style.color = 'var(--text-secondary)';
+            tabFrameworks.style.borderColor = 'transparent';
+
             panelCustomAi.style.display = 'block';
             panelUpcoming.style.display = 'none';
+            panelFrameworks.style.display = 'none';
+        });
+
+        tabFrameworks.addEventListener('click', () => {
+            tabFrameworks.classList.add('active');
+            tabFrameworks.style.color = 'var(--gold)';
+            tabFrameworks.style.borderColor = 'var(--gold)';
+
+            tabUpcoming.classList.remove('active');
+            tabUpcoming.style.color = 'var(--text-secondary)';
+            tabUpcoming.style.borderColor = 'transparent';
+
+            tabCustomAi.classList.remove('active');
+            tabCustomAi.style.color = 'var(--text-secondary)';
+            tabCustomAi.style.borderColor = 'transparent';
+
+            panelFrameworks.style.display = 'block';
+            panelUpcoming.style.display = 'none';
+            panelCustomAi.style.display = 'none';
+        });
+    }
+
+    // ============================================
+    // PRE-WRITTEN INTERACTIVE SCRIPT FRAMEWORKS
+    // ============================================
+    const scriptFrameworks = {
+        divine: {
+            titleTa: '🕉️ கடவுள் கதை & ஜோதிட இணைப்பு',
+            titleEn: 'Divine Story & Astrology Crossover',
+            tag: 'HIGH ENGAGEMENT',
+            severityClass: 'medium',
+            titles: [
+                'எந்த சித்தரை வழிபட்டால் என் பிரச்சனைகள் தீரும்? | மேஷம் - மீனம் | ALP ஜோதிடம் | #vastu #spirituality',
+                'உங்கள் அக்ஷய லக்னம் சொல்லும் தெய்வ வழிபாடு! | ALP Astrology | #god #spirituality',
+                'வைகாசி விசாகத்தில் இதை செய்தால் வாழ்க்கை மாறும்! | ALP ஜோதிடம் | #murugan'
+            ],
+            hook: '“உங்க வாழ்க்கையில எந்த பிரச்சனை வந்தாலும் சரி, இந்த ஒரு சித்தரை மட்டும் மனதார நினைச்சு கும்பிடுங்க... உங்க அக்ஷய லக்னத்தின் படி எந்த சித்தர் உங்களை காப்பாற்றுவார் தெரியுமா? இந்த ரகசியத்தை தெரிஞ்சுகிட்டா உங்க வாழ்க்கையில வறுமையே இருக்காது! உங்கள் அக்ஷய லக்னத்தின் இரகசிய விடையை இந்த வீடியோவில் பார்ப்போம்!”',
+            astrology: 'அக்ஷய லக்ன பத்ததி (ALP) விதிப்படி, நமது பிறப்பு லக்னத்தில் இருந்து 10 வருடத்திற்கு ஒருமுறை லக்னம் நகர்ந்து கொண்டே இருக்கும். தற்போது உங்கள் அக்ஷய லக்னம் எந்த ராசியில் பயணிக்கிறது, அதற்குரிய 5 மற்றும் 9-ஆம் அதிபதிகள் யார் என்பதை கண்டறிய வேண்டும். 5-ஆம் இடம் பூர்வ புண்ணிய ஸ்தானம், 9-ஆம் இடம் பாக்ய ஸ்தானம். இந்த கிரகங்களின் சேர்க்கை தான் உங்களுக்குரிய தெய்வத்தை தீர்மானிக்கிறது. உதாரணத்திற்கு, மிதுன அக்ஷய லக்னம் நடப்பவர்களுக்கு புதனின் ஆதிக்கம் இருக்கும், அவர்கள் மகாவிஷ்ணுவையும், தனுசு அக்ஷய லக்னம் நடப்பவர்கள் குருவின் ஆதிக்கத்தால் தட்சிணாமூர்த்தியையும் வழிபட வேண்டும். உங்கள் நகரும் அக்ஷய லக்னத்தை துல்லியமாக அறிந்து கொள்ளும்போது, வழிபாட்டின் பலன்கள் உங்களுக்கு உடனடியாக கிடைக்கும்.',
+            remedy: 'உங்கள் அக்ஷய லக்ன அதிபதிக்குரிய தானியங்கள் மற்றும் மலர்களை கொண்டு அர்ச்சனை செய்யுங்கள். ஒவ்வொரு வியாழக்கிழமையும் அருகிலுள்ள தட்சிணாமூர்த்தி கோவிலுக்கு சென்று நெய் தீபம் ஏற்றி 9 முறை வலம் வாருங்கள். உங்கள் லக்னத்திற்கான பிரத்யேக சித்தரை கண்டறிந்து ஜீவ சமாதியில் பூக்களால் அர்ச்சனை செய்வது கர்ம வினைகளை நொடியில் கரைக்கும்.',
+            cta: '“உங்களுடைய தற்போதைய அக்ஷய லக்னம் என்ன? உங்களுக்குரிய குலதெய்வம் மற்றும் சித்தர் வழிபாட்டை துல்லியமாக கண்டறிய எங்களது ALP அக்ஷய லக்ன பத்ததி மென்பொருளை (Software) பயன்படுத்துங்கள், அல்லது எங்களது 3-நாள் ஜோதிட அடிப்படை வகுப்பில் இணைந்து நீங்களே உங்கள் ஜாதகத்தை கணிக்க கற்றுக்கொள்ளுங்கள்! தொடர்புக்கு: +91 97865 56156.”',
+            tags: '#alpastrology #divinestories #spiritualremedies #siddharvalipadu #alpsastritv #pothuvudaimoorthy'
+        },
+        motivational: {
+            titleTa: '🏆 உத்வேகக் கதை & ஜோதிட இணைப்பு',
+            titleEn: 'Motivational Success & Astrology',
+            tag: 'HIGH RETENTION',
+            severityClass: 'medium',
+            titles: [
+                'விடாமுயற்சி மட்டும் போதாது, உங்க நேரம் எப்படி இருக்கு? | ALP Motivation | #success',
+                'அக்ஷய லக்னம் மாறும்போது உங்கள் தலையெழுத்தே மாறும்! | ALP ஜோதிடம் | #motivation',
+                'தோற்றுப்போன 90s கிட்ஸ் ஜெயிக்கப்போகும் நேரம்! | ALP Astrology | #mindset'
+            ],
+            hook: '“எவ்வளவுதான் உழைச்சாலும் வெற்றி கிடைக்கலையா? எல்லாரும் உங்களை பார்த்து ஏளனம் செய்றாங்களா? கவலைப்படாதீங்க! தாமஸ் ஆல்வா எடிசன் 1000 முறை தோற்றபோது கூட அவருக்குள் இருந்த அந்த ஜோதிட கிரக அமைப்பு என்ன தெரியுமா? உங்க அக்ஷய லக்னம் இப்போது மாறப்போகுது, இனி உங்க வெற்றி நிச்சயம்! இதோ உங்களுக்கான உத்வேகப் பாதை!”',
+            astrology: 'ALP முறையில் 10 வருடத்திற்கு ஒருமுறை லக்னம் மாறும் போது நமது எண்ணங்களும், செய்யும் தொழில்களும் மாறும். 3-ஆம் இடம் என்பது தைரிய வீர்ய ஸ்தானம், 10-ஆம் இடம் ஜீவன ஸ்தானம். அக்ஷய லக்னத்திற்கு 3 மற்றும் 10-ஆம் அதிபதிகள் பலமாக இருந்தால், அந்த நபருக்கு எதையும் தாங்கும் மனவலிமையும், விடாமுயற்சியும் தானாகவே பிறக்கும். ஒருவருக்கு அக்ஷய லக்னத்தில் ராகு அல்லது செவ்வாய் கடந்து செல்லும்போது அவர்கள் கடுமையான போராட்டங்களை சந்திப்பார்கள், ஆனால் அதன் பிறகு வரும் காலம் அவர்களுக்கு மிகப்பெரிய ராஜயோகத்தை தரும்.',
+            remedy: 'ஒவ்வொரு செவ்வாய்க்கிழமையும் முருகப்பெருமானை செவ்வரளி பூக்களால் வழிபடுங்கள். காலையில் சூரிய நமஸ்காரம் செய்து “ஓம் ஆதித்யாய நமஹ” என்ற மந்திரத்தை 21 முறை கூறுங்கள். இது உங்கள் உள்ளத்தில் தன்னம்பிக்கையையும், உடலில் நேர்மறை ஆற்றலையும் பன்மடங்கு அதிகரிக்கும்.',
+            cta: '“தோல்விகளில் இருந்து மீண்டு வர உங்கள் ஜாதகத்தில் அக்ஷய லக்னம் எந்த இடத்தில் உள்ளது என்பதை எங்களது மொபைல் செயலி (ALP Astrology App) மூலம் நொடியில் தெரிந்துகொள்ளுங்கள். Google Play Store-இல் இலவசமாக பதிவிறக்கம் செய்யுங்கள், அல்லது எங்களது வாட்ஸ்அப் எண்ணிற்கு தொடர்புகொண்டு ஜோதிட ஆலோசனை பெறுங்கள்!”',
+            tags: '#alpastrology #motivation #successmindset #akshayalagnapaddhati #victoryrecipes #selfimprovement #tamiltalks'
+        },
+        traditional: {
+            titleTa: '🪐 பொது ஜோதிடம் - எளிய விளக்கம்',
+            titleEn: 'Traditional/Plain Astrology Made Simple',
+            tag: 'POTHU JOTHIDAM',
+            severityClass: 'low',
+            titles: [
+                'கிரகங்களின் சேர்க்கை தரும் யோகங்கள் மற்றும் அவயோகங்கள்! | ALP ஜோதிடம் | #pothujothidam',
+                'உங்கள் ஜாதகத்தில் இந்த கிரகம் இந்த இடத்தில் இருந்தால் ஆபத்தா? | ALP Astrology | #zodiac',
+                'எளிய முறையில் சொந்த ஜாதகம் பார்க்க கற்றுக்கொள்ளுங்கள்! | ALP ஜோதிடம் | #astrologyclass'
+            ],
+            hook: '“உங்க ஜாதகத்துல 12 கட்டங்கள்ல கிரகங்கள் எங்க இருந்தா என்ன பலன் தரும்? ராகு-கேது, சனி, குரு இவங்களோட பார்வை உங்க மேல பட்டா என்ன நடக்கும்? எந்த ஒரு ஜோதிடரும் சொல்லாத எளிய உண்மைகளை இன்னைக்கு நாம பார்க்கப்போறோம்!”',
+            astrology: 'பாரம்பரிய ஜோதிடத்தில் பிறப்பு லக்னத்தை மட்டுமே வைத்து பலன் கூறுவார்கள். ஆனால், ALP முறையில் அக்ஷய லக்னம் நகர்வதை கொண்டு தற்போதைய பலன்களை மிக துல்லியமாக கணிக்கலாம். லக்னத்திற்கு 1, 2, 5, 9, 11-ஆம் அதிபதிகள் சுப கிரகமாக இருந்து சுப வீடுகளில் அமர்ந்தால் அந்த காலகட்டத்தில் பணவரவு, புகழ், பதவி தேடிவரும். 6, 8, 12-ஆம் அதிபர்கள் மறைவு ஸ்தானங்களில் இருந்தால் எதிர்ப்புகள், கடன், ஆரோக்கிய குறைபாடு ஏற்படலாம். ஆனால், அக்ஷய லக்ன அதிபதி பலமாக இருந்தால் அனைத்து தோஷங்களும் நிவர்த்தியாகும்.',
+            remedy: 'தினமும் காலையில் குளித்துவிட்டு உங்கள் குலதெய்வத்தை நினைத்து 5 நிமிடம் தியானம் செய்யுங்கள். பசு மாட்டிற்கு வாழைப்பழமோ அல்லது அகத்திக்கீரையோ வழங்குவது பித்ரு தோஷங்களையும், கிரக தோஷங்களையும் பெருமளவில் குறைக்கும் எளிய பரிகாரமாகும்.',
+            cta: '“ஜோதிடத்தை முழுமையாக கற்றுக்கொண்டு உங்கள் குடும்பத்தினரின் ஜாதகத்தை நீங்களே கணிக்க வேண்டுமா? எங்களது ALP ஜோதிட பயிற்சி வகுப்புகள் ஆன்லைனில் மிக எளிய முறையில் நடத்தப்படுகிறது. உடனே உங்கள் பெயரை பதிவு செய்ய கீழே உள்ள லிங்கை கிளிக் செய்யுங்கள்!”',
+            tags: '#alpastrology #plainastrology #rasiandlagnam #learnastrology #zodiacsecrets #pothujothidam #astroguru'
+        },
+        crossover: {
+            titleTa: '📱 தொழில்நுட்பம் / பொது நல்வாழ்வு & ஜோதிடம்',
+            titleEn: 'Lifestyle, Technology & Astrology Crossover',
+            tag: 'VIRAL TREND',
+            severityClass: 'normal',
+            titles: [
+                'மொபைல் போன் பயன்பாடு உங்கள் ஜாதகத்தை மாற்றுமா? | ALP Crossover | #techlife',
+                'தினமும் இந்த நேரத்தில் தூங்கினால் பண விரயம் ஏற்படுமா? | ALP ஜோதிடம் | #habits',
+                'உங்கள் அக்ஷய லக்னம் மற்றும் மொபைல் நம்பர் பொருத்தம்! | ALP Astrology | #numerology'
+            ],
+            hook: '“நீங்க அதிக நேரம் மொபைல் போன் பயன்படுத்துபவரா? அது உங்க ஜாதகத்துல இருக்குற ராகு மற்றும் புதன் கிரகங்களை எப்படி பலவீனப்படுத்துது தெரியுமா? இதனால உங்க வாழ்க்கையில வறுமையையும், தூக்கமின்மையையும் வரலாம்! இதுல இருந்து தப்பிக்க என்ன செய்யணும் தெரியுமா?”',
+            astrology: 'தொழில்நுட்ப சாதனங்கள் அனைத்தும் ராகுவின் ஆதிக்கத்திற்கு உட்பட்டவை. புதன் என்பது தகவல் தொடர்பு மற்றும் புத்திகாரகன். அளவுக்கு அதிகமாக கைபேசி மற்றும் கணினியை பயன்படுத்துவது ஜாதகத்தில் ராகுவின் தீய தாக்கத்தை அதிகரிக்கும். இதனால் மன உளைச்சல், தூக்கமின்மை (12-ஆம் இடம் பாதிப்பு) ஏற்படும். உங்கள் அக்ஷய லக்னம் மிதுனம், கன்னி அல்லது கும்பமாக இருந்தால் நீங்கள் தொழில்நுட்ப துறையில் வெற்றி பெறலாம், ஆனால் ராகுவின் திசை நடக்கும் போது மிக எச்சரிக்கையாக இருக்க வேண்டும். மொபைல் எண் கூட்டுத்தொகை உங்கள் அக்ஷய லக்ன அதிபதிக்கு நட்பாக இருப்பது அவசியம்.',
+            remedy: 'இரவு 9 மணிக்கு மேல் மொபைல் போன் பயன்படுத்துவதை தவிர்த்துவிட்டு புத்தகங்கள் படியுங்கள் (புதன் பலப்படும்). படுக்கும் முன் கைகால்களை அலம்பி, கற்பூரம் ஏற்றி நெகடிவ் எனர்ஜியை நீக்குங்கள். சனிக்கிழமைகளில் உளுந்து வடை தானம் செய்வது ராகுவின் தீய கதிர்வீச்சு தாக்கத்தை குறைக்கும்.',
+            cta: '“உங்க மொபைல் நம்பர் மற்றும் லக்னத்திற்கு இடையேயான பொருத்தம் எப்படி உள்ளது? உங்கள் லக்னத்திற்கு ஏற்ற சிறந்த தொழில் மற்றும் மொபைல் எண் கூட்டுத்தொகையை கண்டறிய எங்களது அட்வான்ஸ் ALP சாப்ட்வேரை வாங்குங்கள்! தொடர்புக்கு: +91 97865 56156.”',
+            tags: '#alpastrology #technews #digitaldetox #astrocrossover #mobilenumerology #habitsforwealth #rahuketu'
+        },
+        remedies: {
+            titleTa: '💰 பரிகாரங்கள் & வழிபாட்டு முறைகள்',
+            titleEn: 'Actionable Remedies & Pariharams',
+            tag: 'HIGH VIRALITY',
+            severityClass: 'medium',
+            titles: [
+                'தீராத கடன் மற்றும் பண கஷ்டம் தீர இந்த எளிய பரிகாரம் செய்யுங்க! | ALP Remedies | #pariharam',
+                'வீட்டில் லட்சுமி தேவியின் அருளை ஈர்க்கும் எளிய வீட்டு பரிகாரங்கள்! | ALP ஜோதிடம் | #wealth',
+                'இந்த கோவிலுக்கு ஒருமுறை சென்றால் உங்கள் தலையெழுத்து மாறும்! | ALP Astrology | #templevisit'
+            ],
+            hook: '“பணம் கையில் தங்குவதே இல்லையா? எவ்வளவு சம்பாதிச்சாலும் கடன் பிரச்சனை துரத்துதா? உங்க வீட்டின் வாசலில் இந்த ஒரு பொருளை மட்டும் கட்டி தொங்கவிடுங்க... அக்ஷய லக்ன பத்ததி முறையிலான இந்த எளிய பரிகாரம் உங்க வறுமையை விரட்டி அடிக்கும்!”',
+            astrology: 'ஜாதகத்தில் 6-ஆம் இடம் என்பது கடன், நோய், எதிரிகளை குறிக்கும். 12-ஆம் இடம் விரய ஸ்தானம். ஒருவரது அக்ஷய லக்னத்திற்கு 6 அல்லது 12-ஆம் அதிபதிகள் தசா புத்தி நடத்தும்போது கடுமையான பொருளாதார நெருக்கடிகள் ஏற்படும். இந்த கால கட்டத்தில் கிரகங்களின் அதிதேவதைகளுக்கு எளிய பரிகாரங்களை செய்ய வேண்டும். சுக்கிரன் பாதிக்கப்பட்டால் லட்சுமி தேவியையும், செவ்வாய் பாதிக்கப்பட்டால் முருகனையும் வழிபட வேண்டும். அக்ஷய லக்னத்திற்கு 11-ஆம் இடமான லாப ஸ்தான அதிபதிக்குரிய பரிகாரங்கள் பண வரவை உடனடியாக ஏற்படுத்தும்.',
+            remedy: 'ஒவ்வொரு வெள்ளிக்கிழமையும் மகாலட்சுமிக்கு நெய் விளக்கு ஏற்றி சர்க்கரைப் பொங்கல் நிவேதனம் செய்யுங்கள். வாசலில் கல் உப்பு கலந்த நீரால் தெளித்து கோலமிடுங்கள். அருகிலுள்ள பழமையான திருத்தலத்திற்கு சென்று உங்கள் அக்ஷய லக்ன நட்சத்திரத்தன்று சிறப்பு அர்ச்சனை செய்வது கர்ம வினையை வேரோடு அறுக்கும்.',
+            cta: '“உங்களது அக்ஷய லக்னத்திற்கு ஏற்ப எந்த பரிகாரத்தை செய்தால் கடன் தீரும்? உடனே துல்லியமான ஜாதக கணிப்பை பெற எங்களது அக்ஷய லக்ன பத்ததி மென்பொருளை டவுன்லோட் செய்து பாருங்கள், அல்லது எங்கள் பயிற்சி வகுப்பில் இணைந்து பரிகார ரகசியங்களை கற்றுக்கொள்ளுங்கள்!”',
+            tags: '#alpastrology #kadanparigaram #wealthremedies #easyastrotips #templesecrets #pothuvudaimoorthy #lucktips'
+        },
+        marriage: {
+            titleTa: '💍 திருமணத் தடைகள் & தீர்வுகள்',
+            titleEn: 'Marriage & Relationship Obstacles',
+            tag: 'MOST REQUESTED',
+            severityClass: 'high',
+            titles: [
+                '90s கிட்ஸ் திருமண தடைக்கான உண்மையான ஜோதிட காரணம்! | ALP Marriage | #90skids',
+                'கணவன்-மனைவி கருத்து வேறுபாடு நீங்கி ஒன்று சேர எளிய வழி! | ALP ஜோதிடம் | #relationship',
+                'உங்கள் ஜாதகத்தில் களத்திர தோஷம் உள்ளதா? பயப்பட தேவையில்லை! | ALP Astrology | #marriagepostponed'
+            ],
+            hook: '“வயசு 30 தாண்டியும் இன்னும் திருமணம் அமையலையா? 90s கிட்ஸ் எல்லாரும் கேட்கும் ஒரே கேள்வி: எனக்கு எப்போதான் கல்யாணம் நடக்கும்? உங்க ஜாதகத்துல இருக்குற இந்த ஒரு கிரக அடைவு தான் இதற்கு காரணம்... இந்த ரகசியத்தை தெரிஞ்சுகிட்டா 3 மாசத்துல கல்யாணம் கூடி வரும்!”',
+            astrology: 'அக்ஷய லக்ன பத்ததி (ALP) முறையில், ஒருவருக்கு திருமணம் நடக்கும் சரியான காலத்தை லக்னத்திற்கு 7-ஆம் இடமான களத்திர ஸ்தானத்தை கொண்டு துல்லியமாக கணிக்கலாம். அக்ஷய லக்னத்திற்கு 7-ஆம் அதிபதி அல்லது 7-ல் உள்ள கிரகம் தசா புத்தி நடத்தும்போது திருமணம் கைகூடும். 7-ஆம் அதிபதி 6, 8, 12-இல் மறைந்தோ அல்லது சனியுடன் சேர்ந்தோ இருந்தால் திருமண தாமதம் அல்லது கணவன்-மனைவிக்குள் சண்டை சச்சரவுகள் ஏற்படும். ராகு-கேது தோஷம் இருந்தால் 7-ஆம் இடத்தை தியானித்து பரிகாரம் செய்வது அவசியம்.',
+            remedy: 'திங்கட்கிழமைகளில் உமாமகேஸ்வரர் கோவிலுக்கு சென்று நெய் தீபம் ஏற்றி தம்பதி சமேதராக வழிபடுங்கள். மஞ்சள், குங்குமம் மற்றும் வளையல்களை சுமங்கலி பெண்களுக்கு தானமாக வழங்குங்கள். 7-ஆம் அதிபதியின் தானியத்தை தர்ம காரியங்களுக்கு தானமாக அளிப்பது திருமண தடையை உடைக்கும்.',
+            cta: '“உங்கள் அக்ஷய லக்னத்தின் படி உங்களுக்கு எப்போது திருமணம் கைகூடும்? கணவன் மனைவி ஒற்றுமை பலப்பட என்ன செய்ய வேண்டும்? எங்களது மூத்த ஜோதிடர்களிடம் இருந்து துல்லியமான திருமண கால கணிப்பை பெற கீழே உள்ள வாட்ஸ்அப் லிங்கை கிளிக் செய்யுங்கள்!”',
+            tags: '#alpastrology #marriagedelay #90skidswedding #kalathiradosham #relationshipgoals #alpsastritv #easyweddingtips'
+        }
+    };
+
+    // Framework Selection Interactive Logic
+    const frameworkCards = document.querySelectorAll('.framework-card');
+    if (frameworkCards && placeholder && results && scriptEventTitle && scriptPostTag && scriptHook && scriptAstrology && scriptRemedy && scriptCta && scriptTitles && scriptTags) {
+        frameworkCards.forEach(card => {
+            card.addEventListener('click', () => {
+                // Toggle active card styles
+                document.querySelectorAll('.planner-event-card').forEach(c => c.classList.remove('active'));
+                card.classList.add('active');
+
+                // Transition UI state
+                placeholder.style.display = 'none';
+                results.style.display = 'block';
+
+                const cat = card.dataset.category;
+                const blueprint = scriptFrameworks[cat];
+
+                if (blueprint) {
+                    // Map content to UI
+                    scriptEventTitle.textContent = `${blueprint.titleTa} / ${blueprint.titleEn}`;
+                    scriptPostTag.textContent = blueprint.tag;
+                    scriptPostTag.className = `severity-tag ${blueprint.severityClass}`;
+
+                    scriptHook.innerHTML = blueprint.hook;
+                    scriptAstrology.innerHTML = blueprint.astrology;
+                    scriptRemedy.innerHTML = blueprint.remedy;
+                    scriptCta.innerHTML = blueprint.cta;
+
+                    // Populate recommended titles
+                    scriptTitles.innerHTML = '';
+                    blueprint.titles.forEach((title, idx) => {
+                        const item = document.createElement('div');
+                        item.className = 'script-title-item';
+                        item.innerHTML = `
+                            <span><strong>Title ${idx + 1}:</strong> ${title}</span>
+                            <span class="copy-badge">COPY</span>
+                        `;
+                        setupCopyToClipboard(item, title, `✓ Title ${idx + 1} Copied to Clipboard!`);
+                        scriptTitles.appendChild(item);
+                    });
+
+                    // Populate metadata tags & descriptions
+                    const fullMetaDescription = `🔮 ${blueprint.titles[0]}\n\n✨ அக்ஷய லக்ன பத்ததி (ALP) கணித முறைப்படி ${blueprint.titleTa} பற்றிய முழு விளக்கங்கள் மற்றும் எளிய பரிகார வழிமுறைகள்!\n\n🎬 Timestamps:\n00:00 - Intro & Dynamic Hook\n01:30 - Story Detail & Transition Cues\n04:00 - Astrological Planetary Focus (using ALP system)\n07:15 - Actionable Ritual Remedy (Pariharam)\n09:30 - How to learn ALP & App Link\n\nLearn ALP Astrology:\n🎓 Basic Course registration link in first pinned comment!\n🌐 Website: https://alpastrology.com\n📞 Contact: +91 97865 56156\n\n${blueprint.tags}`;
+                    
+                    scriptTags.innerHTML = fullMetaDescription;
+
+                    // Clear and bind copy to clipboard listener
+                    const newTags = scriptTags.cloneNode(true);
+                    scriptTags.parentNode.replaceChild(newTags, scriptTags);
+                    setupCopyToClipboard(newTags, fullMetaDescription, '✓ Complete Video Description Copied!');
+                }
+            });
         });
     }
 
@@ -2518,6 +2704,265 @@ document.addEventListener('DOMContentLoaded', () => {
         loadSavedLibraryShelf();
         filterNetworkTable(); // run initial affiliate network filter
     }, 500);
+
+    // ============================================
+    // SECTION 13: ADVANCED COMPETITOR & DEMOGRAPHICS DATA
+    // ============================================
+    const globalCompetitorData = {
+        tamil: {
+            title: 'Tamil Competitors (IBC Bakthi, Life Horoscope, Astro Chinnaraj)',
+            badge: 'VERIFIABILITY: LOW (20%)',
+            drawbacks: 'Cluttered thumbnails, static audio commentary, and a massive reliance on repetitive generalized Vedic rasi predictions (which has very low mathematical precision). However, they possess enormous upload volumes, deep historical libraries, and established older female/male demographic trust.',
+            trustSecret: 'Building traditional religious bonds and temple worship pariharams. They rely heavily on standard devotional imagery, astrological heritage, and simple faith-driven remedy instructions rather than mathematical validation of individual charts.',
+            improvements: 'Upgrade video pacing: overlay high-converting lower-thirds, use zoom cuts for voice emphasis (every 10-15 seconds), and insert graphical chart popups showing exactly how the temple pariharam relates mathematically to the user\'s moving Akshaya Lagna. Consolidate your visual branding under `@ALPASTROLOGY` to avoid audience splitting.'
+        },
+        hindi: {
+            title: 'Hindi Competitors (AstroTak, Astro Arun Pandit, Astrosage)',
+            badge: 'VERIFIABILITY: MEDIUM (45%)',
+            drawbacks: 'Highly repetitive weekly predictions and general pop-astrology career/relationship advice. Their huge strength is extremely polished editing, high-energy presentation, rapid visual jump cuts, graphical digital boards, and active response loops answering viewer comment suggestions.',
+            trustSecret: 'Building deep personal branding, high-relatability, and instant solutions for youth anxieties. They leverage active student/user reviews and interactive live Q&As to establish rapid community authority.',
+            improvements: 'Adopt youth-friendly pacing: implement visual cuts every 5-8 seconds, project high energy with active hand gestures and camera-facing posture, use bright modern fonts, and introduce comment-response cards (answering specific viewer-submitted birth charts live on screen to prove authority).'
+        },
+        english: {
+            title: 'English Competitors (The Astrology Podcast, KRSchannel)',
+            badge: 'VERIFIABILITY: HIGH (75%)',
+            drawbacks: 'Often highly academic, long-form, and less accessible to a general mass-audience looking for immediate daily solutions. However, they excel in pristine multi-camera setups, shallow depth of field, exceptional audio isolation, and deep scholarly citations of ancient scriptures.',
+            trustSecret: 'Establishing academic rigor, intellectual depth, and highly professional broadcast aesthetics. They build trust through logical reasoning and presenting detailed charts on clean, high-contrast slides.',
+            improvements: 'Upgrade audio quality: lay rugs over reflective marble floors and isolate your studio to eliminate room echo. Utilize your Sony FX Cinema camera as A-Cam (S-Log3, f/2.8) and Canon as B-Cam to capture secondary angles, and present ALP as a logical, mathematical "Astrology Science" rather than mysticism.'
+        },
+        alp: {
+            title: 'ALP Strategy (Our Capstone Strategy)',
+            badge: 'VERIFIABILITY: 100% MATHEMATICAL',
+            drawbacks: 'Current drawbacks include slow visual pacing, high room echo in videos, visual dilution due to excessive upload frequency (7,900+ videos), split audience branding between SASTI TV and ALP, and a lack of on-screen visual proof showing how predictions actually materialize.',
+            trustSecret: 'Unshakeable mathematical precision through Dr. Pothuvudaimoorthy\'s Akshaya Lagna Paddhati (ALP) where the moving lagna shifts 1 degree every 4 months, allowing exact prediction validation.',
+            improvements: 'Earn people\'s trust programmatically: overlay client case study charts on screen during explanations, show absolute prediction proof with dates, structure distinct branded playlists, decrease upload frequency while heavily boosting post-production quality, and leverage interactive student affiliate networks (303K+ combined reach) to cross-promote services.'
+        }
+    };
+
+    const demographicsBlueprint = {
+        '18-25': {
+            male: {
+                title: '👨 Ages 18-25 · Male Target Blueprint',
+                driver: 'High anxiety about career stability, exams concentration, competitive placements, parental expectations, and digital/tech addictions.',
+                houses: '1st (Self-growth), 5th (Intellect & Exam Success), & 10th (Career Path) Houses.',
+                deity: 'Saraswathi, Lord Murugan. Remedies: Offering green flowers, utilizing Mercury energies for mental focus.',
+                titleIdea: '"IT & Govt Jobs: அக்ஷய லக்னம் சொல்லும் சரியான படிப்பு! | ALP Career Guide"',
+                visuals: 'Rapid pacing (cuts every 5-8s), dynamic green/cyan tech lower-third overlays, digital chart grids, and energetic presenter stance. Frame astrology as a mathematical system Crossover rather than devotion.'
+            },
+            female: {
+                title: '👩 Ages 18-25 · Female Target Blueprint',
+                driver: 'Anxiety regarding higher education, career independence, love/marriage crossroads, self-identity, and emotional balance.',
+                houses: '5th (Emotions & Intellect), 7th (Relationship houses), & 9th (Higher learning) Houses.',
+                deity: 'Goddess Durga, Amman worship. Remedies: Jasmine flower archana, simple Friday lamp pariharams.',
+                titleIdea: '"உயர் கல்வி மற்றும் காதல் யோகம் ஜாதகத்தில் எப்போது கூடி வரும்? | ALP Study Guide"',
+                visuals: 'Soothing soft key lighting, warm golden tones, structured bullet points, elegant and clear lower-thirds, step-by-step empathetic logical breakdowns.'
+            }
+        },
+        '26-40': {
+            male: {
+                title: '👨 Ages 26-40 · Male Target Blueprint',
+                driver: 'Severe pressure regarding late marriages (90s kids delays), heavy financial debts, career stagnation, business growth hurdles, and buying a house.',
+                houses: '7th (Marriage partner), 6th (Debt & litigations), & 10th/11th (Profession & profits) Houses.',
+                deity: 'Lord Bhairavar, Lord Ganesha. Remedies: Offering black sesame oil lamps to Bhairavar on Ashtami days.',
+                titleIdea: '"தீராத கடன் மற்றும் தொழில் முடக்கம் நீங்க அக்ஷய லக்ன பரிகாரங்கள்! | ALP Debt Relief"',
+                visuals: 'Highly authoritative presentation style, clean case-study chart overlays on screen, direct bullet points, bold red/gold warning colors. Present clear mathematical proof of prediction dates.'
+            },
+            female: {
+                title: '👩 Ages 26-40 · Female Target Blueprint',
+                driver: 'Marital discord, child birth / fertility delays, delayed marriage timing, domestic peace, and safe gold/asset purchasing times.',
+                houses: '7th (Kalathira sthanam), 5th (Puthra bhagya - child), & 2nd (Dhana & family wealth) Houses.',
+                deity: 'Garbarakshambigai Amman, Goddess Lakshmi. Remedies: Salt-water home cleansing pariharams, Friday ghee lamps.',
+                titleIdea: '"திருமண தாமதம் மற்றும் களத்திர தோஷத்திற்கு எளிய ALP பரிகாரங்கள்! | ALP Marriage Guide"',
+                visuals: 'Warm, highly supportive and empathetic tone, soft rim lighting to separate from black backdrop, large clear text overlays listing daily home rituals.'
+            }
+        },
+        '41-55': {
+            male: {
+                title: '👨 Ages 41-55 · Male Target Blueprint',
+                driver: 'Mid-life career transitions, permanent house construction, family inheritance disputes, children\'s higher education costs, and initial health alerts.',
+                houses: '4th (Property, Vastu, & vehicles), 8th (Inheritance & sudden events), & 10th (Career maturity) Houses.',
+                deity: 'Goddess Varahi Amman, Lord Shiva. Remedies: Special Varahi worship with coconut lamps, Vastu remedies.',
+                titleIdea: '"சொந்த வீடு கட்டும் யோகம் ஜாதகத்தில் எந்த அக்ஷய லக்னத்தில் நடக்கும்? | ALP Vastu"',
+                visuals: 'Professional corporate/academic background styling, clear floorplan overlays, slower and highly authoritative vocal delivery, traditional clean serif fonts.'
+            },
+            female: {
+                title: '👩 Ages 41-55 · Female Target Blueprint',
+                driver: 'Children\'s marriage delays, husband\'s career/health protection, household peace, and transitioning into personal spiritual practices.',
+                houses: '7th (Husband\'s house), 5th (Grandchildren/Children\'s weddings), & 9th (Spiritual dharma) Houses.',
+                deity: 'Lord Murugan, Amman temples. Remedies: Ancestral Pithru pariharams, simple home temple lamps.',
+                titleIdea: '"உங்கள் பிள்ளைகளுக்கு எப்போது திருமணம் நடக்கும்? அக்ஷய லக்ன துல்லிய கணிப்பு! | ALP Family"',
+                visuals: 'Calm maternal presentation, gentle background music, slow and steady pacing, clean visual slides outlining exact pariharam items.'
+            }
+        },
+        '56-70': {
+            male: {
+                title: '👨 Ages 56-70+ · Male Target Blueprint',
+                driver: 'Post-retirement health worries (joint pain, heart), legacy planning, peaceful distribution of wealth, and achieving profound spiritual peace.',
+                houses: '8th (Longevity & wellness), 12th (Moksha & sound sleep), & 9th (Dharmic deeds) Houses.',
+                deity: 'Lord Dhanvantri, Lord Shiva. Remedies: Daily mantra chanting, simple organic pariharams, spiritual book reading.',
+                titleIdea: '"நிம்மதியான தூக்கம் மற்றும் ஆரோக்கியமான ஓய்வு காலத்திற்கு ஜோதிட ரகசியங்கள்! | ALP Moksha"',
+                visuals: 'Slower voice pacing, high-contrast large white/yellow fonts on screen, clean black backdrop with dedicated gold rim light, traditional classical background score.'
+            },
+            female: {
+                title: '👩 Ages 56-70+ · Female Target Blueprint',
+                driver: 'Grandchildren\'s growth and exams, persistent joint pains/chronic health issues, organizing spiritual pilgrimages, and ensuring family legacy unity.',
+                houses: '5th (Grandchildren), 12th (Health & sleep), & 9th (Temple pilgrimages) Houses.',
+                deity: 'Lord Lakshmi-Narayana, Lord Krishna. Remedies: Tulsi water offerings, chanting Vishnu Sahasranamam.',
+                titleIdea: '"பேரன் பேத்திகளின் கல்வி மற்றும் குடும்ப ஐஸ்வர்யத்தை பெருக்கும் வழிபாடுகள்! | ALP Legacy"',
+                visuals: 'Warm grandmotherly presentation tone, very large text display on screen, clear audio isolation with absolutely zero background fan hum or room echo.'
+            }
+        }
+    };
+
+    // --- Competitor switcher handlers ---
+    const tabCompTamil = document.getElementById('tab-comp-tamil');
+    const tabCompHindi = document.getElementById('tab-comp-hindi');
+    const tabCompEnglish = document.getElementById('tab-comp-english');
+    const tabCompAlp = document.getElementById('tab-comp-alp');
+
+    const compResultsBox = document.getElementById('comp-results-box');
+    const compTierTitle = document.getElementById('comp-tier-title');
+    const compVerifiabilityBadge = document.getElementById('comp-verifiability-badge');
+    const compDrawbacks = document.getElementById('comp-drawbacks');
+    const compTrustSecret = document.getElementById('comp-trust-secret');
+    const compImprovements = document.getElementById('comp-improvements');
+
+    function selectCompetitorTab(activeTab, key) {
+        const siblings = activeTab.parentNode.querySelectorAll('.planner-tab-btn');
+        siblings.forEach(s => {
+            s.classList.remove('active');
+            s.style.color = 'var(--text-secondary)';
+            s.style.borderColor = 'transparent';
+        });
+
+        activeTab.classList.add('active');
+        activeTab.style.color = 'var(--gold)';
+        activeTab.style.borderColor = 'var(--gold)';
+
+        const data = globalCompetitorData[key];
+        if (data && compResultsBox && compTierTitle && compVerifiabilityBadge && compDrawbacks && compTrustSecret && compImprovements) {
+            // Apply slight fade transition
+            compResultsBox.style.opacity = '0.3';
+            setTimeout(() => {
+                compTierTitle.textContent = data.title;
+                compVerifiabilityBadge.textContent = data.badge;
+                compDrawbacks.textContent = data.drawbacks;
+                compTrustSecret.textContent = data.trustSecret;
+                compImprovements.textContent = data.improvements;
+                compResultsBox.style.opacity = '1';
+            }, 150);
+        }
+    }
+
+    if (tabCompTamil) tabCompTamil.addEventListener('click', () => selectCompetitorTab(tabCompTamil, 'tamil'));
+    if (tabCompHindi) tabCompHindi.addEventListener('click', () => selectCompetitorTab(tabCompHindi, 'hindi'));
+    if (tabCompEnglish) tabCompEnglish.addEventListener('click', () => selectCompetitorTab(tabCompEnglish, 'english'));
+    if (tabCompAlp) tabCompAlp.addEventListener('click', () => selectCompetitorTab(tabCompAlp, 'alp'));
+
+    // --- Demographics targeting engine handlers ---
+    const demoAgeCards = document.querySelectorAll('.demo-age-card');
+    const demoGenderMale = document.getElementById('demo-gender-male');
+    const demoGenderFemale = document.getElementById('demo-gender-female');
+
+    const demoOutcomeTitle = document.getElementById('demo-outcome-title');
+    const demoOutcomeDriver = document.getElementById('demo-outcome-driver');
+    const demoOutcomeHouses = document.getElementById('demo-outcome-houses');
+    const demoOutcomeDeity = document.getElementById('demo-outcome-deity');
+    const demoOutcomeTitleIdea = document.getElementById('demo-outcome-title-idea');
+    const demoOutcomeVisuals = document.getElementById('demo-outcome-visuals');
+
+    let activeDemoAge = '18-25';
+    let activeDemoGender = 'male';
+
+    function compileDemographicBlueprint() {
+        const ageGroup = demographicsBlueprint[activeDemoAge];
+        if (!ageGroup) return;
+        const blueprint = ageGroup[activeDemoGender];
+
+        if (blueprint && demoOutcomeTitle && demoOutcomeDriver && demoOutcomeHouses && demoOutcomeDeity && demoOutcomeTitleIdea && demoOutcomeVisuals) {
+            demoOutcomeTitle.textContent = blueprint.title;
+            demoOutcomeDriver.textContent = blueprint.driver;
+            demoOutcomeHouses.textContent = blueprint.houses;
+            demoOutcomeDeity.textContent = blueprint.deity;
+            demoOutcomeTitleIdea.textContent = blueprint.titleIdea;
+            demoOutcomeVisuals.textContent = blueprint.visuals;
+        }
+    }
+
+    if (demoAgeCards) {
+        demoAgeCards.forEach(card => {
+            card.addEventListener('click', () => {
+                demoAgeCards.forEach(c => c.classList.remove('active'));
+                card.classList.add('active');
+
+                activeDemoAge = card.dataset.age;
+                compileDemographicBlueprint();
+                showToast(`🎯 Demographic compiled for Ages ${activeDemoAge}`);
+            });
+        });
+    }
+
+    if (demoGenderMale && demoGenderFemale) {
+        demoGenderMale.addEventListener('click', () => {
+            demoGenderFemale.classList.remove('active');
+            demoGenderFemale.style.borderColor = 'var(--border-color)';
+            demoGenderFemale.style.color = 'var(--text-secondary)';
+            demoGenderFemale.style.background = 'none';
+
+            demoGenderMale.classList.add('active');
+            activeDemoGender = 'male';
+            compileDemographicBlueprint();
+            showToast('👨 Gender Profile Swapped to Male');
+        });
+
+        demoGenderFemale.addEventListener('click', () => {
+            demoGenderMale.classList.remove('active');
+            demoGenderMale.style.borderColor = 'var(--border-color)';
+            demoGenderMale.style.color = 'var(--text-secondary)';
+            demoGenderMale.style.background = 'none';
+
+            demoGenderFemale.classList.add('active');
+            activeDemoGender = 'female';
+            compileDemographicBlueprint();
+            showToast('👩 Gender Profile Swapped to Female');
+        });
+    }
+
+    // ============================================
+    // LIGHT MODE / DARK MODE THEME SWITCHER LOGIC
+    // ============================================
+    const themeToggleBtn = document.getElementById('themeToggleBtn');
+    
+    function applyTheme(theme) {
+        if (theme === 'light') {
+            document.body.classList.add('light-theme');
+            if (themeToggleBtn) {
+                themeToggleBtn.innerHTML = '🌙 Dark Mode';
+                themeToggleBtn.style.borderColor = 'var(--cyan)';
+            }
+        } else {
+            document.body.classList.remove('light-theme');
+            if (themeToggleBtn) {
+                themeToggleBtn.innerHTML = '💡 Light Mode';
+                themeToggleBtn.style.borderColor = 'var(--border-color)';
+            }
+        }
+    }
+
+    if (themeToggleBtn) {
+        themeToggleBtn.addEventListener('click', () => {
+            const isLight = document.body.classList.contains('light-theme');
+            const newTheme = isLight ? 'dark' : 'light';
+            
+            applyTheme(newTheme);
+            localStorage.setItem('alp_site_theme', newTheme);
+            showToast(`✨ Swapped to ${newTheme === 'light' ? 'Light Mode' : 'Dark Mode'}`);
+        });
+    }
+
+    // Initialize Theme on load
+    const savedTheme = localStorage.getItem('alp_site_theme') || 'dark';
+    applyTheme(savedTheme);
 
     console.log('✦ ALP Astrology Strategy Report — Loaded Successfully');
 });
