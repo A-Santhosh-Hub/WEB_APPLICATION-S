@@ -9,6 +9,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Outfit:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
+     <link rel="icon" type="image/png" href="https://www.alpastrology.org/static/media/hand.6bbbeeb61439eeec5ca5.webp">
 </head>
 <body>
     <!-- Animated Background -->
@@ -794,6 +795,7 @@
                     <div class="planner-tabs" style="display: flex; gap: 0.5rem; margin-bottom: 1.25rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
                         <button class="planner-tab-btn active" id="tab-upcoming" style="flex: 1; padding: 0.6rem; background: none; border: none; color: var(--gold); border-bottom: 2px solid var(--gold); font-weight: 700; cursor: pointer; font-size: 0.8rem; transition: var(--transition-fast);">📅 Special Days</button>
                         <button class="planner-tab-btn" id="tab-custom-ai" style="flex: 1; padding: 0.6rem; background: none; border: none; color: var(--text-secondary); border-bottom: 2px solid transparent; font-weight: 700; cursor: pointer; font-size: 0.8rem; transition: var(--transition-fast);">🔮 Custom AI Planner</button>
+                        <button class="planner-tab-btn" id="tab-frameworks" style="flex: 1; padding: 0.6rem; background: none; border: none; color: var(--text-secondary); border-bottom: 2px solid transparent; font-weight: 700; cursor: pointer; font-size: 0.8rem; transition: var(--transition-fast);">🎬 Script Frameworks</button>
                     </div>
 
                     <div id="panel-upcoming" class="planner-panel">
@@ -840,6 +842,80 @@
                         
                         <div id="ai-error-log" style="display: none; color: #f87171; font-size: 0.7rem; margin-top: 0.5rem; text-align: center; line-height: 1.4;">
                             <!-- Errors will be logged here -->
+                        </div>
+                    </div>
+
+                    <!-- Panel Frameworks (Interactive pre-written script frameworks) -->
+                    <div id="panel-frameworks" class="planner-panel" style="display: none; text-align: left;">
+                        <h3 style="font-size: 0.95rem; margin-bottom: 0.75rem; color: var(--text-secondary); font-weight: 600;">Choose a Video Script Blueprint:</h3>
+                        <div id="framework-card-list" class="planner-events" style="display: flex; flex-direction: column; gap: 0.75rem; max-height: 480px; overflow-y: auto; padding-right: 0.25rem;">
+                            
+                            <div class="planner-event-card framework-card" data-category="divine" style="cursor: pointer; padding: 0.85rem 1rem;">
+                                <div class="planner-card-header">
+                                    <span class="planner-card-title">🕉️ 1. Divine Story + Astrology</span>
+                                    <span class="planner-badge normal" style="background: rgba(16, 185, 129, 0.1); color: var(--emerald); font-size: 0.65rem;">HIGH ENGAGEMENT</span>
+                                </div>
+                                <span style="font-size: 0.72rem; color: var(--text-muted); font-weight: 500;">கடவுள் கதை & ஜோதிட இணைப்பு</span>
+                                <div style="font-size: 0.7rem; color: var(--text-secondary); margin-top: 0.35rem; line-height: 1.4;">
+                                    Classic spiritual histories and temple legends mapped programmatically to ALP transits & targeted remedy guidelines.
+                                </div>
+                            </div>
+
+                            <div class="planner-event-card framework-card" data-category="motivational" style="cursor: pointer; padding: 0.85rem 1rem;">
+                                <div class="planner-card-header">
+                                    <span class="planner-card-title">🏆 2. Motivational Story + Astrology</span>
+                                    <span class="planner-badge normal" style="background: rgba(16, 185, 129, 0.1); color: var(--emerald); font-size: 0.65rem;">HIGH RETENTION</span>
+                                </div>
+                                <span style="font-size: 0.72rem; color: var(--text-muted); font-weight: 500;">உத்வேகக் கதை & ஜோதிட இணைப்பு</span>
+                                <div style="font-size: 0.7rem; color: var(--text-secondary); margin-top: 0.35rem; line-height: 1.4;">
+                                    Inspiring real-world success, mindset shifts, and failure-to-victory arcs connected to dynamic ALP moving lagna shifts.
+                                </div>
+                            </div>
+
+                            <div class="planner-event-card framework-card" data-category="traditional" style="cursor: pointer; padding: 0.85rem 1rem;">
+                                <div class="planner-card-header">
+                                    <span class="planner-card-title">🪐 3. Plain/Traditional Astrology</span>
+                                    <span class="planner-badge normal" style="background: rgba(6, 182, 212, 0.1); color: var(--cyan); font-size: 0.65rem;">POTHU JOTHIDAM</span>
+                                </div>
+                                <span style="font-size: 0.72rem; color: var(--text-muted); font-weight: 500;">பொது ஜோதிடம் - எளிய விளக்கம்</span>
+                                <div style="font-size: 0.7rem; color: var(--text-secondary); margin-top: 0.35rem; line-height: 1.4;">
+                                    Simple, accessible explanations of planetary placements, house strengths, and basic rules using the core ALP mathematical logic.
+                                </div>
+                            </div>
+
+                            <div class="planner-event-card framework-card" data-category="crossover" style="cursor: pointer; padding: 0.85rem 1rem;">
+                                <div class="planner-card-header">
+                                    <span class="planner-card-title">📱 4. General & Tech Crossover</span>
+                                    <span class="planner-badge normal" style="background: rgba(212, 160, 23, 0.1); color: var(--gold); font-size: 0.65rem;">VIRAL TREND</span>
+                                </div>
+                                <span style="font-size: 0.72rem; color: var(--text-muted); font-weight: 500;">தொழில்நுட்பம் / பொது நல்வாழ்வு & ஜோதிடம்</span>
+                                <div style="font-size: 0.7rem; color: var(--text-secondary); margin-top: 0.35rem; line-height: 1.4;">
+                                    Explores modern lifestyle habits, smartphone usage on Rahu/Mercury, and customized everyday tech/numerology advice.
+                                </div>
+                            </div>
+
+                            <div class="planner-event-card framework-card" data-category="remedies" style="cursor: pointer; padding: 0.85rem 1rem;">
+                                <div class="planner-card-header">
+                                    <span class="planner-card-title">💰 5. Actionable Remedies & Pariharams</span>
+                                    <span class="planner-badge normal" style="background: rgba(16, 185, 129, 0.1); color: var(--emerald); font-size: 0.65rem;">HIGH VIRALITY</span>
+                                </div>
+                                <span style="font-size: 0.72rem; color: var(--text-muted); font-weight: 500;">பரிகாரங்கள் & வழிபாட்டு முறைகள்</span>
+                                <div style="font-size: 0.7rem; color: var(--text-secondary); margin-top: 0.35rem; line-height: 1.4;">
+                                    Simple, high-impact domestic pariharams, specific temple rituals, and items to clear monetary and karmic obstacles.
+                                </div>
+                            </div>
+
+                            <div class="planner-event-card framework-card" data-category="marriage" style="cursor: pointer; padding: 0.85rem 1rem;">
+                                <div class="planner-card-header">
+                                    <span class="planner-card-title">💍 6. Marriage & Relationship Delays</span>
+                                    <span class="planner-badge normal" style="background: rgba(244, 63, 94, 0.1); color: #fb7185; font-size: 0.65rem;">MOST REQUESTED</span>
+                                </div>
+                                <span style="font-size: 0.72rem; color: var(--text-muted); font-weight: 500;">திருமணத் தடைகள் & தீர்வுகள்</span>
+                                <div style="font-size: 0.7rem; color: var(--text-secondary); margin-top: 0.35rem; line-height: 1.4;">
+                                    Empathetic, clear solutions for delayed marriages (90s kids), marital discord, and planetary remedies for the 7th house.
+                                </div>
+                            </div>
+
                         </div>
                     </div>
                 </div>
@@ -2701,6 +2777,142 @@ benefit/prediction/insight].
             </div>
         </section>
 
+        <!-- ===================== SECTION 13: GLOBAL COMPARATIVE ANALYTICS & TRUST-BUILDING STRATEGY ===================== -->
+        <section class="section" id="demographics-trust">
+            <div class="section-header">
+                <span class="section-number">13</span>
+                <h2 class="section-title">Global Comparative Analytics & Trust-Building Strategy</h2>
+                <p class="section-subtitle">Data-driven competitor gap analysis, dynamic trust architectures, and demographic targeting blueprints across all age brackets and genders</p>
+            </div>
+
+            <!-- Part A: Global Comparative Drawbacks Dashboard -->
+            <div class="glass" style="padding: 2rem; border-radius: var(--radius-lg); margin-bottom: 2.5rem; border-color: rgba(212, 160, 23, 0.15); background: rgba(15, 15, 35, 0.4);">
+                <h3 style="font-size: 1.15rem; margin-bottom: 1.25rem; color: var(--gold); text-align: left; display: flex; align-items: center; gap: 0.5rem;">🌎 Competitive Gap & Trust Analyzer</h3>
+                <p style="font-size: 0.85rem; color: var(--text-secondary); line-height: 1.6; margin-bottom: 1.5rem; text-align: left;">
+                    A senior data analyst comparison of our ALP channel with other leading Tamil, Hindi, and English astrology channels. Select a competitor tier below to analyze active drawbacks and actionable video packaging/proof improvements.
+                </p>
+
+                <!-- Interactive Selector Tabs -->
+                <div class="planner-tabs" style="display: flex; gap: 0.5rem; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; flex-wrap: wrap;">
+                    <button class="planner-tab-btn active" id="tab-comp-tamil" style="padding: 0.6rem 1rem; background: none; border: none; color: var(--gold); border-bottom: 2px solid var(--gold); font-weight: 700; cursor: pointer; font-size: 0.8rem; transition: var(--transition-fast);">🕉️ Tamil Competitors</button>
+                    <button class="planner-tab-btn" id="tab-comp-hindi" style="padding: 0.6rem 1rem; background: none; border: none; color: var(--text-secondary); border-bottom: 2px solid transparent; font-weight: 700; cursor: pointer; font-size: 0.8rem; transition: var(--transition-fast);">⚡ Hindi Competitors</button>
+                    <button class="planner-tab-btn" id="tab-comp-english" style="padding: 0.6rem 1rem; background: none; border: none; color: var(--text-secondary); border-bottom: 2px solid transparent; font-weight: 700; cursor: pointer; font-size: 0.8rem; transition: var(--transition-fast);">🎙️ English Competitors</button>
+                    <button class="planner-tab-btn" id="tab-comp-alp" style="padding: 0.6rem 1rem; background: none; border: none; color: var(--text-secondary); border-bottom: 2px solid transparent; font-weight: 700; cursor: pointer; font-size: 0.8rem; transition: var(--transition-fast);">🏆 ALP Strategy</button>
+                </div>
+
+                <!-- Dynamic Comparison Card Box -->
+                <div class="verdict-card" id="comp-results-box" style="background: rgba(20, 20, 50, 0.45); border-color: rgba(212, 160, 23, 0.2); padding: 1.75rem; text-align: left; transition: all 0.3s ease;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem; margin-bottom: 1.25rem;">
+                        <h4 id="comp-tier-title" style="color: var(--gold); font-size: 1.1rem; margin: 0;">Tamil Competitors (IBC Bakthi, Life Horoscope)</h4>
+                        <span id="comp-verifiability-badge" class="planner-badge normal" style="background: rgba(244, 63, 94, 0.1); color: #fb7185;">VERIFIABILITY: LOW (20%)</span>
+                    </div>
+
+                    <div class="planner-layout-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; margin-bottom: 1.25rem;">
+                        <div>
+                            <h5 style="color: #fb7185; font-size: 0.85rem; margin-bottom: 0.4rem; font-weight: 700; text-transform: uppercase;">⚠️ Drawbacks & Content Gaps</h5>
+                            <p id="comp-drawbacks" style="font-size: 0.8rem; color: var(--text-secondary); line-height: 1.5; margin: 0;">
+                                Cluttered thumbnails, static audio commentary, and a massive reliance on repetitive generalized Vedic rasi predictions (which has very low mathematical precision). However, they have huge upload volumes and established older female demographics.
+                            </p>
+                        </div>
+                        <div>
+                            <h5 style="color: var(--emerald); font-size: 0.85rem; margin-bottom: 0.4rem; font-weight: 700; text-transform: uppercase;">🔒 Their Trust Strategy</h5>
+                            <p id="comp-trust-secret" style="font-size: 0.8rem; color: var(--text-secondary); line-height: 1.5; margin: 0;">
+                                Building traditional religious bonds and temple worship guidelines. They rely on standard devotional imagery rather than logical verification of charts.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div style="background: rgba(6, 182, 212, 0.05); border: 1px solid rgba(6, 182, 212, 0.2); padding: 1rem; border-radius: var(--radius-md);">
+                        <h5 style="color: var(--cyan); font-size: 0.85rem; margin-bottom: 0.4rem; font-weight: 700; text-transform: uppercase; display: flex; align-items: center; gap: 0.4rem;">💡 Actionable Post-Production & Editing Improvements</h5>
+                        <p id="comp-improvements" style="font-size: 0.82rem; color: var(--text-primary); line-height: 1.5; margin: 0;">
+                            Upgrade video pacing: overlay high-converting lower-thirds, use zoom cuts for voice emphasis (every 10-15 seconds), and insert graphical chart popups showing exactly how the temple pariharam relates mathematically to the user's moving Akshaya Lagna.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Part B: Dynamic Demographics & Age-Gender Targeting Engine -->
+            <div class="glass" style="padding: 2rem; border-radius: var(--radius-lg); border-color: rgba(6, 182, 212, 0.15); background: rgba(15, 15, 35, 0.45); text-align: left;">
+                <h3 style="font-size: 1.15rem; margin-bottom: 0.5rem; color: var(--cyan); display: flex; align-items: center; gap: 0.5rem;">🎯 Interactive Demographics Targeting Engine</h3>
+                <p style="font-size: 0.85rem; color: var(--text-secondary); line-height: 1.6; margin-bottom: 1.5rem;">
+                    A dynamic demographics compiler utilizing internet-wide analytics. Select a target age bracket and gender to instantly compile psychological pain points, ALP house mappings, high-CTR bilingual titles, and precise video-editing styling blueprints to earn deep trust.
+                </p>
+
+                <div class="planner-layout-grid" style="display: grid; grid-template-columns: 1fr 2fr; gap: 1.5rem; align-items: start;">
+                    
+                    <!-- Left Settings Panel -->
+                    <div style="display: flex; flex-direction: column; gap: 1.25rem;">
+                        <!-- Select Age Bracket -->
+                        <div class="ai-form-group" style="margin: 0;">
+                            <label style="display: block; font-size: 0.72rem; font-weight: 700; color: var(--cyan); margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.05em;">1. Select Age Bracket</label>
+                            <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                                <div class="planner-event-card demo-age-card active" data-age="18-25" style="cursor: pointer; padding: 0.65rem 0.85rem; margin: 0;">
+                                    <strong style="font-size: 0.8rem; color: var(--text-primary);">Ages 18-25 (Gen Z / Youth)</strong>
+                                </div>
+                                <div class="planner-event-card demo-age-card" data-age="26-40" style="cursor: pointer; padding: 0.65rem 0.85rem; margin: 0;">
+                                    <strong style="font-size: 0.8rem; color: var(--text-primary);">Ages 26-40 (90s Kids / Adults)</strong>
+                                </div>
+                                <div class="planner-event-card demo-age-card" data-age="41-55" style="cursor: pointer; padding: 0.65rem 0.85rem; margin: 0;">
+                                    <strong style="font-size: 0.8rem; color: var(--text-primary);">Ages 41-55 (Middle-Aged)</strong>
+                                </div>
+                                <div class="planner-event-card demo-age-card" data-age="56-70" style="cursor: pointer; padding: 0.65rem 0.85rem; margin: 0;">
+                                    <strong style="font-size: 0.8rem; color: var(--text-primary);">Ages 56-70+ (Seniors)</strong>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Select Gender -->
+                        <div class="ai-form-group" style="margin: 0;">
+                            <label style="display: block; font-size: 0.72rem; font-weight: 700; color: var(--cyan); margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.05em;">2. Select Gender</label>
+                            <div style="display: flex; gap: 0.5rem;">
+                                <button id="demo-gender-male" class="planner-tab-btn active" style="flex: 1; padding: 0.6rem; background: rgba(6, 182, 212, 0.1); border: 1px solid var(--cyan); border-radius: var(--radius-sm); color: var(--cyan); font-weight: 700; cursor: pointer; font-size: 0.8rem;">👨 Male</button>
+                                <button id="demo-gender-female" class="planner-tab-btn" style="flex: 1; padding: 0.6rem; background: none; border: 1px solid var(--border-color); border-radius: var(--radius-sm); color: var(--text-secondary); font-weight: 700; cursor: pointer; font-size: 0.8rem;">👩 Female</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right Outcomes Panel (Dynamic Target Blueprint Card) -->
+                    <div class="verdict-card" style="background: rgba(20, 20, 50, 0.45); border-color: rgba(6, 182, 212, 0.2); padding: 1.5rem; margin: 0; min-height: 400px; display: flex; flex-direction: column; justify-content: space-between;">
+                        <div>
+                            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.5rem;">
+                                <h4 id="demo-outcome-title" style="color: var(--cyan); font-size: 1rem; margin: 0; display: flex; align-items: center; gap: 0.4rem;">👨 Ages 18-25 · Male Target Blueprint</h4>
+                                <span class="planner-badge normal" style="background: rgba(6, 182, 212, 0.1); color: var(--cyan); font-size: 0.6rem;">ACTIVE PROFILE</span>
+                            </div>
+
+                            <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                                <div>
+                                    <strong style="font-size: 0.7rem; text-transform: uppercase; color: var(--text-muted); display: block;">🧠 Audience Psychological Driver:</strong>
+                                    <span id="demo-outcome-driver" style="font-size: 0.82rem; color: var(--text-primary); line-height: 1.4;">High anxiety about career stability, exams concentration, parental pressure, and tech/social addictions.</span>
+                                </div>
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                                    <div>
+                                        <strong style="font-size: 0.7rem; text-transform: uppercase; color: var(--text-muted); display: block;">🪐 ALP House Focus:</strong>
+                                        <span id="demo-outcome-houses" style="font-size: 0.82rem; color: var(--gold); font-weight: 600;">1st, 5th, & 10th Houses</span>
+                                    </div>
+                                    <div>
+                                        <strong style="font-size: 0.7rem; text-transform: uppercase; color: var(--text-muted); display: block;">🕉️ Deity & Remedy Approach:</strong>
+                                        <span id="demo-outcome-deity" style="font-size: 0.82rem; color: var(--text-secondary);">Saraswathi, Mercury/Green flowers</span>
+                                    </div>
+                                </div>
+                                <div class="description-template" style="background: rgba(255,255,255,0.01); border: 1px solid var(--border-color); padding: 0.75rem; border-radius: var(--radius-sm);">
+                                    <strong style="font-size: 0.7rem; text-transform: uppercase; color: var(--cyan); display: block; margin-bottom: 0.25rem;">🔍 Recommended High-CTR Title:</strong>
+                                    <span id="demo-outcome-title-idea" style="font-size: 0.82rem; color: var(--text-primary); font-weight: 700; line-height: 1.4;">"IT & Govt Jobs: அக்ஷய லக்னம் சொல்லும் சரியான படிப்பு! | ALP Career Guide"</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div style="background: rgba(6, 182, 212, 0.05); border: 1px solid rgba(6, 182, 212, 0.2); padding: 0.85rem; border-radius: var(--radius-md); margin-top: 1rem;">
+                            <strong style="font-size: 0.7rem; text-transform: uppercase; color: var(--cyan); display: block; margin-bottom: 0.25rem; display: flex; align-items: center; gap: 0.3rem;">🎬 Post-Production Visual Directives (Builds Trust):</strong>
+                            <p id="demo-outcome-visuals" style="font-size: 0.78rem; color: var(--text-primary); line-height: 1.4; margin: 0;">
+                                Keep pacing rapid (cuts every 5-8s), use dynamic graphical chart overlays on the screen, implement bright lower-third texts, and present astrology as a logical technology Crossover rather than ancient mysticism to gain youth authority.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        </section>
+
     </main>
 
     <!-- Footer -->
@@ -2720,6 +2932,9 @@ benefit/prediction/insight].
             <p class="footer-copy">© 2026 ALP Astrology Team · Senior Data Analytics Report · Confidential</p>
         </div>
     </footer>
+
+    <!-- Floating Theme Switcher Button -->
+    <button class="theme-toggle-btn" id="themeToggleBtn" aria-label="Toggle Light/Dark Theme">💡 Light Mode</button>
 
     <!-- Back to Top -->
     <button class="back-to-top" id="backToTop" aria-label="Back to top">↑</button>
