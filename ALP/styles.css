@@ -3364,5 +3364,206 @@ body {
     border-bottom: 1px solid rgba(255,255,255,0.03);
 }
 
+/* ============================================
+   SECTION 13: ADVANCED DEMOGRAPHICS & TRUST STYLES
+   ============================================ */
+.demo-age-card {
+    transition: var(--transition-fast);
+    background: rgba(255,255,255,0.01) !important;
+    border: 1px solid var(--border-color) !important;
+}
+
+.demo-age-card:hover {
+    border-color: rgba(6, 182, 212, 0.5) !important;
+    transform: translateX(3px);
+}
+
+.demo-age-card.active {
+    border-color: var(--cyan) !important;
+    background: rgba(6, 182, 212, 0.08) !important;
+    box-shadow: 0 0 15px rgba(6, 182, 212, 0.15) !important;
+}
+
+#demographics-trust .planner-tab-btn {
+    border-radius: var(--radius-sm);
+    transition: var(--transition-fast);
+}
+
+#demographics-trust .planner-tab-btn:hover {
+    color: var(--cyan);
+}
+
+#demographics-trust .planner-tab-btn.active {
+    color: var(--cyan) !important;
+    border-color: var(--cyan) !important;
+}
+
+#demo-gender-male.active {
+    background: rgba(6, 182, 212, 0.1) !important;
+    border-color: var(--cyan) !important;
+    color: var(--cyan) !important;
+}
+
+#demo-gender-female.active {
+    background: rgba(244, 63, 94, 0.1) !important;
+    border-color: #fb7185 !important;
+    color: #fb7185 !important;
+}
+
+/* Responsive grid overrides for Section 13 demographics engine */
+@media only screen and (max-width: 992px) {
+    #demographics-trust .planner-layout-grid {
+        grid-template-columns: 1fr !important;
+        gap: 1.5rem !important;
+    }
+}
+
+/* ============================================
+   LIGHT THEME VARIABLE OVERRIDES & SWITCHER CSS
+   ============================================ */
+body.light-theme {
+    --bg-primary: #f4f4f9;
+    --bg-secondary: #ffffff;
+    --bg-tertiary: #ebeef5;
+    --bg-card: rgba(255, 255, 255, 0.88);
+    --bg-glass: rgba(10, 10, 30, 0.02);
+    --bg-glass-hover: rgba(10, 10, 30, 0.05);
+
+    --text-primary: #18182b;
+    --text-secondary: #484865;
+    --text-muted: #787895;
+
+    --gold: #b38400; /* slightly darker gold for premium visual contrast in light mode */
+    --gold-light: #d4a017;
+    --gold-dark: #805c00;
+    --maroon: #701010;
+    --maroon-light: #992222;
+
+    --border-color: rgba(10, 10, 30, 0.08);
+    --border-glow: rgba(179, 132, 0, 0.4);
+
+    --gradient-hero: linear-gradient(135deg, #f4f4f9 0%, #ebe7f8 50%, #e3ecf5 100%);
+    --gradient-gold: linear-gradient(135deg, #b38400, #d4a017);
+
+    --shadow-sm: 0 2px 8px rgba(10, 10, 30, 0.05);
+    --shadow-md: 0 4px 20px rgba(10, 10, 30, 0.08);
+    --shadow-lg: 0 8px 40px rgba(10, 10, 30, 0.1);
+    --shadow-glow: 0 0 30px rgba(179, 132, 0, 0.12);
+}
+
+/* Subtle transitions for theme switching */
+body {
+    transition: background-color 0.4s ease, color 0.4s ease, border-color 0.4s ease;
+}
+
+body.light-theme .stars, body.light-theme .bg-gradient {
+    transition: all 0.4s ease;
+}
+
+/* Subtle dark stars in light theme */
+body.light-theme .star {
+    background: rgba(10, 10, 30, 0.3) !important;
+}
+
+/* Glass card styling overrides to ensure beautiful high-contrast readability in light mode */
+body.light-theme .glass,
+body.light-theme .pillar-card,
+body.light-theme .formula-card,
+body.light-theme .prod-card,
+body.light-theme .verdict-card,
+body.light-theme .keywords-card,
+body.light-theme .network-filter-pill:not(.active) {
+    background: var(--bg-card) !important;
+    border-color: var(--border-color) !important;
+    box-shadow: var(--shadow-sm) !important;
+}
+
+body.light-theme .pillar-item {
+    background: rgba(10, 10, 30, 0.02) !important;
+    border: 1px solid rgba(10, 10, 30, 0.04) !important;
+}
+body.light-theme .pillar-item:hover {
+    background: rgba(10, 10, 30, 0.04) !important;
+}
+
+body.light-theme .planner-event-card {
+    background: rgba(10, 10, 30, 0.01) !important;
+    border-color: var(--border-color) !important;
+}
+body.light-theme .planner-event-card:hover {
+    border-color: rgba(179, 132, 0, 0.4) !important;
+}
+body.light-theme .planner-event-card.active {
+    border-color: var(--gold) !important;
+    background: rgba(179, 132, 0, 0.04) !important;
+}
+
+/* Dynamic styling for form fields in light theme for reading values */
+body.light-theme input[type="password"],
+body.light-theme input[type="text"],
+body.light-theme input[type="date"] {
+    background: #ffffff !important;
+    border-color: var(--border-color) !important;
+    color: var(--text-primary) !important;
+}
+
+/* Specific text color tweaks for subheaders and blocks in light theme */
+body.light-theme .section-subtitle,
+body.light-theme .nav-link,
+body.light-theme .verdict-closing,
+body.light-theme p {
+    color: var(--text-secondary) !important;
+}
+
+body.light-theme .nav {
+    background: rgba(244, 244, 249, 0.8) !important;
+    border-bottom-color: var(--border-color) !important;
+    backdrop-filter: blur(20px) !important;
+    -webkit-backdrop-filter: blur(20px) !important;
+}
+
+/* Theme Toggle Button Styles */
+.theme-toggle-btn {
+    position: fixed;
+    bottom: 30px;
+    left: 30px;
+    width: 140px;
+    height: 46px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 30px;
+    color: var(--text-primary);
+    font-size: 0.82rem;
+    font-weight: 700;
+    cursor: pointer;
+    z-index: 2000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    box-shadow: var(--shadow-md);
+    transition: var(--transition-med);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+}
+
+.theme-toggle-btn:hover {
+    transform: translateY(-3px);
+    border-color: var(--gold);
+    box-shadow: var(--shadow-glow);
+}
+
+body.light-theme .theme-toggle-btn {
+    background: #ffffff !important;
+    border-color: rgba(10, 10, 30, 0.08) !important;
+    box-shadow: 0 4px 15px rgba(10, 10, 30, 0.08) !important;
+}
+
+body.light-theme .theme-toggle-btn:hover {
+    border-color: var(--cyan) !important;
+    color: var(--cyan) !important;
+    box-shadow: 0 0 15px rgba(6, 182, 212, 0.15) !important;
+}
+
 
 
