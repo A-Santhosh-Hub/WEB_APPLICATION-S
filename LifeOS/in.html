@@ -91,6 +91,7 @@
         {
             "imports": {
                 "react": "https://esm.sh/react@18.2.0",
+                "react/jsx-runtime": "https://esm.sh/react@18.2.0/jsx-runtime",
                 "react-dom/client": "https://esm.sh/react-dom@18.2.0/client",
                 "lucide-react": "https://esm.sh/lucide-react@0.294.0"
             }
@@ -443,7 +444,7 @@
                 <BraveCard colSpan={2} bgColor="bg-brave-peach dark:bg-[#3d2a1d]">
                   <div className="flex justify-between items-center mb-6">
                      <h3 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                       Financial Overview
+                        Financial Overview
                     </h3>
                     {isEditMode && (
                       <button 
