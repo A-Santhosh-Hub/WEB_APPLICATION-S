@@ -44,7 +44,4 @@
 
 # 18. SanVibe ---> [ https://a-santhosh-hub.github.io/WEB_APPLICATION-S/SanVibe/test.html ]
 
-
-The SanStudio is Now working, wait 🫸 for Update!!!
-
 we giving a lot of portfolio template and open source project code..
