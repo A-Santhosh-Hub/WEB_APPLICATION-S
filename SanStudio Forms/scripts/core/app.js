@@ -236,27 +236,13 @@ const App = {
     const tag = e.target.tagName;
     const isEditing = ['INPUT', 'TEXTAREA', 'SELECT'].includes(tag) || e.target.isContentEditable;
 
-    // ⌘K / Ctrl+K — Command palette
-    if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
-      e.preventDefault();
-      EventBus.emit(Events.COMMAND_OPEN);
-      return;
-    }
 
-    // ⌘/ — Search
-    if ((e.metaKey || e.ctrlKey) && e.key === '/') {
-      e.preventDefault();
-      EventBus.emit(Events.SEARCH_OPEN);
-      return;
-    }
 
     if (isEditing) return;
 
     // Escape
     if (e.key === 'Escape') {
       EventBus.emit(Events.MODAL_CLOSE);
-      EventBus.emit(Events.COMMAND_CLOSE);
-      EventBus.emit(Events.SEARCH_CLOSE);
       return;
     }
 

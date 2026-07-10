@@ -965,6 +965,10 @@
   animation: overlayFadeIn var(--duration-fast) var(--ease-out) both;
 }
 
+.command-overlay[hidden] {
+  display: none;
+}
+
 .command-panel {
   width: 100%;
   max-width: 560px;
