@@ -426,7 +426,8 @@ function openShareModal(form) {
   const modal = document.getElementById('share-modal');
   const content = document.getElementById('share-modal-content');
 
-  const publicUrl = `${window.location.origin}/form.html?id=${form.id}`;
+  const basePath = window.location.origin + window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/'));
+  const publicUrl = `${basePath}/form.html?id=${form.id}`;
 
   content.innerHTML = `
     <div class="modal-header">

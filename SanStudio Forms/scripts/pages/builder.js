@@ -1358,7 +1358,8 @@ function setupTopbar() {
 
   // Share button
   document.getElementById('builder-share-btn')?.addEventListener('click', () => {
-    const url = `${window.location.origin}/form.html?id=${state.form.id}`;
+    const basePath = window.location.origin + window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/'));
+    const url = `${basePath}/form.html?id=${state.form.id}`;
     navigator.clipboard.writeText(url).then(() => {
       Toast.success('Link copied!', 'Share this URL with respondents.');
     });
@@ -1523,7 +1524,8 @@ function setupFormSettings() {
   // Generate embed code
   const embedCode = document.getElementById('setting-embed-code');
   if (embedCode) {
-    const formUrl = `${window.location.origin}/form.html?id=${state.form?.id}`;
+    const basePath = window.location.origin + window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/'));
+    const formUrl = `${basePath}/form.html?id=${state.form?.id}`;
     embedCode.value = `<iframe src="${formUrl}" width="100%" height="600" frameborder="0"></iframe>`;
   }
 
