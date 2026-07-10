@@ -1,0 +1,73 @@
+/**
+ * SanStudio Forms — Luxury Theme
+ * ================================
+ * Gold, black, cream — premium executive feel.
+ * Applied via [data-theme="luxury"] on <html>.
+ */
+
+[data-theme="luxury"] {
+  color-scheme: dark;
+
+  --bg-base:        #0a0800;
+  --bg-surface:     #100e00;
+  --bg-surface-2:   #181500;
+  --bg-surface-3:   #201c00;
+  --bg-inverse:     #ffffff;
+
+  --brand-primary:       #c9a227;
+  --brand-primary-hover: #b8911e;
+  --brand-secondary:     #d4af37;
+  --brand-accent:        #f5e6a0;
+  --brand-gradient: linear-gradient(135deg, #c9a227 0%, #d4af37 40%, #f5e6a0 70%, #c9a227 100%);
+
+  --text-primary:   #f5e6a0;
+  --text-secondary: #b89a4a;
+  --text-tertiary:  #6b5425;
+  --text-brand:     #d4af37;
+  --text-link:      #d4af37;
+  --text-link-hover:#f5e6a0;
+
+  --border-subtle:  rgba(212, 175, 55, 0.08);
+  --border-default: rgba(212, 175, 55, 0.15);
+  --border-strong:  rgba(212, 175, 55, 0.3);
+  --border-brand:   #d4af37;
+  --border-focus:   #f5e6a0;
+
+  --shadow-card:     0 4px 24px rgba(0,0,0,0.8), 0 0 1px rgba(212,175,55,0.2);
+  --shadow-card-hover: 0 8px 40px rgba(0,0,0,0.9), 0 0 20px rgba(212,175,55,0.15);
+  --shadow-brand:    0 0 24px rgba(212, 175, 55, 0.4);
+  --shadow-modal:    0 24px 80px rgba(0, 0, 0, 0.95);
+
+  --sidebar-bg:     #0a0800;
+  --sidebar-border: rgba(212, 175, 55, 0.08);
+  --topbar-bg:      #0a0800;
+  --topbar-border:  rgba(212, 175, 55, 0.08);
+  --card-bg:        #100e00;
+  --card-border:    rgba(212, 175, 55, 0.1);
+  --input-bg:       rgba(0, 0, 0, 0.4);
+  --input-border:   rgba(212, 175, 55, 0.2);
+}
+
+[data-theme="luxury"] .text-gradient {
+  background: linear-gradient(135deg, #c9a227, #f5e6a0, #d4af37);
+  background-size: 200%;
+  animation: gradientShift 3s ease infinite;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+[data-theme="luxury"] .gradient-mesh::before {
+  background: radial-gradient(circle, #d4af37, transparent 70%);
+  opacity: 0.12;
+}
+[data-theme="luxury"] .gradient-mesh::after {
+  background: radial-gradient(circle, #c9a227, transparent 70%);
+  opacity: 0.08;
+}
+
+[data-theme="luxury"] body {
+  background:
+    radial-gradient(ellipse at 30% 0%, rgba(212, 175, 55, 0.08) 0%, transparent 50%),
+    #0a0800;
+}

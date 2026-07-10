@@ -1,0 +1,355 @@
+/**
+ * SanStudio Forms — Dashboard Styles
+ * =====================================
+ */
+
+/* ================================================
+ * Stats Bar
+ * ================================================ */
+
+.stats-bar {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-4);
+  margin-bottom: var(--space-8);
+}
+
+.stat-card {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-2xl);
+  padding: var(--space-5) var(--space-6);
+  box-shadow: var(--card-shadow);
+  transition: var(--transition-moderate);
+}
+
+.stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--card-shadow-hover);
+}
+
+.stat-value {
+  font-size: var(--text-3xl);
+  font-weight: var(--weight-bold);
+  color: var(--text-primary);
+  letter-spacing: var(--tracking-tight);
+  line-height: 1;
+  margin-bottom: var(--space-1-5);
+}
+
+.stat-label {
+  font-size: var(--text-xs);
+  color: var(--text-tertiary);
+  font-weight: var(--weight-medium);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+}
+
+@media (max-width: 768px) {
+  .stats-bar {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* ================================================
+ * Setup Banner
+ * ================================================ */
+
+.setup-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: var(--space-4) var(--space-5);
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.08) 0%, rgba(99, 102, 241, 0.06) 100%);
+  border: 1px solid rgba(139, 92, 246, 0.2);
+  border-radius: var(--radius-2xl);
+  margin-bottom: var(--space-6);
+  animation: fadeUp var(--duration-moderate) var(--ease-out) both;
+}
+
+.setup-banner-content {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-4);
+}
+
+.setup-banner-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-xl);
+  background: rgba(139, 92, 246, 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--brand-primary);
+  flex-shrink: 0;
+}
+
+.setup-banner-text strong {
+  display: block;
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+  color: var(--text-primary);
+  margin-bottom: var(--space-1);
+}
+
+.setup-banner-text p {
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+  max-width: none;
+}
+
+.setup-banner-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-shrink: 0;
+}
+
+/* ================================================
+ * Forms Grid
+ * ================================================ */
+
+.forms-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: var(--space-5);
+}
+
+.forms-grid.view-list {
+  grid-template-columns: 1fr;
+  gap: var(--space-3);
+}
+
+/* ================================================
+ * Form Card
+ * ================================================ */
+
+.form-card {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: var(--card-radius);
+  box-shadow: var(--card-shadow);
+  overflow: hidden;
+  cursor: pointer;
+  transition: box-shadow var(--duration-moderate) var(--ease-out),
+              transform var(--duration-moderate) var(--ease-out),
+              border-color var(--duration-normal) var(--ease-out);
+  position: relative;
+  animation: fadeUp var(--duration-moderate) var(--ease-out) both;
+}
+
+.form-card:hover {
+  box-shadow: var(--card-shadow-hover);
+  transform: translateY(-3px);
+  border-color: var(--border-brand);
+}
+
+.form-card.is-pinned::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: var(--brand-gradient);
+}
+
+/* Card banner / color strip */
+.form-card-banner {
+  height: 80px;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.form-card-banner-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-xl);
+  background: rgba(255,255,255,0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(10px);
+}
+
+/* Card body */
+.form-card-body {
+  padding: var(--space-4) var(--space-5);
+}
+
+.form-card-title {
+  font-size: var(--text-base);
+  font-weight: var(--weight-semibold);
+  color: var(--text-primary);
+  margin-bottom: var(--space-1);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.form-card-meta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  font-size: var(--text-xs);
+  color: var(--text-tertiary);
+}
+
+.form-card-meta-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+/* Card footer */
+.form-card-footer {
+  padding: var(--space-3) var(--space-5);
+  border-top: 1px solid var(--border-subtle);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.form-card-stats {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  font-size: var(--text-xs);
+}
+
+.form-card-stat {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  color: var(--text-secondary);
+}
+
+.form-card-stat-value {
+  font-weight: var(--weight-semibold);
+  color: var(--text-primary);
+}
+
+.form-card-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  opacity: 0;
+  transition: opacity var(--duration-fast) var(--ease-out);
+}
+
+.form-card:hover .form-card-actions {
+  opacity: 1;
+}
+
+.form-card-action-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-md);
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-tertiary);
+  transition: var(--transition-fast);
+}
+
+.form-card-action-btn:hover {
+  background: var(--bg-surface-2);
+  color: var(--text-primary);
+}
+
+/* List view card */
+.forms-grid.view-list .form-card {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.forms-grid.view-list .form-card-banner {
+  width: 56px;
+  height: 56px;
+  border-radius: var(--radius-xl);
+  flex-shrink: 0;
+}
+
+.forms-grid.view-list .form-card-body {
+  flex: 1;
+  padding: var(--space-4) var(--space-4) var(--space-4) 0;
+}
+
+.forms-grid.view-list .form-card-footer {
+  border-top: none;
+  padding: var(--space-4) var(--space-4) var(--space-4) 0;
+  border-left: 1px solid var(--border-subtle);
+}
+
+/* Skeleton card in grid */
+.form-card.skeleton-card {
+  height: 200px;
+  pointer-events: none;
+}
+
+/* Form color themes */
+.form-banner-purple  { background: linear-gradient(135deg, #8b5cf6, #6366f1); }
+.form-banner-blue    { background: linear-gradient(135deg, #3b82f6, #06b6d4); }
+.form-banner-green   { background: linear-gradient(135deg, #10b981, #34d399); }
+.form-banner-orange  { background: linear-gradient(135deg, #f59e0b, #f97316); }
+.form-banner-rose    { background: linear-gradient(135deg, #f43f5e, #e11d48); }
+.form-banner-pink    { background: linear-gradient(135deg, #ec4899, #f43f5e); }
+.form-banner-teal    { background: linear-gradient(135deg, #14b8a6, #06b6d4); }
+.form-banner-indigo  { background: linear-gradient(135deg, #6366f1, #8b5cf6); }
+.form-banner-amber   { background: linear-gradient(135deg, #d97706, #f59e0b); }
+
+/* ================================================
+ * Import drop zone
+ * ================================================ */
+
+.import-drop-zone {
+  border: 2px dashed var(--border-default);
+  border-radius: var(--radius-2xl);
+  padding: var(--space-10) var(--space-6);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  transition: var(--transition-normal);
+  cursor: default;
+}
+
+.import-drop-zone.drag-over {
+  border-color: var(--brand-primary);
+  background: var(--brand-gradient-soft);
+}
+
+/* ================================================
+ * Activity indicator (on form cards)
+ * ================================================ */
+
+.live-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: 10px;
+  font-weight: var(--weight-semibold);
+  color: var(--color-emerald-500);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+}
+
+.live-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--color-emerald-500);
+  animation: ping 1.5s var(--ease-out) infinite;
+  position: relative;
+}

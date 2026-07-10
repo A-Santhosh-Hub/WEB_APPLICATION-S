@@ -1,0 +1,149 @@
+/**
+ * SanStudio Forms — Analytics Page Styles
+ * =========================================
+ */
+
+/* ================================================
+ * Stats Overview
+ * ================================================ */
+
+.stat-card-brand {
+  background: var(--brand-gradient);
+  color: white;
+  border: none;
+}
+
+.stat-card-brand .stat-value {
+  color: white;
+}
+
+.stat-card-brand .stat-label {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+/* ================================================
+ * Charts & Insights
+ * ================================================ */
+
+.question-analytics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: var(--space-5);
+}
+
+.insight-card {
+  display: flex;
+  flex-direction: column;
+  padding: var(--space-5);
+  height: 100%;
+}
+
+.insight-q-title {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+  color: var(--text-primary);
+  margin-bottom: var(--space-1);
+  line-height: var(--leading-snug);
+}
+
+.insight-q-meta {
+  font-size: var(--text-xs);
+  color: var(--text-tertiary);
+  margin-bottom: var(--space-4);
+  padding-bottom: var(--space-4);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.insight-q-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+/* Bar Chart inside insight cards */
+.insight-bars {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.insight-bar-row {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1-5);
+}
+
+.insight-bar-label {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-size: var(--text-xs);
+}
+
+.insight-bar-name {
+  color: var(--text-secondary);
+  font-weight: var(--weight-medium);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 70%;
+}
+
+.insight-bar-val {
+  color: var(--text-primary);
+  font-weight: var(--weight-semibold);
+}
+
+.insight-bar-track {
+  width: 100%;
+  height: 6px;
+  background: var(--bg-surface-2);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+}
+
+.insight-bar-fill {
+  height: 100%;
+  background: var(--brand-gradient);
+  border-radius: var(--radius-full);
+  transition: width 1s var(--ease-spring);
+}
+
+/* Mini Stats Grid (for numeric/text questions) */
+.insight-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+  gap: var(--space-3);
+}
+
+.insight-stat-mini {
+  background: var(--bg-surface-2);
+  padding: var(--space-3);
+  border-radius: var(--radius-lg);
+  text-align: center;
+}
+
+.insight-stat-mini .val {
+  font-size: var(--text-lg);
+  font-weight: var(--weight-bold);
+  color: var(--brand-primary);
+  margin-bottom: var(--space-1);
+}
+
+.insight-stat-mini .lbl {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wider);
+  color: var(--text-tertiary);
+}
+
+/* ================================================
+ * Responsive
+ * ================================================ */
+
+@media (max-width: 768px) {
+  .stats-bar {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+}

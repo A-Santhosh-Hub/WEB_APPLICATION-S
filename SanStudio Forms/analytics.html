@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="SanStudio Forms — Analytics Dashboard. Visualize your form data.">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="assets/icons/favicon.svg" type="image/svg+xml">
+  <title>Analytics — SanStudio Forms</title>
+
+  <link rel="stylesheet" href="styles/tokens.css">
+  <link rel="stylesheet" href="styles/reset.css">
+  <link rel="stylesheet" href="styles/base.css">
+  <link rel="stylesheet" href="styles/animations.css">
+  <link rel="stylesheet" href="styles/components.css">
+  <link rel="stylesheet" href="styles/layout.css">
+  <link rel="stylesheet" href="styles/themes/light.css">
+  <link rel="stylesheet" href="styles/themes/dark.css">
+  <link rel="stylesheet" href="styles/themes/glassmorphism.css">
+  <link rel="stylesheet" href="styles/themes/neumorphism.css">
+  <link rel="stylesheet" href="styles/themes/cyberpunk.css">
+  <link rel="stylesheet" href="styles/themes/aurora.css">
+  <link rel="stylesheet" href="styles/themes/luxury.css">
+  <link rel="stylesheet" href="styles/pages/analytics.css">
+</head>
+<body data-page="analytics">
+  <div class="gradient-mesh" aria-hidden="true"></div>
+  <div class="cursor-glow" aria-hidden="true"></div>
+
+  <div class="app-shell" id="app-shell">
+
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar" role="navigation" aria-label="Main navigation">
+      <div class="sidebar-header">
+        <a href="index.html" class="sidebar-logo">
+          <div class="sidebar-logo-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M9 2H5a2 2 0 00-2 2v16a2 2 0 002 2h14a2 2 0 002-2V9l-7-7z" fill="rgba(255,255,255,0.3)"/><path d="M9 2v7h7" stroke="white" stroke-width="2" stroke-linecap="round"/><path d="M7 13h10M7 17h6" stroke="white" stroke-width="1.5" stroke-linecap="round"/></svg>
+          </div>
+          <div class="sidebar-logo-text">
+            <span class="sidebar-logo-name">SanStudio Forms</span>
+            <span class="sidebar-logo-tagline">Build Beautiful Forms</span>
+          </div>
+        </a>
+        <button class="sidebar-collapse-btn" id="sidebar-toggle" aria-label="Toggle sidebar">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 19l-7-7 7-7M18 19l-7-7 7-7"/></svg>
+        </button>
+      </div>
+      <div class="sidebar-content">
+        <nav>
+          <div class="sidebar-section">
+            <a href="index.html" class="sidebar-nav-item">
+              <span class="nav-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></span>
+              <span class="nav-label">Dashboard</span>
+            </a>
+            <a href="responses.html" class="sidebar-nav-item">
+              <span class="nav-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg></span>
+              <span class="nav-label">Responses</span>
+            </a>
+            <a href="analytics.html" class="sidebar-nav-item active" aria-current="page">
+              <span class="nav-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 20V10M12 20V4M6 20v-6"/></svg></span>
+              <span class="nav-label">Analytics</span>
+            </a>
+            <a href="settings.html" class="sidebar-nav-item">
+              <span class="nav-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/></svg></span>
+              <span class="nav-label">Settings</span>
+            </a>
+          </div>
+        </nav>
+      </div>
+      <div class="sidebar-footer">
+        <a href="https://sanstudio-hub.github.io/in/" target="_blank" rel="noopener noreferrer" class="sidebar-nav-item">
+          <span class="nav-icon"><div style="width:20px;height:20px;border-radius:6px;background:var(--brand-gradient);display:flex;align-items:center;justify-content:center;"><svg width="12" height="12" viewBox="0 0 24 24" fill="white"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg></div></span>
+          <span class="nav-label" style="font-size: var(--text-xs); color: var(--text-tertiary);">Developed by <strong style="color:var(--text-secondary)">SanStudio</strong></span>
+        </a>
+      </div>
+    </aside>
+
+    <!-- Topbar -->
+    <header class="topbar">
+      <div class="topbar-left">
+        <nav class="breadcrumb" aria-label="Breadcrumb">
+          <a href="index.html" class="breadcrumb-link">Dashboard</a>
+          <span class="breadcrumb-sep">/</span>
+          <span class="breadcrumb-item">Analytics</span>
+        </nav>
+      </div>
+      <div class="topbar-right">
+        <div class="dropdown" id="date-range-wrap">
+          <button class="btn btn-secondary btn-sm" id="date-range-btn" aria-haspopup="true">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/></svg>
+            <span id="date-range-label">Last 30 Days</span>
+          </button>
+          <div class="dropdown-menu dropdown-menu-right" id="date-range-dropdown" hidden>
+            <button class="dropdown-item date-range-option active" data-range="7">Last 7 Days</button>
+            <button class="dropdown-item date-range-option" data-range="30">Last 30 Days</button>
+            <button class="dropdown-item date-range-option" data-range="90">Last 3 Months</button>
+            <button class="dropdown-item date-range-option" data-range="365">Last Year</button>
+            <button class="dropdown-item date-range-option" data-range="all">All Time</button>
+          </div>
+        </div>
+        <button class="btn btn-icon btn-ghost" id="theme-toggle" aria-label="Toggle theme">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- Main -->
+    <main class="main-content" id="main-content" role="main">
+      <div class="page-container">
+
+        <!-- Page Header -->
+        <header class="page-header">
+          <div class="page-header-info">
+            <h1 class="page-title">Analytics</h1>
+            <p class="page-subtitle" id="analytics-subtitle">Select a form to view insights</p>
+          </div>
+          <div class="page-header-actions">
+            <div class="dropdown" id="analytics-form-wrap">
+              <button class="btn btn-secondary btn-sm" id="analytics-form-btn" aria-haspopup="true">
+                <span id="analytics-form-label">All Forms</span>
+              </button>
+              <div class="dropdown-menu dropdown-menu-right" id="analytics-form-dropdown" hidden>
+                <button class="dropdown-item" data-form-id="">All Forms (aggregate)</button>
+                <!-- Dynamic form list -->
+              </div>
+            </div>
+          </div>
+        </header>
+
+        <!-- Overview Stats -->
+        <div class="stats-bar animate-fade-up stagger-children" style="grid-template-columns: repeat(4,1fr); margin-bottom: var(--space-8)">
+          <div class="stat-card stat-card-brand">
+            <div class="stat-value" id="a-total">—</div>
+            <div class="stat-label">Total Responses</div>
+            <div class="stat-trend" id="a-total-trend"></div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" id="a-completion">—</div>
+            <div class="stat-label">Completion Rate</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" id="a-duration">—</div>
+            <div class="stat-label">Avg. Duration</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" id="a-last">—</div>
+            <div class="stat-label">Last Response</div>
+          </div>
+        </div>
+
+        <!-- Chart: Daily submissions -->
+        <section class="section">
+          <div class="section-header">
+            <h2 class="section-title">Daily Submissions</h2>
+          </div>
+          <div class="card" style="padding: var(--space-6)">
+            <canvas id="submissions-chart" height="200" aria-label="Daily submissions chart" role="img"></canvas>
+            <div class="chart-empty" id="chart-empty" style="display:none; text-align:center; padding: var(--space-8); color: var(--text-tertiary); font-size: var(--text-sm)">
+              No data available for this period
+            </div>
+          </div>
+        </section>
+
+        <!-- Question-level analytics -->
+        <section class="section" id="question-analytics-section">
+          <div class="section-header">
+            <h2 class="section-title">Question Insights</h2>
+          </div>
+          <div class="question-analytics-grid" id="question-analytics-grid">
+            <!-- Populated by JS -->
+          </div>
+        </section>
+
+      </div>
+    </main>
+  </div>
+
+  <script type="module" src="scripts/core/app.js"></script>
+  <script type="module" src="scripts/pages/analytics.js"></script>
+</body>
+</html>

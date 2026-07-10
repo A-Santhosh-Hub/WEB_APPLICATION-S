@@ -1,0 +1,73 @@
+/**
+ * SanStudio Forms — Glassmorphism Theme
+ * =======================================
+ * Translucent panels, blurred backgrounds, depth effects.
+ * Applied via [data-theme="glassmorphism"] on <html>.
+ */
+
+[data-theme="glassmorphism"] {
+  color-scheme: dark;
+
+  /* Use a rich gradient as the page background */
+  --bg-base:        #0d0d1a;
+  --bg-surface:     rgba(255, 255, 255, 0.06);
+  --bg-surface-2:   rgba(255, 255, 255, 0.09);
+  --bg-surface-3:   rgba(255, 255, 255, 0.12);
+  --bg-inverse:     rgba(0, 0, 0, 0.8);
+
+  --text-primary:   rgba(255, 255, 255, 0.95);
+  --text-secondary: rgba(255, 255, 255, 0.65);
+  --text-tertiary:  rgba(255, 255, 255, 0.35);
+  --text-brand:     #c4b5fd;
+  --text-link:      #a78bfa;
+  --text-link-hover:#c4b5fd;
+
+  --border-subtle:  rgba(255, 255, 255, 0.07);
+  --border-default: rgba(255, 255, 255, 0.12);
+  --border-strong:  rgba(255, 255, 255, 0.2);
+  --border-brand:   rgba(167, 139, 250, 0.5);
+  --border-focus:   rgba(167, 139, 250, 0.8);
+
+  --shadow-card:    0 8px 32px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255,255,255,0.1);
+  --shadow-card-hover: 0 16px 64px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255,255,255,0.15);
+  --shadow-modal:   0 24px 80px rgba(0, 0, 0, 0.7);
+  --shadow-dropdown: 0 8px 40px rgba(0, 0, 0, 0.5);
+
+  --sidebar-bg:     rgba(13, 13, 26, 0.6);
+  --sidebar-border: rgba(255,255,255,0.07);
+  --topbar-bg:      rgba(13, 13, 26, 0.6);
+  --topbar-border:  rgba(255,255,255,0.07);
+  --card-bg:        rgba(255, 255, 255, 0.06);
+  --card-border:    rgba(255, 255, 255, 0.1);
+  --input-bg:       rgba(255, 255, 255, 0.06);
+  --input-border:   rgba(255, 255, 255, 0.12);
+
+  --scrollbar-thumb: rgba(255,255,255,0.15);
+
+  /* Brand gradient with more glow */
+  --brand-gradient: linear-gradient(135deg, #a78bfa 0%, #818cf8 50%, #38bdf8 100%);
+}
+
+/* Page background: animated gradient mesh */
+[data-theme="glassmorphism"] body {
+  background:
+    radial-gradient(ellipse at 20% 20%, rgba(139, 92, 246, 0.25) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 80%, rgba(6, 182, 212, 0.2) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 50%, rgba(99, 102, 241, 0.15) 0%, transparent 60%),
+    #0d0d1a;
+}
+
+/* Glass surfaces */
+[data-theme="glassmorphism"] .sidebar,
+[data-theme="glassmorphism"] .topbar,
+[data-theme="glassmorphism"] .card,
+[data-theme="glassmorphism"] .modal-panel,
+[data-theme="glassmorphism"] .dropdown-menu,
+[data-theme="glassmorphism"] .question-card,
+[data-theme="glassmorphism"] .panel {
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+}
+
+[data-theme="glassmorphism"] .gradient-mesh::before { opacity: 0.35; }
+[data-theme="glassmorphism"] .gradient-mesh::after  { opacity: 0.25; }

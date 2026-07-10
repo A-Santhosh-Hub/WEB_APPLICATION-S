@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="SanStudio Forms — Settings. Configure your API, account, and preferences.">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="assets/icons/favicon.svg" type="image/svg+xml">
+  <title>Settings — SanStudio Forms</title>
+
+  <link rel="stylesheet" href="styles/tokens.css">
+  <link rel="stylesheet" href="styles/reset.css">
+  <link rel="stylesheet" href="styles/base.css">
+  <link rel="stylesheet" href="styles/animations.css">
+  <link rel="stylesheet" href="styles/components.css">
+  <link rel="stylesheet" href="styles/layout.css">
+  <link rel="stylesheet" href="styles/themes/light.css">
+  <link rel="stylesheet" href="styles/themes/dark.css">
+  <link rel="stylesheet" href="styles/themes/glassmorphism.css">
+  <link rel="stylesheet" href="styles/themes/neumorphism.css">
+  <link rel="stylesheet" href="styles/themes/cyberpunk.css">
+  <link rel="stylesheet" href="styles/themes/aurora.css">
+  <link rel="stylesheet" href="styles/themes/luxury.css">
+  <link rel="stylesheet" href="styles/pages/settings.css">
+</head>
+<body data-page="settings">
+  <div class="gradient-mesh" aria-hidden="true"></div>
+  <div class="cursor-glow" aria-hidden="true"></div>
+
+  <div class="app-shell" id="app-shell">
+
+    <!-- Sidebar (shared) -->
+    <aside class="sidebar" id="sidebar" role="navigation" aria-label="Main navigation">
+      <div class="sidebar-header">
+        <a href="index.html" class="sidebar-logo">
+          <div class="sidebar-logo-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M9 2H5a2 2 0 00-2 2v16a2 2 0 002 2h14a2 2 0 002-2V9l-7-7z" fill="rgba(255,255,255,0.3)"/><path d="M9 2v7h7" stroke="white" stroke-width="2" stroke-linecap="round"/><path d="M7 13h10M7 17h6" stroke="white" stroke-width="1.5" stroke-linecap="round"/></svg>
+          </div>
+          <div class="sidebar-logo-text">
+            <span class="sidebar-logo-name">SanStudio Forms</span>
+            <span class="sidebar-logo-tagline">Build Beautiful Forms</span>
+          </div>
+        </a>
+        <button class="sidebar-collapse-btn" id="sidebar-toggle" aria-label="Toggle sidebar">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 19l-7-7 7-7M18 19l-7-7 7-7"/></svg>
+        </button>
+      </div>
+      <div class="sidebar-content">
+        <nav>
+          <div class="sidebar-section">
+            <a href="index.html" class="sidebar-nav-item">
+              <span class="nav-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></span>
+              <span class="nav-label">Dashboard</span>
+            </a>
+            <a href="responses.html" class="sidebar-nav-item">
+              <span class="nav-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg></span>
+              <span class="nav-label">Responses</span>
+            </a>
+            <a href="analytics.html" class="sidebar-nav-item">
+              <span class="nav-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 20V10M12 20V4M6 20v-6"/></svg></span>
+              <span class="nav-label">Analytics</span>
+            </a>
+            <a href="settings.html" class="sidebar-nav-item active" aria-current="page">
+              <span class="nav-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/></svg></span>
+              <span class="nav-label">Settings</span>
+            </a>
+          </div>
+        </nav>
+      </div>
+      <div class="sidebar-footer">
+        <a href="https://sanstudio-hub.github.io/in/" target="_blank" rel="noopener noreferrer" class="sidebar-nav-item">
+          <span class="nav-icon"><div style="width:20px;height:20px;border-radius:6px;background:var(--brand-gradient);display:flex;align-items:center;justify-content:center;"><svg width="12" height="12" viewBox="0 0 24 24" fill="white"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg></div></span>
+          <span class="nav-label" style="font-size: var(--text-xs); color: var(--text-tertiary);">Developed by <strong style="color:var(--text-secondary)">SanStudio</strong></span>
+        </a>
+      </div>
+    </aside>
+
+    <!-- Topbar -->
+    <header class="topbar">
+      <div class="topbar-left">
+        <nav class="breadcrumb">
+          <a href="index.html" class="breadcrumb-link">Dashboard</a>
+          <span class="breadcrumb-sep">/</span>
+          <span class="breadcrumb-item">Settings</span>
+        </nav>
+      </div>
+      <div class="topbar-right">
+        <button class="btn btn-icon btn-ghost" id="theme-toggle" aria-label="Toggle theme">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- Main -->
+    <main class="main-content" id="main-content" role="main">
+      <div class="page-container" style="max-width:800px">
+
+        <header class="page-header">
+          <div class="page-header-info">
+            <h1 class="page-title">Settings</h1>
+            <p class="page-subtitle">Configure your workspace and integration</p>
+          </div>
+        </header>
+
+        <div class="settings-layout">
+
+          <!-- Settings Navigation -->
+          <nav class="settings-nav" aria-label="Settings sections">
+            <button class="settings-nav-item active" data-section="connection">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
+              Connection
+            </button>
+            <button class="settings-nav-item" data-section="appearance">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 2v20M2 12h20"/></svg>
+              Appearance
+            </button>
+            <button class="settings-nav-item" data-section="account">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2M12 11a4 4 0 100-8 4 4 0 000 8z"/></svg>
+              Account
+            </button>
+            <button class="settings-nav-item" data-section="data">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
+              Data & Export
+            </button>
+            <button class="settings-nav-item" data-section="about">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+              About
+            </button>
+          </nav>
+
+          <!-- Settings Panels -->
+          <div class="settings-panels">
+
+            <!-- Connection -->
+            <section class="settings-panel" id="section-connection">
+              <h2 class="settings-panel-title">Google Apps Script Connection</h2>
+              <p class="settings-panel-desc">Connect your Google Sheets backend to enable cloud storage and real-time analytics.</p>
+
+              <div class="settings-card">
+                <div class="form-group">
+                  <label for="api-url">Apps Script Deployment URL</label>
+                  <input type="url" class="input" id="api-url" placeholder="https://script.google.com/macros/s/...">
+                  <span class="field-hint">Deploy your <code>Code.gs</code> as a Web App (Execute as: Me, Access: Anyone)</span>
+                </div>
+                <div style="display:flex; align-items:center; gap: var(--space-3)">
+                  <button class="btn btn-primary btn-sm" id="save-api-url">Save & Test Connection</button>
+                  <span id="connection-status" style="font-size: var(--text-xs); color: var(--text-tertiary)"></span>
+                </div>
+              </div>
+
+              <div class="settings-card" style="margin-top: var(--space-4)">
+                <h3 style="font-size: var(--text-sm); font-weight: var(--weight-semibold); margin-bottom: var(--space-4)">Setup Instructions</h3>
+                <ol style="font-size: var(--text-sm); color: var(--text-secondary); display:flex; flex-direction:column; gap: var(--space-3); padding-left: var(--space-5)">
+                  <li>Open <a href="https://script.google.com" target="_blank" rel="noopener" style="color: var(--brand-primary)">Google Apps Script</a> and create a new project.</li>
+                  <li>Create a Google Sheet and link it to your script, or use the active spreadsheet.</li>
+                  <li>Copy the contents of <code>backend/Code.gs</code> into your Apps Script editor.</li>
+                  <li>Run the <code>setup()</code> function once to initialize the spreadsheet.</li>
+                  <li>Deploy as Web App: Execute as <strong>Me</strong>, Access <strong>Anyone</strong>.</li>
+                  <li>Copy the deployment URL and paste it above.</li>
+                </ol>
+              </div>
+            </section>
+
+            <!-- Appearance -->
+            <section class="settings-panel" id="section-appearance" style="display:none">
+              <h2 class="settings-panel-title">Appearance</h2>
+              <p class="settings-panel-desc">Customize the look and feel of your workspace.</p>
+
+              <div class="settings-card">
+                <div class="form-group" style="margin-bottom: var(--space-5)">
+                  <label>App Theme</label>
+                  <div class="theme-selector" id="app-theme-selector">
+                    <!-- Populated by JS -->
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <!-- Account -->
+            <section class="settings-panel" id="section-account" style="display:none">
+              <h2 class="settings-panel-title">Account</h2>
+              <p class="settings-panel-desc">Your workspace identity and display preferences.</p>
+
+              <div class="settings-card">
+                <div class="form-group">
+                  <label for="display-name">Display Name</label>
+                  <input type="text" class="input" id="display-name" placeholder="Your Name" maxlength="80">
+                </div>
+                <div class="form-group" style="margin-bottom: var(--space-5)">
+                  <label for="display-email">Email (for notifications)</label>
+                  <input type="email" class="input" id="display-email" placeholder="you@example.com">
+                </div>
+                <button class="btn btn-primary btn-sm" id="save-account">Save Account</button>
+              </div>
+            </section>
+
+            <!-- Data -->
+            <section class="settings-panel" id="section-data" style="display:none">
+              <h2 class="settings-panel-title">Data & Export</h2>
+              <p class="settings-panel-desc">Manage your local data and export options.</p>
+
+              <div class="settings-card">
+                <h3 style="font-size: var(--text-sm); font-weight: var(--weight-semibold); margin-bottom: var(--space-4)">Local Storage</h3>
+                <div style="display:flex; gap: var(--space-3); margin-bottom: var(--space-4)">
+                  <div class="stat-card" style="flex:1">
+                    <div class="stat-value" id="local-forms-count">—</div>
+                    <div class="stat-label">Forms cached</div>
+                  </div>
+                  <div class="stat-card" style="flex:1">
+                    <div class="stat-value" id="local-responses-count">—</div>
+                    <div class="stat-label">Responses cached</div>
+                  </div>
+                </div>
+                <div style="display:flex; gap: var(--space-3); flex-wrap:wrap">
+                  <button class="btn btn-secondary btn-sm" id="export-all-data">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+                    Export All Data
+                  </button>
+                  <button class="btn btn-danger btn-sm" id="clear-local-cache">
+                    Clear Local Cache
+                  </button>
+                </div>
+              </div>
+
+              <div class="settings-card" style="margin-top: var(--space-4)">
+                <h3 style="font-size: var(--text-sm); font-weight: var(--weight-semibold); color: var(--color-error); margin-bottom: var(--space-4)">Danger Zone</h3>
+                <p style="font-size: var(--text-sm); color: var(--text-secondary); margin-bottom: var(--space-4)">
+                  These actions are irreversible. Proceed with caution.
+                </p>
+                <button class="btn btn-danger btn-sm" id="clear-all-data">
+                  Delete All Data
+                </button>
+              </div>
+            </section>
+
+            <!-- About -->
+            <section class="settings-panel" id="section-about" style="display:none">
+              <h2 class="settings-panel-title">About SanStudio Forms</h2>
+
+              <div class="settings-card about-card">
+                <div class="about-logo">
+                  <div style="width:64px;height:64px;border-radius:20px;background:var(--brand-gradient);display:flex;align-items:center;justify-content:center;margin-bottom: var(--space-4)">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
+                      <path d="M9 2H5a2 2 0 00-2 2v16a2 2 0 002 2h14a2 2 0 002-2V9l-7-7z" fill="rgba(255,255,255,0.3)"/>
+                      <path d="M9 2v7h7" stroke="white" stroke-width="2" stroke-linecap="round"/>
+                      <path d="M7 13h10M7 17h6" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
+                    </svg>
+                  </div>
+                  <h3 style="font-size: var(--text-xl); font-weight: var(--weight-bold); color: var(--text-primary)">SanStudio Forms</h3>
+                  <p style="font-size: var(--text-sm); color: var(--text-tertiary); margin-top: var(--space-1)">Version 1.0.0 · Build Something Beautiful</p>
+                </div>
+
+                <p style="font-size: var(--text-sm); color: var(--text-secondary); line-height: var(--leading-relaxed); margin: var(--space-5) 0">
+                  A premium form builder powered by Google Apps Script and Google Sheets.
+                  No monthly fees, no data limits, no lock-in — just beautiful forms.
+                </p>
+
+                <div style="display:flex; gap: var(--space-3)">
+                  <a href="https://sanstudio-hub.github.io/in/" target="_blank" rel="noopener" class="btn btn-primary btn-sm">
+                    Visit SanStudio
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3"/></svg>
+                  </a>
+                </div>
+
+                <div style="margin-top: var(--space-6); padding-top: var(--space-5); border-top: 1px solid var(--border-subtle)">
+                  <h4 style="font-size: var(--text-xs); font-weight: var(--weight-semibold); letter-spacing: var(--tracking-wider); text-transform: uppercase; color: var(--text-tertiary); margin-bottom: var(--space-3)">Tech Stack</h4>
+                  <div style="display:flex; flex-wrap:wrap; gap: var(--space-2)">
+                    ${['HTML5','CSS3','JavaScript ES2022','Google Apps Script','Google Sheets','IndexedDB','Service Workers','PWA'].map(t => `<span class="badge badge-secondary">${t}</span>`).join('')}
+                  </div>
+                </div>
+              </div>
+            </section>
+
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script type="module" src="scripts/core/app.js"></script>
+  <script type="module" src="scripts/pages/settings.js"></script>
+</body>
+</html>
