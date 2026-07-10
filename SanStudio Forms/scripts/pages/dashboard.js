@@ -52,8 +52,21 @@ async function loadForms() {
     const result = await API.forms.list();
     if (result.ok && result.data) {
       forms = result.data;
-      // Sync to local storage
-      for (const f of forms) {
+      
+      // Load local forms to find any that haven't been synced to the new API yet
+      const localForms = await FormStorage.loadAll();
+      const apiFormIds = new Set(forms.map(f => f.id));
+      
+      for (const lf of localForms) {
+        if (!apiFormIds.has(lf.id)) {
+          forms.push(lf);
+          // Auto-sync this previously local form to the newly connected API
+          API.forms.create(lf).catch(() => {});
+        }
+      }
+
+      // Sync API forms down to local storage
+      for (const f of result.data) {
         await FormStorage.save(f);
       }
     } else {

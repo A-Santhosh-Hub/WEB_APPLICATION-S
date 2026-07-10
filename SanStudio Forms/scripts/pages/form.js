@@ -63,8 +63,8 @@ async function loadForm(formId) {
 
   if (result.ok && result.data) {
     state.form = result.data;
-  } else if (result.notConfigured) {
-    // Load from localStorage fallback
+  } else {
+    // Load from localStorage fallback (if offline, not configured, or form not synced to API yet)
     const { FormStorage } = await import('../core/storage.js');
     state.form = await FormStorage.load(formId);
   }
