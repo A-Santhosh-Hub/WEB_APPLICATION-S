@@ -46,9 +46,9 @@
 
 # 19. SanShop  ---> [ https://a-santhosh-hub.github.io/HTML/SanShop/ ]
 
-# 20. The PROJECT LIKE MOBILE DISPLAY CHECKING 
+# 20. The PROJECT LIKE MOBILE DISPLAY CHECKING---> Working
 
-we giving a lot of portfolio template and open source project code..
+
 
 
 # My portfolio : --> [https://a-santhosh-hub.github.io/in/]
