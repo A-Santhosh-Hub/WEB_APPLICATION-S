@@ -48,6 +48,9 @@
 
 # 20. The PROJECT LIKE MOBILE DISPLAY CHECKING---> Working
 
+# 21. DisplayCheck - Mobile & PC Diagnostic Tool ---> [ https://a-santhosh-hub.github.io/WEB_APPLICATION-S/Mobile%20&%20PC/in.html ]
+
+
 # A Brave-inspired, user-first Android application designed for students to download, manage, and share educational content offline.
  > **Learn Offline, Share Knowledge**  
  > A premium, high-performance Android application built with Kotlin and Jetpack Compose for downloading, managing, and viewing tutorial videos and audio offline.
