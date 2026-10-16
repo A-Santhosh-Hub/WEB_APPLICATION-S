@@ -50,7 +50,7 @@
 
 # 21. DisplayCheck - Mobile & PC Diagnostic Tool ---> [ https://a-santhosh-hub.github.io/WEB_APPLICATION-S/Mobile%20&%20PC/in.html ]
 
-#22. https://a-santhosh-hub.github.io/WEB_APPLICATION-S/SanPayNote/
+#22. SanPay Note v1.6.0 — User Comparison Filter -----> [ https://a-santhosh-hub.github.io/WEB_APPLICATION-S/SanPayNote/ ]
 
 # A Brave-inspired, user-first Android application designed for students to download, manage, and share educational content offline.
  > **Learn Offline, Share Knowledge**  
