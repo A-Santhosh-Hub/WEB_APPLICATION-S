@@ -1,0 +1,2419 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Shared Wallet - Origin OS x GTA 6 Edition</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        gtaPink: '#FF007F',
+                        gtaOrange: '#FF9E00',
+                        gtaPurple: '#7B2CBF',
+                        darkBg: '#05050A',
+                        darkCard: '#11111A',
+                        darkBorder: '#1F1F2E',
+                        lightBg: '#F3F4F6',
+                        lightCard: '#FFFFFF'
+                    },
+                    fontFamily: { sans: ['Outfit', 'system-ui', 'sans-serif'] },
+                    borderRadius: {
+                        '4xl': '2rem',
+                        '5xl': '2.5rem',
+                    },
+                    boxShadow: {
+                        'gta': '0 10px 25px -5px rgba(255, 0, 127, 0.4)',
+                        'gta-subtle': '0 4px 15px -3px rgba(255, 158, 0, 0.2)',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { font-family: 'Outfit', sans-serif; -webkit-tap-highlight-color: transparent; }
+        
+        /* Glassmorphism - Origin OS Style */
+        .glass { background: rgba(255,255,255,0.7); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.4); }
+        .dark .glass { background: rgba(17, 17, 26, 0.6); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px); border: 1px solid rgba(255,255,255,0.05); }
+        
+        /* Custom Scrollbars */
+        ::-webkit-scrollbar { width: 4px; height: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #FF9E00; border-radius: 10px; }
+        
+        /* Animations */
+        .fade-in { animation: fadeIn 0.4s cubic-bezier(0.16,1,0.3,1); }
+        .slide-up { animation: slideUp 0.5s cubic-bezier(0.16,1,0.3,1); }
+        @keyframes fadeIn { from { opacity:0 } to { opacity:1 } }
+        @keyframes slideUp { from { transform:translateY(30px); opacity:0 } to { transform:translateY(0); opacity:1 } }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .spin { animation: spin 1s linear infinite; }
+        
+        /* GTA Gradient Text */
+        .text-gta { background: linear-gradient(to right, #FF007F, #FF9E00); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .bg-gta { background: linear-gradient(to right, #FF007F, #FF9E00); }
+        
+        /* Navigation Styles */
+        .nav-item { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        .nav-item.active { 
+            background: linear-gradient(135deg, rgba(255,0,127,0.15) 0%, rgba(255,158,0,0.15) 100%); 
+            color: #FF007F; 
+            font-weight: 700; 
+            border: 1px solid rgba(255,0,127,0.3);
+            box-shadow: inset 0 0 10px rgba(255,0,127,0.05);
+        }
+        .dark .nav-item.active { color: #FF9E00; border: 1px solid rgba(255,158,0,0.3); box-shadow: inset 0 0 15px rgba(255,158,0,0.1); }
+        
+        /* Toggle Switch */
+        .toggle-on  { background: linear-gradient(to right, #FF007F, #FF9E00); }
+        .toggle-off { background-color: #cbd5e1; }
+        .dark .toggle-off { background-color: #334155; }
+        
+        /* Input overrides for rounded aesthetic */
+        input, select { border-radius: 9999px !important; padding-left: 1.25rem !important; padding-right: 1.25rem !important; }
+        input[type="date"], input[type="month"] { border-radius: 1rem !important; }
+    </style>
+</head>
+<body class="bg-lightBg text-slate-900 dark:bg-darkBg dark:text-slate-100 transition-colors duration-500 flex h-screen overflow-hidden p-0 lg:p-4 gap-4 selection:bg-gtaPink selection:text-white">
+    
+    <!-- Floating Sidebar (Desktop) -->
+    <aside class="hidden lg:flex w-72 shrink-0 flex-col justify-between rounded-[2.5rem] border border-slate-200 dark:border-darkBorder bg-white/60 dark:bg-darkCard/60 backdrop-blur-3xl shadow-xl transition-colors z-20 overflow-hidden relative">
+        <div class="absolute top-0 right-0 w-32 h-32 bg-gtaPink/10 blur-[50px] rounded-full pointer-events-none"></div>
+        <div class="absolute bottom-0 left-0 w-32 h-32 bg-gtaOrange/10 blur-[50px] rounded-full pointer-events-none"></div>
+        
+        <div class="relative z-10 flex-1 flex flex-col min-h-0">
+            <div class="h-24 flex items-center justify-between px-8 border-b border-slate-200/50 dark:border-darkBorder/50 cursor-pointer hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors" onclick="app.openWorkspaceModal()">
+                <div class="flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-2xl bg-gta flex items-center justify-center shadow-gta">
+                        <i class="ph-fill ph-wallet text-white text-2xl"></i>
+                    </div>
+                    <div>
+                        <p class="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-0.5">Account</p>
+                        <h1 class="font-extrabold text-base truncate w-32 current-workspace-name text-slate-800 dark:text-white">Main Account</h1>
+                    </div>
+                </div>
+                <i class="ph-bold ph-caret-up-down text-slate-400"></i>
+            </div>
+            
+            <nav class="p-4 space-y-1.5 mt-2 overflow-y-auto flex-1 custom-scroll">
+                <button onclick="app.navigate('dashboard')" class="nav-item active w-full flex items-center px-5 py-3.5 rounded-3xl" data-target="dashboard"><i class="ph-fill ph-squares-four text-xl"></i><span class="ml-4 font-medium text-[15px]">Dashboard</span></button>
+                <button onclick="app.navigate('transactions')" class="nav-item w-full flex items-center px-5 py-3.5 rounded-3xl" data-target="transactions"><i class="ph-fill ph-list-dashes text-xl"></i><span class="ml-4 font-medium text-[15px]">Transactions</span></button>
+                <button onclick="app.navigate('autopay')" class="nav-item w-full flex items-center px-5 py-3.5 rounded-3xl" data-target="autopay"><i class="ph-fill ph-arrows-clockwise text-xl"></i><span class="ml-4 font-medium text-[15px]">Auto Pay</span></button>
+                <button onclick="app.navigate('lent')" class="nav-item w-full flex items-center px-5 py-3.5 rounded-3xl" data-target="lent"><i class="ph-fill ph-hand-coins text-xl"></i><span class="ml-4 font-medium text-[15px]">Lent Tracker</span></button>
+                <button onclick="app.navigate('borrowed')" class="nav-item w-full flex items-center px-5 py-3.5 rounded-3xl" data-target="borrowed"><i class="ph-fill ph-hand-arrow-down text-xl"></i><span class="ml-4 font-medium text-[15px]">Borrowed Tracker</span></button>
+                <button onclick="app.navigate('users')" class="nav-item w-full flex items-center px-5 py-3.5 rounded-3xl" data-target="users"><i class="ph-fill ph-users text-xl"></i><span class="ml-4 font-medium text-[15px]">Users</span></button>
+                <button onclick="app.navigate('summary')" class="nav-item w-full flex items-center px-5 py-3.5 rounded-3xl" data-target="summary"><i class="ph-fill ph-chart-pie-slice text-xl"></i><span class="ml-4 font-medium text-[15px]">Summary</span></button>
+                <button onclick="app.navigate('compare')" class="nav-item w-full flex items-center px-5 py-3.5 rounded-3xl" data-target="compare"><i class="ph-fill ph-chart-line-up text-xl"></i><span class="ml-4 font-medium text-[15px]">Compare</span></button>
+                <button onclick="app.navigate('split')" class="nav-item w-full flex items-center px-5 py-3.5 rounded-3xl" data-target="split"><i class="ph-fill ph-scales text-xl"></i><span class="ml-4 font-medium text-[15px]">Fair Split</span></button>
+                <button onclick="app.navigate('savings')" class="nav-item w-full flex items-center px-5 py-3.5 rounded-3xl" data-target="savings"><i class="ph-fill ph-piggy-bank text-xl"></i><span class="ml-4 font-medium text-[15px]">Savings</span></button>
+                <button onclick="app.navigate('settings')" class="nav-item w-full flex items-center px-5 py-3.5 rounded-3xl" data-target="settings"><i class="ph-fill ph-gear text-xl"></i><span class="ml-4 font-medium text-[15px]">Settings</span></button>
+            </nav>
+        </div>
+        
+        <div class="p-6 border-t border-slate-200/50 dark:border-darkBorder/50 relative z-10">
+            <button onclick="app.toggleTheme()" class="w-full flex items-center px-5 py-3 rounded-3xl bg-slate-100 dark:bg-[#1A1A24] hover:bg-slate-200 dark:hover:bg-[#232332] transition-colors mb-4">
+                <i id="theme-icon" class="ph-fill ph-moon text-xl text-gtaPink"></i>
+                <span id="theme-text" class="ml-3 font-semibold text-[14px]">Dark Mode</span>
+            </button>
+            <div class="text-center text-xs text-slate-500 font-medium">Developed By <a href="https://a-santhosh-hub.github.io/in/" target="_blank" class="text-gtaPink hover:text-gtaOrange transition-colors">Santhosh A</a></div>
+        </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 flex flex-col h-full overflow-hidden relative w-full lg:rounded-[2.5rem] lg:border lg:border-slate-200/50 lg:dark:border-darkBorder/50 bg-white/40 dark:bg-[#0C0C14]/60 backdrop-blur-3xl lg:shadow-2xl">
+        
+        <!-- Top Header -->
+        <header class="h-16 sm:h-20 flex items-center justify-between px-3 sm:px-6 md:px-8 border-b border-slate-200/50 dark:border-darkBorder/50 z-10 shrink-0 gap-2">
+            <div class="flex items-center gap-2 sm:gap-3 overflow-hidden min-w-0">
+                <button onclick="app.openWorkspaceModal()" class="lg:hidden flex items-center gap-1.5 sm:gap-2 bg-white dark:bg-[#1A1A24] px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-full shadow-sm hover:scale-105 transition-transform shrink-0 border border-slate-200/50 dark:border-darkBorder/50">
+                    <div class="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-gta flex items-center justify-center shrink-0"><i class="ph-bold ph-wallet text-white text-[10px]"></i></div>
+                    <span class="text-[11px] sm:text-xs font-bold truncate current-workspace-name max-w-[65px] sm:max-w-[150px]">Main</span>
+                </button>
+                <h2 id="page-title" class="text-xl sm:text-2xl font-extrabold capitalize truncate pr-2 hidden sm:block tracking-tight text-slate-800 dark:text-white">Dashboard</h2>
+            </div>
+            <div class="flex items-center gap-1.5 sm:gap-3 shrink-0">
+                <!-- Sync Pill -->
+                <div id="gsheets-header-pill" class="hidden items-center justify-center gap-1.5 sm:gap-2 bg-[#1A1A24] dark:bg-black/50 w-8 h-8 sm:w-auto sm:h-auto sm:px-4 sm:py-2 rounded-full border border-emerald-500/30 shadow-[0_0_15px_rgba(16,185,129,0.15)] shrink-0">
+                    <div id="gsheets-pill-dot" class="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(16,185,129,0.8)] animate-pulse shrink-0"></div>
+                    <span id="gsheets-pill-text" class="hidden sm:block text-xs font-bold text-emerald-400 uppercase tracking-widest">Synced</span>
+                </div>
+                
+                <button onclick="app.toggleTheme()" class="w-8 h-8 sm:w-10 sm:h-10 flex lg:hidden items-center justify-center bg-white dark:bg-[#1A1A24] rounded-full shadow-sm shrink-0 border border-slate-200/50 dark:border-darkBorder/50">
+                    <i id="theme-icon-mobile" class="ph-bold ph-moon text-sm sm:text-lg text-gtaPink"></i>
+                </button>
+                
+                <div id="month-filter-container" class="flex items-center bg-white dark:bg-[#1A1A24] rounded-full p-0.5 sm:p-1 shadow-sm border border-slate-100 dark:border-darkBorder shrink-0">
+                    <button onclick="app.changeMonth(-1)" class="w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors shrink-0"><i class="ph-bold ph-caret-left"></i></button>
+                    <span id="current-month-display" class="px-1 sm:px-2 text-[11px] sm:text-sm font-bold w-[76px] sm:w-28 md:w-36 text-center truncate tracking-wide">Current Month</span>
+                    <button onclick="app.changeMonth(1)" class="w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors shrink-0"><i class="ph-bold ph-caret-right"></i></button>
+                </div>
+            </div>
+        </header>
+
+        <div id="export-content" class="flex-1 overflow-y-auto p-4 md:p-8 pb-36 lg:pb-8 custom-scroll">
+            
+            <!-- DASHBOARD -->
+            <section id="view-dashboard" class="view-section slide-up max-w-7xl mx-auto w-full">
+                <div id="smart-alerts" class="mb-6 space-y-3 empty:hidden"></div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                    <!-- Master Card -->
+                    <div class="p-8 rounded-[2.5rem] md:col-span-3 lg:col-span-1 relative overflow-hidden bg-gta shadow-gta group hover:scale-[1.02] transition-transform duration-300">
+                        <div class="absolute -right-10 -bottom-10 w-64 h-64 bg-white opacity-10 rounded-full blur-3xl group-hover:scale-150 transition-transform duration-700"></div>
+                        <div class="relative z-10">
+                            <div class="flex items-center gap-2 mb-2">
+                                <div class="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center backdrop-blur-md">
+                                    <i class="ph-bold ph-wallet text-white"></i>
+                                </div>
+                                <p class="text-white/90 text-sm font-bold tracking-widest uppercase">Total Net Balance</p>
+                            </div>
+                            <h3 class="text-5xl font-black tracking-tighter text-white drop-shadow-md mt-2" id="dash-total-balance">₹0</h3>
+                            
+                            <div class="mt-8 pt-6 border-t border-white/20 flex justify-between items-center bg-black/10 rounded-3xl p-4 backdrop-blur-sm">
+                                <div>
+                                    <span class="text-white/70 text-[10px] uppercase font-bold tracking-widest block mb-1">Income</span> 
+                                    <span class="font-extrabold text-white text-lg" id="dash-total-income">₹0</span>
+                                </div>
+                                <div class="w-[1px] h-8 bg-white/20"></div>
+                                <div class="text-right">
+                                    <span class="text-white/70 text-[10px] uppercase font-bold tracking-widest block mb-1">Expense</span> 
+                                    <span class="font-extrabold text-white text-lg" id="dash-total-expense">₹0</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- User Cards Container -->
+                    <div class="md:col-span-3 lg:col-span-2 flex gap-4 overflow-x-auto pb-4 snap-x custom-scroll" id="dash-user-balances"></div>
+                </div>
+                
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+                    <div class="glass p-6 rounded-[2rem] lg:col-span-2 shadow-sm border border-slate-200/50 dark:border-darkBorder/50">
+                        <div class="flex justify-between items-center mb-6"><h3 class="font-bold text-xl tracking-tight">Income & Expenses</h3></div>
+                        <div class="h-64 relative w-full"><canvas id="barChart"></canvas></div>
+                    </div>
+                    <div class="glass p-6 rounded-[2rem] shadow-sm border border-slate-200/50 dark:border-darkBorder/50 flex flex-col">
+                        <h3 class="font-bold text-xl tracking-tight mb-6">Wallet Share</h3>
+                        <div class="flex-1 relative w-full flex items-center justify-center min-h-[200px]"><canvas id="doughnutChart"></canvas></div>
+                    </div>
+                </div>
+                
+                <div class="glass p-6 md:p-8 rounded-[2rem] shadow-sm border border-slate-200/50 dark:border-darkBorder/50">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="font-bold text-xl tracking-tight">Recent Transactions</h3>
+                        <button onclick="app.navigate('transactions')" class="text-gtaPink text-sm font-bold hover:text-gtaOrange transition-colors bg-gtaPink/10 px-4 py-2 rounded-full">View All</button>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead><tr class="text-slate-400 text-xs uppercase tracking-widest font-bold border-b border-slate-200 dark:border-darkBorder"><th class="pb-4">Date</th><th class="pb-4">User</th><th class="pb-4">Details</th><th class="pb-4 text-right">Amount</th></tr></thead>
+                            <tbody id="dash-recent-tx" class="text-sm font-medium"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- AUTO PAY -->
+            <section id="view-autopay" class="view-section hidden fade-in max-w-7xl mx-auto w-full">
+                <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
+                    <div>
+                        <h3 class="text-4xl font-black mb-2 text-gta tracking-tight">Auto Pay</h3>
+                        <p class="text-sm text-slate-500 dark:text-slate-400 font-medium">Schedule automatic recurring payments for bills, subscriptions, or savings.</p>
+                    </div>
+                    <button onclick="app.openAutoPayModal()" class="bg-gta hover:opacity-90 text-white px-6 py-3.5 rounded-full shadow-gta transition-all flex items-center justify-center gap-2 font-bold shrink-0">
+                        <i class="ph-bold ph-plus text-lg"></i> Setup Auto Pay
+                    </button>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="autopay-grid"></div>
+            </section>
+
+            <!-- LENT TRACKER -->
+            <section id="view-lent" class="view-section hidden fade-in max-w-7xl mx-auto w-full">
+                <div class="mb-8 flex flex-col md:flex-row md:items-end justify-between gap-6">
+                    <div>
+                        <h3 class="text-4xl font-black mb-2 tracking-tight">Lent Tracker</h3>
+                        <p class="text-sm text-slate-500 dark:text-slate-400 font-medium">Track partial/full repayments, or add extra money to existing loans.</p>
+                    </div>
+                    <div class="bg-gradient-to-br from-orange-500/10 to-pink-500/10 border border-orange-500/30 px-6 py-4 rounded-[2rem] text-right shrink-0 shadow-[0_0_20px_rgba(249,115,22,0.1)]">
+                        <p class="text-[10px] text-orange-500 font-bold uppercase tracking-widest mb-1">Total Still Pending</p>
+                        <p class="text-3xl font-black text-orange-600 dark:text-orange-400" id="lent-total-pending">₹0</p>
+                    </div>
+                </div>
+                <h4 class="text-xl font-bold mb-6 flex items-center gap-2"><div class="w-8 h-8 rounded-full bg-orange-500/20 flex items-center justify-center"><i class="ph-bold ph-clock text-orange-500"></i></div> Active Loans</h4>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-10" id="lent-active-grid"></div>
+                <h4 class="text-xl font-bold mb-6 flex items-center gap-2 border-t border-slate-200/50 dark:border-darkBorder/50 pt-8"><div class="w-8 h-8 rounded-full bg-emerald-500/20 flex items-center justify-center"><i class="ph-bold ph-check-circle text-emerald-500"></i></div> Fully Settled</h4>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 opacity-70 hover:opacity-100 transition-opacity duration-500" id="lent-settled-grid"></div>
+            </section>
+
+            <!-- BORROWED TRACKER -->
+            <section id="view-borrowed" class="view-section hidden fade-in max-w-7xl mx-auto w-full">
+                <div class="mb-8 flex flex-col md:flex-row md:items-end justify-between gap-6">
+                    <div>
+                        <h3 class="text-4xl font-black mb-2 tracking-tight">Borrowed Tracker</h3>
+                        <p class="text-sm text-slate-500 dark:text-slate-400 font-medium">Track money you owe, record repayments, or add extra debts.</p>
+                    </div>
+                    <div class="bg-gradient-to-br from-blue-500/10 to-indigo-500/10 border border-blue-500/30 px-6 py-4 rounded-[2rem] text-right shrink-0 shadow-[0_0_20px_rgba(59,130,246,0.1)]">
+                        <p class="text-[10px] text-blue-500 font-bold uppercase tracking-widest mb-1">Total Still Owed</p>
+                        <p class="text-3xl font-black text-blue-600 dark:text-blue-400" id="borrowed-total-pending">₹0</p>
+                    </div>
+                </div>
+                <h4 class="text-xl font-bold mb-6 flex items-center gap-2"><div class="w-8 h-8 rounded-full bg-blue-500/20 flex items-center justify-center"><i class="ph-bold ph-clock text-blue-500"></i></div> Active Debts</h4>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-10" id="borrowed-active-grid"></div>
+                <h4 class="text-xl font-bold mb-6 flex items-center gap-2 border-t border-slate-200/50 dark:border-darkBorder/50 pt-8"><div class="w-8 h-8 rounded-full bg-emerald-500/20 flex items-center justify-center"><i class="ph-bold ph-check-circle text-emerald-500"></i></div> Fully Repaid</h4>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 opacity-70 hover:opacity-100 transition-opacity duration-500" id="borrowed-settled-grid"></div>
+            </section>
+
+            <!-- COMPARE VIEW -->
+            <section id="view-compare" class="view-section hidden fade-in max-w-5xl mx-auto w-full">
+                <div class="glass p-8 rounded-[2.5rem] shadow-sm border border-slate-200/50 dark:border-darkBorder/50 mb-8 relative overflow-hidden">
+                    <div class="absolute top-0 right-0 w-64 h-64 bg-gtaPurple/5 blur-[80px] rounded-full pointer-events-none"></div>
+                    <div class="relative z-10">
+                        <div class="flex items-center gap-4 mb-4">
+                            <div class="w-12 h-12 rounded-2xl bg-gtaPurple/20 flex items-center justify-center text-gtaPurple"><i class="ph-bold ph-chart-line-up text-2xl"></i></div>
+                            <h3 class="text-3xl font-black tracking-tight">Compare Months</h3>
+                        </div>
+                        <p class="text-sm text-slate-500 dark:text-slate-400 mb-8 font-medium max-w-2xl">Select a user (or all users) and two months to compare financial performance, spending habits, and net flow.</p>
+                        
+                        <div class="mb-6">
+                            <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2 ml-2">Filter by User</label>
+                            <select id="cmp-user" class="w-full sm:w-72 bg-white/50 dark:bg-black/40 border border-slate-200 dark:border-darkBorder backdrop-blur-md focus:ring-2 focus:ring-gtaPink/50 transition-all font-semibold"></select>
+                        </div>
+                        <div class="flex flex-col sm:flex-row gap-4 items-center">
+                            <div class="flex-1 w-full">
+                                <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2 ml-2">Base Month</label>
+                                <input type="month" id="cmp-m1" class="w-full bg-white/50 dark:bg-black/40 border border-slate-200 dark:border-darkBorder backdrop-blur-md focus:ring-2 focus:ring-gtaPink/50 transition-all font-bold text-lg">
+                            </div>
+                            <div class="w-10 h-10 rounded-full bg-slate-100 dark:bg-darkBorder flex items-center justify-center sm:mt-6 shrink-0 shadow-inner font-black text-slate-400">VS</div>
+                            <div class="flex-1 w-full">
+                                <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2 ml-2">Target Month</label>
+                                <input type="month" id="cmp-m2" class="w-full bg-white/50 dark:bg-black/40 border border-slate-200 dark:border-darkBorder backdrop-blur-md focus:ring-2 focus:ring-gtaPink/50 transition-all font-bold text-lg">
+                            </div>
+                            <button onclick="app.executeComparison()" class="w-full sm:w-auto sm:mt-8 bg-gta hover:opacity-90 text-white px-8 py-4 rounded-full shadow-gta transition-all font-bold flex items-center justify-center gap-2">
+                                <i class="ph-bold ph-arrows-left-right text-xl"></i> Compare
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="compare-results" class="hidden space-y-8 fade-in">
+                    <!-- Performance Summary Box -->
+                    <div class="glass p-8 rounded-[2rem] shadow-gta-subtle border border-gtaPink/30 relative overflow-hidden">
+                        <div class="absolute top-0 left-0 w-1 h-full bg-gta"></div>
+                        <h4 id="cmp-summary-title" class="font-black text-2xl mb-4 text-gta flex items-center gap-2"><i class="ph-fill ph-sparkle text-gtaOrange"></i> Performance Summary</h4>
+                        <div id="cmp-summary-text" class="space-y-3 text-[15px] text-slate-700 dark:text-slate-300 font-medium"></div>
+                    </div>
+
+                    <!-- Comparison Table/Grid -->
+                    <div class="glass rounded-[2rem] shadow-sm border border-slate-200/50 dark:border-darkBorder/50 overflow-hidden">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse whitespace-nowrap">
+                                <thead>
+                                    <tr class="bg-black/5 dark:bg-black/40 text-slate-500 dark:text-slate-400 text-xs uppercase tracking-widest border-b border-slate-200 dark:border-darkBorder">
+                                        <th class="p-5 font-bold">Metric</th>
+                                        <th class="p-5 font-bold text-right" id="cmp-header-1">Month 1</th>
+                                        <th class="p-5 font-bold text-right" id="cmp-header-2">Month 2</th>
+                                        <th class="p-5 font-bold text-right">Difference</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="cmp-tbody" class="text-[15px] font-medium divide-y divide-slate-100 dark:divide-darkBorder/50">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SUMMARY -->
+            <section id="view-summary" class="view-section hidden fade-in max-w-7xl mx-auto w-full">
+                <div class="mb-8"><h3 class="text-4xl font-black mb-2 tracking-tight">Monthly Breakdown</h3><p class="text-sm text-slate-500 dark:text-slate-400 font-medium">Total transaction flow for the selected month.</p></div>
+                <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-10" id="summary-overall-cards"></div>
+                <div class="mb-6"><h3 class="text-2xl font-bold tracking-tight">Breakdown By User</h3></div>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="summary-users-grid"></div>
+            </section>
+
+            <!-- SAVINGS -->
+            <section id="view-savings" class="view-section hidden fade-in max-w-7xl mx-auto w-full">
+                <div class="mb-8"><h3 class="text-4xl font-black mb-2 tracking-tight">Savings & Vault</h3><p class="text-sm text-slate-500 dark:text-slate-400 font-medium">Money transferred to external savings accounts.</p></div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
+                    <div class="p-8 rounded-[2.5rem] relative overflow-hidden bg-gradient-to-br from-emerald-400 to-teal-600 text-white shadow-[0_10px_25px_-5px_rgba(16,185,129,0.4)] hover:scale-[1.02] transition-transform">
+                        <div class="relative z-10">
+                            <p class="text-emerald-100 text-sm font-bold tracking-widest uppercase mb-1">Total Vault (All Time)</p>
+                            <h3 class="text-5xl font-black tracking-tighter" id="save-total-all">₹0</h3>
+                            <div class="mt-8 pt-6 border-t border-white/20 bg-black/10 p-4 rounded-3xl backdrop-blur-sm inline-block">
+                                <span class="opacity-80 text-xs font-bold uppercase tracking-widest block mb-1">Saved This Month</span> 
+                                <span class="font-extrabold text-xl" id="save-total-month">₹0</span>
+                            </div>
+                        </div>
+                        <i class="ph-bold ph-piggy-bank absolute -right-10 -bottom-10 text-9xl opacity-20"></i>
+                    </div>
+                </div>
+                <h3 class="text-2xl font-bold tracking-tight mb-6">Savings By User</h3>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6" id="save-users-grid"></div>
+            </section>
+
+            <!-- TRANSACTIONS -->
+            <section id="view-transactions" class="view-section hidden fade-in max-w-7xl mx-auto w-full">
+                <div class="mb-8"><h3 class="text-4xl font-black tracking-tight">Activity Log</h3></div>
+                <div class="glass p-4 rounded-full shadow-sm border border-slate-200/50 dark:border-darkBorder/50 mb-6 flex flex-col sm:flex-row gap-3 items-center">
+                    <div class="relative w-full flex-1">
+                        <i class="ph-bold ph-magnifying-glass absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 text-lg"></i>
+                        <input type="text" id="tx-search" placeholder="Search note or category..." class="w-full pl-12 bg-white/50 dark:bg-black/40 border-0 focus:ring-2 focus:ring-gtaPink/50 font-medium">
+                    </div>
+                    <div class="w-[1px] h-8 bg-slate-200 dark:bg-darkBorder hidden sm:block"></div>
+                    <div class="flex gap-2 w-full sm:w-auto shrink-0">
+                        <select id="tx-filter-user" class="bg-white/50 dark:bg-black/40 border-0 font-medium"></select>
+                        <select id="tx-filter-type" class="bg-white/50 dark:bg-black/40 border-0 font-medium">
+                            <option value="all">All Types</option>
+                            <option value="income">Income</option>
+                            <option value="expense">Expense</option>
+                            <option value="lent">Lent</option>
+                            <option value="lent_returned">Lent Returned</option>
+                            <option value="borrowed">Borrowed</option>
+                            <option value="borrowed_returned">Repaid Borrowed</option>
+                            <option value="savings">Savings</option>
+                            <option value="withdraw_savings">Withdraw Savings</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="glass rounded-[2rem] shadow-sm border border-slate-200/50 dark:border-darkBorder/50 overflow-hidden">
+                    <!-- Desktop Header -->
+                    <div class="hidden md:flex bg-black/5 dark:bg-black/40 text-slate-500 dark:text-slate-400 text-xs uppercase tracking-widest border-b border-slate-200 dark:border-darkBorder p-5 font-bold">
+                        <div class="w-32">Date</div>
+                        <div class="w-40">User</div>
+                        <div class="w-48">Type</div>
+                        <div class="flex-1">Details</div>
+                        <div class="w-32 text-right">Amount</div>
+                        <div class="w-24 text-center">Action</div>
+                    </div>
+                    <!-- List Container (Replaces table body) -->
+                    <div id="tx-list-full" class="divide-y divide-slate-100 dark:divide-darkBorder/50"></div>
+                    <!-- Empty State -->
+                    <div id="tx-empty-state" class="hidden flex-col items-center justify-center py-16 text-slate-400">
+                        <i class="ph-thin ph-receipt text-7xl mb-4 opacity-50"></i><p class="font-medium text-lg">No records found</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- USERS -->
+            <section id="view-users" class="view-section hidden fade-in max-w-7xl mx-auto w-full">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+                    <div>
+                        <h3 class="text-4xl font-black tracking-tight mb-1">Crew Members</h3>
+                        <p class="text-slate-500 dark:text-slate-400 font-medium text-sm">Manage the squad sharing this wallet.</p>
+                    </div>
+                    <button onclick="app.openUserModal()" class="bg-gta hover:opacity-90 text-white px-6 py-3 rounded-full shadow-gta transition-all flex items-center justify-center gap-2 font-bold shrink-0">
+                        <i class="ph-bold ph-user-plus text-lg"></i> Add Member
+                    </button>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="users-grid"></div>
+            </section>
+
+            <!-- SETTINGS -->
+            <section id="view-settings" class="view-section hidden fade-in max-w-4xl mx-auto">
+                <h3 class="text-4xl font-black tracking-tight mb-8">System Settings</h3>
+                
+                <!-- GOOGLE SHEETS -->
+                <div class="glass p-8 rounded-[2.5rem] shadow-sm border border-slate-200/50 dark:border-darkBorder/50 mb-8 relative overflow-hidden">
+                    <div class="absolute top-0 right-0 w-64 h-64 bg-emerald-500/10 blur-[80px] rounded-full pointer-events-none"></div>
+                    <div class="relative z-10">
+                        <h3 class="text-2xl font-black mb-2 flex items-center gap-3">
+                            <div class="w-10 h-10 bg-emerald-500/20 rounded-full flex items-center justify-center text-emerald-500"><i class="ph-bold ph-google-logo text-xl"></i></div>
+                            Cloud Sync Engine
+                        </h3>
+                        <p class="text-sm text-slate-500 dark:text-slate-400 mb-8 font-medium max-w-2xl">
+                            Turn your Google Drive into a private database. Link a Google Sheet to automatically push data.
+                        </p>
+                        
+                        <div class="space-y-6">
+                            <!-- Steps simplified visually -->
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm font-medium">
+                                <div class="bg-white/50 dark:bg-black/20 p-4 rounded-3xl border border-slate-200 dark:border-darkBorder">
+                                    <div class="w-8 h-8 rounded-full bg-emerald-500 text-white flex items-center justify-center font-bold mb-3">1</div>
+                                    <p>Create a new Sheet at <a href="https://sheets.new" target="_blank" class="text-emerald-500 hover:underline">sheets.new</a></p>
+                                </div>
+                                <div class="bg-white/50 dark:bg-black/20 p-4 rounded-3xl border border-slate-200 dark:border-darkBorder">
+                                    <div class="w-8 h-8 rounded-full bg-emerald-500 text-white flex items-center justify-center font-bold mb-3">2</div>
+                                    <p>Open <strong>Extensions &rarr; Apps Script</strong>.</p>
+                                </div>
+                                <div class="bg-white/50 dark:bg-black/20 p-4 rounded-3xl border border-slate-200 dark:border-darkBorder sm:col-span-2 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                                    <div>
+                                        <div class="w-8 h-8 rounded-full bg-emerald-500 text-white flex items-center justify-center font-bold mb-3">3</div>
+                                        <p>Paste the Connector Code and save.</p>
+                                    </div>
+                                    <button onclick="app.copyAppScript()" id="copy-script-btn" class="bg-slate-200 dark:bg-slate-800 text-slate-800 dark:text-white px-5 py-2.5 rounded-full font-bold hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors shrink-0 flex items-center gap-2">
+                                        <i class="ph-bold ph-copy"></i> Copy Script
+                                    </button>
+                                </div>
+                                <div class="bg-white/50 dark:bg-black/20 p-4 rounded-3xl border border-slate-200 dark:border-darkBorder sm:col-span-2">
+                                    <div class="w-8 h-8 rounded-full bg-emerald-500 text-white flex items-center justify-center font-bold mb-3">4</div>
+                                    <p>Deploy as Web App (Execute as <strong>Me</strong>, Access <strong>Anyone</strong>) & copy URL.</p>
+                                </div>
+                            </div>
+                            
+                            <div class="bg-emerald-50 dark:bg-emerald-900/10 p-6 rounded-3xl border border-emerald-200 dark:border-emerald-800/30">
+                                <label class="block text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-widest mb-2 ml-2">Web App URL</label>
+                                <div class="flex flex-col sm:flex-row gap-3">
+                                    <input type="url" id="gsheets-url-input" placeholder="https://script.google.com/macros/s/..." class="flex-1 bg-white dark:bg-black/40 border border-emerald-200 dark:border-emerald-800/50 focus:ring-2 focus:ring-emerald-500 shadow-sm font-medium">
+                                    <button onclick="app.saveGSheetsUrl()" class="bg-emerald-500 hover:bg-emerald-600 text-white px-8 py-3 rounded-full font-bold shadow-[0_5px_15px_rgba(16,185,129,0.3)] transition-colors shrink-0">
+                                        Connect
+                                    </button>
+                                </div>
+                                <div id="gsheets-status" class="mt-3 hidden"></div>
+                            </div>
+                        </div>
+
+                        <div class="mt-8 pt-8 border-t border-slate-200/50 dark:border-darkBorder/50 flex flex-col sm:flex-row gap-4">
+                            <button onclick="app.testGSheetsConnection()" id="gsheets-test-btn" class="flex-1 bg-white dark:bg-black/40 border border-slate-200 dark:border-darkBorder hover:bg-slate-50 dark:hover:bg-slate-800/50 py-3.5 rounded-full font-bold transition-colors flex items-center justify-center gap-2">
+                                <i class="ph-bold ph-wifi-high text-xl text-blue-500"></i> Test Connection
+                            </button>
+                            <button onclick="app.syncToGoogleSheets()" id="gsheets-sync-btn" class="flex-1 bg-[#1A1A24] dark:bg-white text-white dark:text-black py-3.5 rounded-full font-bold transition-colors flex items-center justify-center gap-2 shadow-xl hover:scale-[1.02]">
+                                <i class="ph-bold ph-cloud-arrow-up text-xl"></i> Force Sync Now
+                            </button>
+                        </div>
+                        
+                        <div class="mt-6 flex items-center justify-between p-5 bg-white/50 dark:bg-black/20 rounded-3xl border border-slate-200/50 dark:border-darkBorder/50">
+                            <div>
+                                <p class="font-bold text-lg text-slate-800 dark:text-white">Auto-Pilot Sync</p>
+                                <p class="text-xs text-slate-500 font-medium mt-1">Push to cloud instantly on every new transaction.</p>
+                            </div>
+                            <button onclick="app.toggleAutoSync()" id="autosync-toggle" class="relative inline-flex h-8 w-14 items-center rounded-full transition-colors focus:outline-none shrink-0 shadow-inner toggle-off">
+                                <span class="inline-block w-6 h-6 transform translate-x-1 rounded-full bg-white shadow-md transition-transform"></span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- EXPORTS -->
+                <div class="glass p-8 rounded-[2.5rem] shadow-sm border border-slate-200/50 dark:border-darkBorder/50 mb-8">
+                    <h3 class="text-2xl font-black mb-6 flex items-center gap-3">
+                        <div class="w-10 h-10 bg-blue-500/20 rounded-full flex items-center justify-center text-blue-500"><i class="ph-bold ph-download-simple text-xl"></i></div>
+                        Data Extraction
+                    </h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <button onclick="app.exportPDF()" class="bg-white/50 dark:bg-black/30 border border-slate-200 dark:border-darkBorder p-5 rounded-3xl hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors text-left group">
+                            <i class="ph-fill ph-file-pdf text-3xl text-rose-500 mb-3 group-hover:scale-110 transition-transform"></i>
+                            <h4 class="font-bold text-lg">Print Report (PDF)</h4>
+                            <p class="text-xs text-slate-500 font-medium mt-1">Clean A4 printout of history.</p>
+                        </button>
+                        <button onclick="app.exportExcel()" class="bg-white/50 dark:bg-black/30 border border-slate-200 dark:border-darkBorder p-5 rounded-3xl hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors text-left group">
+                            <i class="ph-fill ph-file-xls text-3xl text-emerald-500 mb-3 group-hover:scale-110 transition-transform"></i>
+                            <h4 class="font-bold text-lg">Export Workbook</h4>
+                            <p class="text-xs text-slate-500 font-medium mt-1">Multi-sheet Excel backup.</p>
+                        </button>
+                        <button onclick="app.exportJSON()" class="bg-white/50 dark:bg-black/30 border border-slate-200 dark:border-darkBorder p-5 rounded-3xl hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors text-left group">
+                            <i class="ph-fill ph-database text-3xl text-blue-500 mb-3 group-hover:scale-110 transition-transform"></i>
+                            <h4 class="font-bold text-lg">Save Database</h4>
+                            <p class="text-xs text-slate-500 font-medium mt-1">Raw JSON schema backup.</p>
+                        </button>
+                        <div class="relative bg-white/50 dark:bg-black/30 border border-slate-200 dark:border-darkBorder p-5 rounded-3xl hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors text-left group cursor-pointer">
+                            <input type="file" id="import-file" accept=".json" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" onchange="app.importJSON(event)">
+                            <i class="ph-fill ph-upload-simple text-3xl text-purple-500 mb-3 group-hover:scale-110 transition-transform"></i>
+                            <h4 class="font-bold text-lg">Restore Database</h4>
+                            <p class="text-xs text-slate-500 font-medium mt-1">Upload a previous JSON file.</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- DANGER & INFO -->
+                <div class="glass p-8 rounded-[2.5rem] shadow-sm border border-red-500/20 bg-red-50/10 dark:bg-red-900/5">
+                    <div class="flex flex-col sm:flex-row justify-between items-center gap-6">
+                        <div>
+                            <h4 class="font-black text-xl text-red-500 mb-1">Nuke Protocol</h4>
+                            <p class="text-sm text-slate-500 font-medium">Erase all local memory instantly. Irreversible.</p>
+                        </div>
+                        <button onclick="app.resetData()" class="bg-red-500/10 text-red-500 border border-red-500/30 hover:bg-red-500 hover:text-white px-8 py-3.5 rounded-full font-bold transition-colors w-full sm:w-auto">
+                            Destroy Data
+                        </button>
+                    </div>
+                </div>
+
+                <div class="text-center text-slate-400 text-xs font-bold uppercase tracking-widest mt-12 mb-4 opacity-50">
+                    <p>Origin OS Core 6.0 &bull; GTA VI Theme</p>
+                    <p class="mt-2">Created by Santhosh A</p>
+                </div>
+            </section>
+
+            <!-- SPLIT CALCULATOR -->
+            <section id="view-split" class="view-section hidden fade-in max-w-4xl mx-auto w-full">
+                <div class="glass p-8 rounded-[2.5rem] shadow-sm border border-slate-200/50 dark:border-darkBorder/50 mb-8 text-center relative overflow-hidden">
+                    <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full bg-gradient-to-br from-indigo-500/5 to-purple-500/5 pointer-events-none"></div>
+                    <div class="relative z-10">
+                        <div class="w-16 h-16 rounded-3xl bg-indigo-500/20 mx-auto flex items-center justify-center text-indigo-500 mb-4"><i class="ph-bold ph-scales text-3xl"></i></div>
+                        <h3 class="text-4xl font-black tracking-tight mb-3">Fair Algorithm</h3>
+                        <p class="text-[15px] text-slate-500 dark:text-slate-400 mb-8 font-medium max-w-xl mx-auto">Input a target bill amount. The engine mathematically calculates the exact proportional split based on current positive wealth distribution.</p>
+                        <div class="max-w-md mx-auto relative">
+                            <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2 text-left ml-4">Target Amount (₹)</label>
+                            <input type="number" id="split-target" min="1" step="0.01" placeholder="25000" class="w-full bg-white dark:bg-black/40 border border-slate-200 dark:border-darkBorder focus:ring-2 focus:ring-indigo-500 py-4 text-2xl font-black text-center shadow-inner">
+                            <button onclick="app.calculateSplit()" class="w-full mt-4 bg-indigo-500 hover:bg-indigo-600 text-white py-4 rounded-full shadow-[0_5px_20px_rgba(99,102,241,0.3)] font-black text-lg transition-colors tracking-wide">
+                                Execute Split
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div id="split-results-container" class="hidden"></div>
+            </section>
+        </div>
+    </main>
+
+    <!-- Floating Action Button -->
+    <div id="draggable-fab" class="fixed bottom-24 lg:bottom-12 right-6 lg:right-12 z-40 touch-none">
+        <button class="w-16 h-16 bg-gta text-white rounded-full shadow-gta flex items-center justify-center text-3xl transition-transform hover:scale-110 active:scale-95 cursor-move">
+            <i class="ph-bold ph-plus pointer-events-none"></i>
+        </button>
+    </div>
+
+    <!-- Mobile Bottom Nav (Origin OS Floating Style) -->
+    <div class="md:hidden fixed bottom-4 left-4 right-4 z-40 flex justify-center pointer-events-none">
+        <nav class="bg-white/70 dark:bg-[#151520]/80 backdrop-blur-2xl border border-white/20 dark:border-white/10 rounded-full shadow-2xl flex items-center p-2 gap-1 overflow-x-auto custom-scroll pointer-events-auto max-w-full">
+            <button onclick="app.navigate('dashboard')" class="nav-item active shrink-0 flex items-center justify-center w-12 h-12 rounded-full" data-target="dashboard"><i class="ph-bold ph-squares-four text-2xl"></i></button>
+            <button onclick="app.navigate('transactions')" class="nav-item shrink-0 flex items-center justify-center w-12 h-12 rounded-full text-slate-500" data-target="transactions"><i class="ph-bold ph-list-dashes text-2xl"></i></button>
+            <button onclick="app.navigate('autopay')" class="nav-item shrink-0 flex items-center justify-center w-12 h-12 rounded-full text-slate-500" data-target="autopay"><i class="ph-bold ph-arrows-clockwise text-2xl"></i></button>
+            <button onclick="app.navigate('lent')" class="nav-item shrink-0 flex items-center justify-center w-12 h-12 rounded-full text-slate-500" data-target="lent"><i class="ph-bold ph-hand-coins text-2xl"></i></button>
+            <button onclick="app.navigate('borrowed')" class="nav-item shrink-0 flex items-center justify-center w-12 h-12 rounded-full text-slate-500" data-target="borrowed"><i class="ph-bold ph-hand-arrow-down text-2xl"></i></button>
+            <button onclick="app.navigate('summary')" class="nav-item shrink-0 flex items-center justify-center w-12 h-12 rounded-full text-slate-500" data-target="summary"><i class="ph-bold ph-chart-pie-slice text-2xl"></i></button>
+            <button onclick="app.navigate('compare')" class="nav-item shrink-0 flex items-center justify-center w-12 h-12 rounded-full text-slate-500" data-target="compare"><i class="ph-bold ph-chart-line-up text-2xl"></i></button>
+            <button onclick="app.navigate('users')" class="nav-item shrink-0 flex items-center justify-center w-12 h-12 rounded-full text-slate-500" data-target="users"><i class="ph-bold ph-users text-2xl"></i></button>
+            <button onclick="app.navigate('settings')" class="nav-item shrink-0 flex items-center justify-center w-12 h-12 rounded-full text-slate-500" data-target="settings"><i class="ph-bold ph-gear text-2xl"></i></button>
+        </nav>
+    </div>
+
+    <!-- Modals Overlay -->
+    <div id="modal-overlay" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden opacity-0 transition-opacity duration-300"></div>
+
+    <!-- Universal Modal Form Template Style applied to specific forms below -->
+    <style>
+        .modal-glass { @apply bg-white dark:bg-[#151520] rounded-[2.5rem] shadow-2xl border border-white/20 dark:border-white/5; }
+        .modal-input { @apply w-full bg-slate-50 dark:bg-black/30 border border-slate-200 dark:border-darkBorder focus:ring-2 focus:ring-gtaPink/50 py-3.5 font-semibold; }
+        .modal-label { @apply block text-xs font-bold text-slate-400 uppercase tracking-widest mb-1.5 ml-2; }
+    </style>
+
+    <!-- Workspace Modal -->
+    <div id="modal-workspace" class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[90%] max-w-sm max-h-[90dvh] overflow-y-auto modal-glass z-50 hidden opacity-0 scale-95 transition-all duration-300 p-8">
+        <div class="flex justify-between items-center mb-6">
+            <h3 class="text-2xl font-black">Identities</h3>
+            <button onclick="app.closeModals()" class="w-8 h-8 rounded-full bg-slate-100 dark:bg-[#232332] flex items-center justify-center text-slate-500 hover:text-slate-800 dark:hover:text-white"><i class="ph-bold ph-x"></i></button>
+        </div>
+        <div id="workspace-list" class="mb-6 max-h-60 overflow-y-auto pr-2 custom-scroll space-y-2"></div>
+        <div class="border-t border-slate-200/50 dark:border-darkBorder/50 pt-6">
+            <form onsubmit="app.createWorkspace(event)" class="flex flex-col gap-3">
+                <input type="text" id="new-ws-name" required placeholder="New Entity Name..." class="modal-input">
+                <button type="submit" class="bg-slate-900 dark:bg-white text-white dark:text-black py-3.5 rounded-full font-bold w-full">Initialize</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Auto Pay Modal -->
+    <div id="modal-autopay" class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[90%] max-w-md max-h-[90dvh] overflow-y-auto modal-glass z-50 hidden opacity-0 scale-95 transition-all duration-300 p-8">
+        <div class="flex justify-between items-center mb-6">
+            <h3 class="text-2xl font-black" id="autopay-modal-title">Setup Auto Pay</h3>
+            <button onclick="app.closeModals()" class="w-8 h-8 rounded-full bg-slate-100 dark:bg-[#232332] flex items-center justify-center text-slate-500"><i class="ph-bold ph-x"></i></button>
+        </div>
+        <form id="autopay-form" onsubmit="app.saveAutoPay(event)" class="space-y-5">
+            <input type="hidden" id="ap-id">
+            <div><label class="modal-label">Title / Name</label><input type="text" id="ap-title" required placeholder="e.g. Netflix, Rent..." class="modal-input"></div>
+            <div class="grid grid-cols-2 gap-4">
+                <div><label class="modal-label">Type</label><select id="ap-type" required class="modal-input"><option value="expense">Expense (Bill)</option><option value="savings">Transfer to Savings</option><option value="income">Income (Salary)</option></select></div>
+                <div><label class="modal-label">User</label><select id="ap-user" required class="modal-input"></select></div>
+            </div>
+            <div><label class="modal-label">Amount (₹)</label><input type="number" id="ap-amount" required min="1" step="0.01" placeholder="0.00" class="modal-input text-xl text-gtaPink"></div>
+            <div class="grid grid-cols-2 gap-4">
+                <div><label class="modal-label">Frequency</label><select id="ap-frequency" required class="modal-input"><option value="monthly">Monthly</option><option value="weekly">Weekly</option><option value="daily">Daily</option><option value="yearly">Yearly</option></select></div>
+                <div><label class="modal-label">Next Date</label><input type="date" id="ap-next-date" required class="modal-input"></div>
+            </div>
+            <div class="pt-4 flex gap-3"><button type="submit" class="w-full bg-gta text-white font-bold py-4 rounded-full shadow-gta">Commit Script</button></div>
+        </form>
+    </div>
+
+    <!-- Transaction Modal -->
+    <div id="modal-transaction" class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[90%] max-w-md max-h-[90dvh] overflow-y-auto modal-glass z-50 hidden opacity-0 scale-95 transition-all duration-300 p-8">
+        <div class="flex justify-between items-center mb-6">
+            <h3 class="text-2xl font-black" id="tx-modal-title">New Entry</h3>
+            <button onclick="app.closeModals()" class="w-8 h-8 rounded-full bg-slate-100 dark:bg-[#232332] flex items-center justify-center text-slate-500"><i class="ph-bold ph-x"></i></button>
+        </div>
+        <form id="tx-form" onsubmit="app.saveTransaction(event)" class="space-y-5">
+            <input type="hidden" id="tx-id"><input type="hidden" id="tx-linked-id">
+            <div class="grid grid-cols-2 gap-4">
+                <div><label class="modal-label">Type</label><select id="tx-type" required onchange="app.handleTxTypeChange()" class="modal-input">
+                    <option value="expense">Expense</option><option value="income">Income</option><option value="lent">Lent</option><option value="lent_returned">Lent Returned (Inflow)</option><option value="borrowed">Borrowed</option><option value="borrowed_returned">Repaid Borrowed (Outflow)</option><option value="savings">Transfer to Savings</option><option value="withdraw_savings">Withdraw from Savings</option>
+                </select></div>
+                <div><label class="modal-label">User</label><select id="tx-user" required class="modal-input"></select></div>
+            </div>
+            <div><label class="modal-label">Amount (₹)</label><input type="number" id="tx-amount" required min="1" step="0.01" placeholder="0.00" class="modal-input text-2xl text-gtaPink"></div>
+            <div><label class="modal-label" id="tx-cat-label">Category</label><input type="text" id="tx-category" required placeholder="e.g. Food, Rent..." list="category-suggestions" class="modal-input"><datalist id="category-suggestions"><option value="Food & Dining"><option value="Housing & Rent"><option value="Transportation"><option value="Salary"><option value="Shopping"><option value="Utilities"><option value="Entertainment"></datalist></div>
+            <div class="grid grid-cols-2 gap-4">
+                <div><label class="modal-label">Date</label><input type="date" id="tx-date" required class="modal-input"></div>
+                <div><label class="modal-label">Note</label><input type="text" id="tx-note" placeholder="Optional..." class="modal-input"></div>
+            </div>
+            <div class="pt-4 flex gap-3"><button type="submit" id="tx-submit-btn" class="w-full bg-gta text-white font-bold py-4 rounded-full shadow-gta flex justify-center items-center gap-2">Execute</button></div>
+        </form>
+    </div>
+
+    <!-- Settle Modal -->
+    <div id="modal-settle" class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[90%] max-w-sm max-h-[90dvh] overflow-y-auto modal-glass z-50 hidden opacity-0 scale-95 transition-all duration-300 p-8">
+        <div class="flex justify-between items-center mb-6">
+            <h3 class="text-2xl font-black" id="settle-title">Record Repayment</h3>
+            <button onclick="app.closeModals()" class="w-8 h-8 rounded-full bg-slate-100 dark:bg-[#232332] flex items-center justify-center text-slate-500"><i class="ph-bold ph-x"></i></button>
+        </div>
+        <div id="settle-pending-box" class="bg-black/5 dark:bg-white/5 p-4 rounded-2xl mb-6 text-center border border-slate-200/50 dark:border-darkBorder/50">
+            <span class="text-xs uppercase font-bold tracking-widest opacity-60 block mb-1">Target Balance</span>
+            <strong id="settle-pending-display" class="text-3xl font-black">₹0</strong>
+        </div>
+        <form id="settle-form" onsubmit="app.saveSettlement(event)" class="space-y-5">
+            <input type="hidden" id="settle-parent-id"><input type="hidden" id="settle-user-id"><input type="hidden" id="settle-type">
+            <div><label class="modal-label" id="settle-amount-label">Transfer Amount (₹)</label><input type="number" id="settle-amount" required min="1" step="0.01" class="modal-input text-2xl font-black text-center"></div>
+            <div><label class="modal-label" id="settle-date-label">Date</label><input type="date" id="settle-date" required class="modal-input text-center"></div>
+            <div class="pt-4"><button type="submit" id="settle-submit-btn" class="w-full bg-emerald-500 text-white font-bold py-4 rounded-full shadow-[0_5px_20px_rgba(16,185,129,0.3)]">Confirm Settlement</button></div>
+        </form>
+    </div>
+
+    <!-- Add Debt Modal -->
+    <div id="modal-add-debt" class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[90%] max-w-sm max-h-[90dvh] overflow-y-auto modal-glass z-50 hidden opacity-0 scale-95 transition-all duration-300 p-8">
+        <div class="flex justify-between items-center mb-6">
+            <h3 class="text-2xl font-black" id="add-debt-title">Extend Debt</h3>
+            <button onclick="app.closeModals()" class="w-8 h-8 rounded-full bg-slate-100 dark:bg-[#232332] flex items-center justify-center text-slate-500"><i class="ph-bold ph-x"></i></button>
+        </div>
+        <form id="add-debt-form" onsubmit="app.saveAddDebt(event)" class="space-y-5">
+            <input type="hidden" id="add-debt-parent-id"><input type="hidden" id="add-debt-user-id"><input type="hidden" id="add-debt-type">
+            <div><label class="modal-label" id="add-debt-amount-label">Extra Amount (₹)</label><input type="number" id="add-debt-amount" required min="1" step="0.01" class="modal-input text-2xl font-black text-center"></div>
+            <div class="grid grid-cols-2 gap-4">
+                <div><label class="modal-label">Date</label><input type="date" id="add-debt-date" required class="modal-input"></div>
+                <div><label class="modal-label">Note</label><input type="text" id="add-debt-note" placeholder="Optional..." class="modal-input"></div>
+            </div>
+            <div class="pt-4"><button type="submit" id="add-debt-submit-btn" class="w-full bg-slate-900 dark:bg-white text-white dark:text-black font-bold py-4 rounded-full shadow-lg">Inject Funds</button></div>
+        </form>
+    </div>
+
+    <!-- User Modal -->
+    <div id="modal-user" class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[90%] max-w-sm max-h-[90dvh] overflow-y-auto modal-glass z-50 hidden opacity-0 scale-95 transition-all duration-300 p-8">
+        <div class="flex justify-between items-center mb-6">
+            <h3 class="text-2xl font-black" id="user-modal-title">New Entity</h3>
+            <button onclick="app.closeModals()" class="w-8 h-8 rounded-full bg-slate-100 dark:bg-[#232332] flex items-center justify-center text-slate-500"><i class="ph-bold ph-x"></i></button>
+        </div>
+        <form id="user-form" onsubmit="app.saveUser(event)" class="space-y-5">
+            <input type="hidden" id="user-id">
+            <div><label class="modal-label">Alias</label><input type="text" id="user-name" required placeholder="Name..." class="modal-input text-center text-xl font-bold"></div>
+            <div class="grid grid-cols-2 gap-4">
+                <div><label class="modal-label">Aura Color</label><div class="w-full h-[52px] bg-slate-50 dark:bg-black/30 border border-slate-200 dark:border-darkBorder rounded-full overflow-hidden p-1"><input type="color" id="user-color" value="#FF007F" class="w-full h-full cursor-pointer border-0 p-0 bg-transparent rounded-full"></div></div>
+                <div><label class="modal-label">Pay Day (1-31)</label><input type="number" id="user-salary" min="1" max="31" placeholder="e.g. 5" class="modal-input text-center font-bold"></div>
+            </div>
+            <div class="pt-4"><button type="submit" class="w-full bg-gta text-white font-bold py-4 rounded-full shadow-gta">Register Identity</button></div>
+        </form>
+    </div>
+
+    <!-- Confirm Modal -->
+    <div id="modal-confirm" class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[85%] max-w-xs modal-glass z-50 hidden opacity-0 scale-95 transition-all duration-300 p-8 text-center border-red-500/30">
+        <div class="w-20 h-20 rounded-[2rem] bg-red-500/10 mx-auto mb-6 flex items-center justify-center text-red-500 shadow-[0_0_20px_rgba(239,68,68,0.2)]"><i class="ph-fill ph-warning text-4xl"></i></div>
+        <h3 class="text-2xl font-black mb-2" id="confirm-title">Warning</h3>
+        <p class="text-slate-500 dark:text-slate-400 mb-8 text-[15px] font-medium" id="confirm-msg">This action is permanent.</p>
+        <div class="flex gap-3">
+            <button onclick="app.closeModals()" class="flex-1 bg-slate-100 dark:bg-[#232332] text-slate-800 dark:text-white font-bold py-3.5 rounded-full hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors">Abort</button>
+            <button onclick="app.executeConfirm()" class="flex-1 bg-red-500 text-white font-bold py-3.5 rounded-full shadow-[0_5px_15px_rgba(239,68,68,0.3)] hover:bg-red-600 transition-colors">Execute</button>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div id="toast" class="fixed top-6 left-1/2 -translate-x-1/2 bg-slate-900/90 dark:bg-white/90 backdrop-blur-xl text-white dark:text-slate-900 px-6 py-4 rounded-full shadow-2xl transform transition-all duration-300 -translate-y-full opacity-0 z-[100] flex items-center gap-3 border border-white/10 dark:border-black/10 font-bold tracking-wide pointer-events-none">
+        <i id="toast-icon" class="ph-fill ph-check-circle text-gtaPink text-xl"></i>
+        <span id="toast-msg">Success</span>
+    </div>
+
+    <script>
+    // ═══════════════════════════════════════════════════════════
+    //  SHARED WALLET APP — v2.0 (Origin OS x GTA 6 UI Update)
+    //  Developed by Santhosh A
+    // ═══════════════════════════════════════════════════════════
+
+    const APPS_SCRIPT_CODE = `// ============================================================
+//  SHARED WALLET — Google Sheets Connector
+//  Developed by Santhosh A
+// ============================================================
+
+function doPost(e) {
+  var lock = LockService.getScriptLock();
+  lock.tryLock(15000);
+  try {
+    var payload = JSON.parse(e.postData.contents);
+    if (payload.action === 'sync') {
+      writeAllSheets(payload);
+      return jsonOut({ status: 'success', message: 'Synced ' + (payload.transactions||[]).length + ' records.' });
+    }
+    return jsonOut({ status: 'error', message: 'Unknown action.' });
+  } catch(err) {
+    return jsonOut({ status: 'error', message: err.toString() });
+  } finally { lock.releaseLock(); }
+}
+
+function doGet(e) {
+  try {
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    return jsonOut({ status: 'ok', sheetName: ss.getName(), message: 'Connection established!' });
+  } catch(err) { return jsonOut({ status: 'error', message: err.toString() }); }
+}
+
+function jsonOut(obj) {
+  return ContentService.createTextOutput(JSON.stringify(obj)).setMimeType(ContentService.MimeType.JSON);
+}
+
+function writeAllSheets(data) {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var users = data.users||[], transactions = data.transactions||[], wsName = data.workspaceName||'Shared Wallet';
+  writeTxSheet(ss, users, transactions);
+  writeUsersSheet(ss, users, transactions);
+  writeMonthlySheet(ss, transactions);
+  writeInfoSheet(ss, wsName, users.length, transactions.length);
+}
+
+function writeTxSheet(ss, users, transactions) {
+  var s = ss.getSheetByName('Transactions') || ss.insertSheet('Transactions');
+  s.clearContents(); s.clearFormats();
+  var h = ['Date','User','Type','Category / Note','Amount (INR)','Extra Note'];
+  styleHeader(s, h, '#FF007F');
+  if (!transactions.length) return;
+  var typeMap = {income:'Income',expense:'Expense',lent:'Lent',lent_returned:'Lent Returned',borrowed:'Borrowed',borrowed_returned:'Borrowed Repaid',savings:'Transfer to Savings',withdraw_savings:'Withdrawn from Savings'};
+  var rows = transactions.slice().sort(function(a,b){return new Date(b.date)-new Date(a.date);}).map(function(tx){
+    var u = users.find(function(u){return u.id===tx.userId;}); 
+    return [fmtDate(tx.date), u?u.name:'Unknown', typeMap[tx.type]||tx.type, tx.category||'', Number(tx.amount), tx.note||''];
+  });
+  s.getRange(2,1,rows.length,h.length).setValues(rows);
+  s.getRange(2,5,rows.length,1).setNumberFormat('₹#,##0.00');
+  for(var i=0;i<rows.length;i++) s.getRange(i+2,1,1,h.length).setBackground(i%2===0?'#F9FAFB':'#FFFFFF');
+  s.autoResizeColumns(1,h.length); s.setFrozenRows(1);
+}
+
+function writeUsersSheet(ss, users, transactions) {
+  var s = ss.getSheetByName('Users') || ss.insertSheet('Users');
+  s.clearContents(); s.clearFormats();
+  var h = ['User','Net Balance','Total Income','Total Expense','Net Lent','Net Borrowed','Net Savings','Salary Day'];
+  styleHeader(s, h, '#7B2CBF');
+  if(!users.length) return;
+  var rows = users.map(function(u){
+    var inc=0,exp=0,lnt=0,brw=0,sav=0;
+    transactions.forEach(function(tx){
+      if(tx.userId!==u.id) return;
+      var a=Number(tx.amount);
+      if(tx.type==='income') inc+=a;
+      if(tx.type==='expense') exp+=a;
+      if(tx.type==='lent') lnt+=a;
+      if(tx.type==='lent_returned') lnt-=a; 
+      if(tx.type==='borrowed') brw+=a;
+      if(tx.type==='borrowed_returned') brw-=a; 
+      if(tx.type==='savings') sav+=a;
+      if(tx.type==='withdraw_savings') sav-=a;
+    });
+    return [u.name,(inc+brw)-(exp+lnt+sav),inc,exp,lnt,brw,sav,u.salaryDate||'Not Set'];
+  });
+  s.getRange(2,1,rows.length,h.length).setValues(rows);
+  s.getRange(2,2,rows.length,6).setNumberFormat('₹#,##0.00');
+  rows.forEach(function(r,i){ if(Number(r[1])<0) s.getRange(i+2,2).setFontColor('#ef4444').setFontWeight('bold'); });
+  for(var i=0;i<rows.length;i++) s.getRange(i+2,1,1,h.length).setBackground(i%2===0?'#F9FAFB':'#FFFFFF');
+  s.autoResizeColumns(1,h.length); s.setFrozenRows(1);
+}
+
+function writeMonthlySheet(ss, transactions) {
+  var s = ss.getSheetByName('Monthly Summary') || ss.insertSheet('Monthly Summary');
+  s.clearContents(); s.clearFormats();
+  var h = ['Month','Income','Expense','Net Lent','Net Borrowed','Net Savings','Net Flow'];
+  styleHeader(s, h, '#FF9E00');
+  var map={};
+  transactions.forEach(function(tx){
+    var d=new Date(tx.date), k=d.getFullYear()+'-'+pad(d.getMonth()+1);
+    if(!map[k]) map[k]={label:d.toLocaleString('en-GB',{month:'short',year:'numeric'}),inc:0,exp:0,lnt:0,brw:0,sav:0};
+    var a=Number(tx.amount);
+    if(tx.type==='income') map[k].inc+=a;
+    if(tx.type==='expense') map[k].exp+=a;
+    if(tx.type==='lent') map[k].lnt+=a;
+    if(tx.type==='lent_returned') map[k].lnt-=a; 
+    if(tx.type==='borrowed') map[k].brw+=a;
+    if(tx.type==='borrowed_returned') map[k].brw-=a;
+    if(tx.type==='savings') map[k].sav+=a;
+    if(tx.type==='withdraw_savings') map[k].sav-=a;
+  });
+  var keys=Object.keys(map).sort().reverse();
+  if(!keys.length) return;
+  var rows=keys.map(function(k){ var m=map[k],nf=(m.inc+m.brw)-(m.exp+m.lnt+m.sav); return [m.label,m.inc,m.exp,m.lnt,m.brw,m.sav,nf]; });
+  s.getRange(2,1,rows.length,h.length).setValues(rows);
+  s.getRange(2,2,rows.length,6).setNumberFormat('₹#,##0.00');
+  rows.forEach(function(r,i){ s.getRange(i+2,7).setFontColor(Number(r[6])>=0?'#10b981':'#ef4444').setFontWeight('bold'); });
+  for(var i=0;i<rows.length;i++) s.getRange(i+2,1,1,h.length).setBackground(i%2===0?'#F9FAFB':'#FFFFFF');
+  s.autoResizeColumns(1,h.length); s.setFrozenRows(1);
+}
+
+function writeInfoSheet(ss, wsName, uCount, txCount) {
+  var s = ss.getSheetByName('Info') || ss.insertSheet('Info');
+  s.clearContents(); s.clearFormats();
+  var now = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'dd MMM yyyy, hh:mm a');
+  var info=[['Shared Wallet — Google Sheets Connector',''],['',''],['Last Synced',now],['Workspace',wsName],['Total Users',uCount],['Total Transactions',txCount],['',''],['System Core','Origin OS x GTA 6 Edition'],['Portfolio','https://a-santhosh-hub.github.io/in/']];
+  s.getRange(1,1,info.length,2).setValues(info);
+  s.getRange(1,1).setFontWeight('bold').setFontSize(14).setFontColor('#FF007F');
+  s.getRange(3,1,7,1).setFontWeight('bold');
+  s.autoResizeColumns(1,2);
+}
+
+function styleHeader(sheet, headers, bg) {
+  var r = sheet.getRange(1,1,1,headers.length);
+  r.setValues([headers]).setBackground(bg).setFontColor('#FFFFFF').setFontWeight('bold').setFontSize(12);
+}
+function fmtDate(d) { return Utilities.formatDate(new Date(d), Session.getScriptTimeZone(), 'dd MMM yyyy'); }
+function pad(n) { return String(n).padStart(2,'0'); }`;
+
+    const app = {
+        workspaces: [],
+        activeWorkspaceId: null,
+        editingWorkspaceId: null,
+        data: null,
+        settings: { darkMode: true, gsheetsUrl: '', autoSync: false }, // Enforce Dark Mode default for GTA Theme
+        currentView: 'dashboard',
+        currentDate: new Date(),
+        charts: { bar: null, doughnut: null },
+        pendingAction: null,
+
+        tourSteps: [
+            { icon: 'ph-hand-waving', bg: 'bg-gradient-to-r from-pink-500/20 to-orange-500/20', color: 'text-gtaPink', title: 'Welcome to Shared Wallet', text: 'Manage shared finances securely in your browser. Fully redesigned with an Origin OS x GTA 6 aesthetic!' },
+            { icon: 'ph-users', bg: 'bg-emerald-500/20', color: 'text-emerald-500', title: '1. Build Your Crew', text: 'Navigate to the "Users" tab to add yourself and your squad. Pick custom aura colors.' },
+            { icon: 'ph-plus-circle', bg: 'bg-blue-500/20', color: 'text-blue-500', title: '2. Track Everything', text: 'Use the floating action button to log Income, Expenses, Lent, Borrowed, or Savings transfers.' },
+            { icon: 'ph-chart-line-up', bg: 'bg-purple-500/20', color: 'text-purple-500', title: '3. Analytics Engine', text: 'Compare your finances month over month with the Compare tool to track your performance.' },
+            { icon: 'ph-arrows-clockwise', bg: 'bg-orange-500/20', color: 'text-orange-500', title: '4. Auto Pilot', text: 'Setup automatic recurring transactions for bills or salaries so the system runs itself.' },
+            { icon: 'ph-google-logo', bg: 'bg-emerald-500/20', color: 'text-emerald-500', title: '5. Cloud Sync', text: 'Connect your own Google Sheet in Settings to create an indestructible backup bridge.' }
+        ],
+        currentTourStep: 0,
+
+        fmtCurrency: (num) => new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(num || 0),
+        fmtDate: (dateStr) => new Intl.DateTimeFormat('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).format(new Date(dateStr)),
+        formatDateForInput: (d) => { const yr = d.getFullYear(); const mo = String(d.getMonth() + 1).padStart(2, '0'); const da = String(d.getDate()).padStart(2, '0'); return `${yr}-${mo}-${da}`; },
+
+        // ═══════════════════════════════════════════════
+        //  GOOGLE SHEETS INTEGRATION METHODS
+        // ═══════════════════════════════════════════════
+
+        copyAppScript() {
+            navigator.clipboard.writeText(APPS_SCRIPT_CODE).then(() => {
+                const btn = document.getElementById('copy-script-btn');
+                btn.innerHTML = '<i class="ph-bold ph-check text-emerald-500"></i> Copied!';
+                btn.classList.add('text-emerald-500');
+                setTimeout(() => {
+                    btn.innerHTML = '<i class="ph-bold ph-copy"></i> Copy Script';
+                    btn.classList.remove('text-emerald-500');
+                }, 2500);
+                this.showToast('Code copied to clipboard.');
+            }).catch(() => {
+                const ta = document.createElement('textarea');
+                ta.value = APPS_SCRIPT_CODE;
+                ta.style.position = 'fixed';
+                ta.style.opacity = '0';
+                document.body.appendChild(ta);
+                ta.select();
+                document.execCommand('copy');
+                document.body.removeChild(ta);
+                this.showToast('Code copied.');
+            });
+        },
+
+        saveGSheetsUrl() {
+            const input = document.getElementById('gsheets-url-input');
+            const url = (input.value || '').trim();
+            if (url && !url.startsWith('https://script.google.com/macros/s/')) {
+                this.showGSheetsStatus('error', '<i class="ph-bold ph-warning mr-1"></i>Invalid Apps Script URL format.');
+                return;
+            }
+            this.settings.gsheetsUrl = url;
+            this.saveData();
+            this.updateGSheetsUI();
+            if (url) {
+                this.showGSheetsStatus('success', '<i class="ph-bold ph-check-circle mr-1"></i>Bridge link saved. Run Test Connection.');
+                this.showToast('Bridge Link Established!');
+            } else {
+                this.showGSheetsStatus('info', '<i class="ph-bold ph-info mr-1"></i>Link severed. Cloud sync deactivated.');
+                this.showToast('Link severed.');
+            }
+        },
+
+        async testGSheetsConnection() {
+            const url = this.settings.gsheetsUrl;
+            if (!url) {
+                this.showGSheetsStatus('error', '<i class="ph-bold ph-warning mr-1"></i>No URL saved.');
+                return;
+            }
+            const btn = document.getElementById('gsheets-test-btn');
+            btn.innerHTML = '<i class="ph-bold ph-spinner spin text-xl"></i> Connecting...';
+            btn.disabled = true;
+            try {
+                const res = await fetch(url, { method: 'GET' });
+                const data = await res.json();
+                if (data.status === 'ok') {
+                    this.showGSheetsStatus('success', `<i class="ph-bold ph-check-circle mr-1"></i>Connection Stable! Target: <strong>${data.sheetName}</strong>`);
+                    this.showToast('Connection Stable!');
+                } else {
+                    this.showGSheetsStatus('error', `<i class="ph-bold ph-x-circle mr-1"></i>Error: ${data.message}`);
+                }
+            } catch (err) {
+                this.showGSheetsStatus('error', '<i class="ph-bold ph-x-circle mr-1"></i>Connection Timeout. Ensure deployment is set to "Anyone".');
+            } finally {
+                btn.innerHTML = '<i class="ph-bold ph-wifi-high text-xl text-blue-500"></i> Test Connection';
+                btn.disabled = false;
+            }
+        },
+
+        async syncToGoogleSheets(silent = false) {
+            const url = this.settings.gsheetsUrl;
+            if (!url) {
+                if (!silent) {
+                    this.showGSheetsStatus('error', '<i class="ph-bold ph-warning mr-1"></i>No valid URL. Please set up the bridge first.');
+                    this.navigate('settings');
+                }
+                return;
+            }
+            const btn = document.getElementById('gsheets-sync-btn');
+            const pillText = document.getElementById('gsheets-pill-text');
+            const pillDot  = document.getElementById('gsheets-pill-dot');
+            if (btn) { btn.innerHTML = '<i class="ph-bold ph-arrows-clockwise spin text-xl"></i> Syncing...'; btn.disabled = true; }
+            if (pillText) pillText.textContent = 'Syncing...';
+            if (pillDot)  pillDot.classList.replace('bg-emerald-400', 'bg-orange-400');
+            const payload = { action: 'sync', workspaceName: this.data.name, users: this.data.users, transactions: this.data.transactions };
+            try {
+                const res = await fetch(url, { method: 'POST', body: JSON.stringify(payload) });
+                const data = await res.json();
+                if (data.status === 'success') {
+                    if (!silent) {
+                        this.showGSheetsStatus('success', `<i class="ph-bold ph-check-circle mr-1"></i>${data.message}`);
+                        this.showToast('Data Synced to Cloud!');
+                    }
+                    this.settings.lastSync = new Date().toLocaleString('en-IN');
+                    this.saveData();
+                    if (pillText) pillText.textContent = 'Synced';
+                    if (pillDot)  pillDot.classList.replace('bg-orange-400', 'bg-emerald-400');
+                } else {
+                    throw new Error(data.message);
+                }
+            } catch (err) {
+                if (!silent) {
+                    this.showGSheetsStatus('error', `<i class="ph-bold ph-x-circle mr-1"></i>Sync failed: ${err.message}`);
+                    this.showToast('Cloud Sync Failed.', 'error');
+                }
+                if (pillText) pillText.textContent = 'Failed';
+                if (pillDot)  pillDot.classList.replace('bg-orange-400', 'bg-red-500');
+            } finally {
+                if (btn) { btn.innerHTML = '<i class="ph-bold ph-cloud-arrow-up text-xl"></i> Force Sync Now'; btn.disabled = false; }
+            }
+        },
+
+        toggleAutoSync() {
+            this.settings.autoSync = !this.settings.autoSync;
+            this.saveData();
+            this.updateAutoSyncToggle();
+            this.showToast(this.settings.autoSync ? 'Auto-Pilot Engaged!' : 'Auto-Pilot Disabled.');
+        },
+
+        updateAutoSyncToggle() {
+            const btn = document.getElementById('autosync-toggle');
+            if (!btn) return;
+            if (this.settings.autoSync) {
+                btn.className = 'relative inline-flex h-8 w-14 items-center rounded-full transition-colors focus:outline-none shrink-0 shadow-inner toggle-on';
+                btn.innerHTML = '<span class="inline-block w-6 h-6 transform translate-x-7 rounded-full bg-white shadow-md transition-transform"></span>';
+            } else {
+                btn.className = 'relative inline-flex h-8 w-14 items-center rounded-full transition-colors focus:outline-none shrink-0 shadow-inner toggle-off';
+                btn.innerHTML = '<span class="inline-block w-6 h-6 transform translate-x-1 rounded-full bg-white shadow-md transition-transform"></span>';
+            }
+        },
+
+        showGSheetsStatus(type, html) {
+            const el = document.getElementById('gsheets-status');
+            if (!el) return;
+            const classes = {
+                success: 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/30',
+                error:   'bg-red-500/10 text-red-500 border border-red-500/30',
+                info:    'bg-blue-500/10 text-blue-500 border border-blue-500/30'
+            };
+            el.className = `mt-3 text-sm p-4 rounded-2xl font-bold ${classes[type] || classes.info}`;
+            el.innerHTML = html;
+            el.classList.remove('hidden');
+        },
+
+        updateGSheetsUI() {
+            const input = document.getElementById('gsheets-url-input');
+            if (input && this.settings.gsheetsUrl) input.value = this.settings.gsheetsUrl;
+            const pill = document.getElementById('gsheets-header-pill');
+            if (pill) {
+                if (this.settings.gsheetsUrl) pill.classList.replace('hidden', 'flex');
+                else pill.classList.replace('flex', 'hidden');
+            }
+            this.updateAutoSyncToggle();
+        },
+
+        // ═══════════════════════════════════════════════
+        //  CORE APP LOGIC
+        // ═══════════════════════════════════════════════
+
+        init() {
+            const savedWorkspaces = localStorage.getItem('wallet_workspaces');
+            const activeWsId      = localStorage.getItem('wallet_active_ws');
+            const savedSettings   = localStorage.getItem('wallet_settings');
+
+            if (savedSettings) {
+                const parsed = JSON.parse(savedSettings);
+                this.settings = Object.assign({ darkMode: true, gsheetsUrl: '', autoSync: false }, parsed);
+                if (this.settings.darkMode) document.documentElement.classList.add('dark');
+                else document.documentElement.classList.remove('dark');
+            } else {
+                // Default to dark mode for GTA theme
+                document.documentElement.classList.add('dark');
+                this.settings.darkMode = true;
+            }
+
+            this.updateThemeUI();
+
+            if (savedWorkspaces) {
+                this.workspaces = JSON.parse(savedWorkspaces);
+                this.activeWorkspaceId = activeWsId || this.workspaces[0].id;
+            } else {
+                const oldUsers = localStorage.getItem('wallet_users');
+                const oldTx    = localStorage.getItem('wallet_transactions');
+                const defaultWs = {
+                    id: 'ws_' + Date.now(),
+                    name: 'Main Account',
+                    users: oldUsers ? JSON.parse(oldUsers) : [
+                        { id: 'u1', name: 'Me',      color: '#FF007F', salaryDate: 5 },
+                        { id: 'u2', name: 'Partner', color: '#7B2CBF', salaryDate: 10 }
+                    ],
+                    transactions: oldTx ? JSON.parse(oldTx) : [],
+                    autoPays: []
+                };
+                this.workspaces = [defaultWs];
+                this.activeWorkspaceId = defaultWs.id;
+            }
+
+            this.syncDataPointer();
+
+            document.getElementById('tx-search').addEventListener('input', () => this.renderTransactions());
+            document.getElementById('tx-filter-user').addEventListener('change', () => this.renderTransactions());
+            document.getElementById('tx-filter-type').addEventListener('change', () => this.renderTransactions());
+            document.getElementById('tx-date').valueAsDate = new Date();
+
+            this.setupDraggableFab();
+            this.initCompareDates();
+            this.renderAll();
+            this.updateGSheetsUI();
+            
+            // Tour handling
+            if (!localStorage.getItem('wallet_tour_seen')) {
+                this.initTour();
+                localStorage.setItem('wallet_tour_seen', 'true');
+            }
+        },
+
+        initTour() {
+             // Mockup of a tour setup if it was requested, currently the code handles tour state but has no modal UI provided originally. 
+        },
+
+        syncDataPointer() {
+            const ws = this.workspaces.find(w => w.id === this.activeWorkspaceId) || this.workspaces[0];
+            this.activeWorkspaceId = ws.id;
+            this.data = ws;
+            if (!this.data.autoPays) this.data.autoPays = [];
+            document.querySelectorAll('.current-workspace-name').forEach(el => el.innerText = ws.name);
+            this.processAutoPays();
+        },
+
+        // ═══════════════════════════════════════════════
+        //  AUTO PAY ENGINE
+        // ═══════════════════════════════════════════════
+
+        processAutoPays() {
+            let generatedCount = 0;
+            const today = new Date();
+            today.setHours(0,0,0,0);
+
+            this.data.autoPays.forEach(ap => {
+                if (!ap.active) return;
+                const parts = ap.nextDate.split('-');
+                let nextD = new Date(parts[0], parts[1] - 1, parts[2]);
+                nextD.setHours(0,0,0,0);
+                
+                let maxIterations = 0; 
+                while (nextD <= today && maxIterations < 100) {
+                    this.data.transactions.push({
+                        id: 'tx_auto_' + Date.now() + Math.random().toString(36).substr(2, 5),
+                        type: ap.type || 'expense',
+                        userId: ap.userId,
+                        amount: Number(ap.amount),
+                        category: ap.title,
+                        date: this.formatDateForInput(nextD),
+                        note: 'Auto-paid (' + ap.frequency + ')'
+                    });
+                    generatedCount++;
+                    
+                    if (ap.frequency === 'daily') nextD.setDate(nextD.getDate() + 1);
+                    else if (ap.frequency === 'weekly') nextD.setDate(nextD.getDate() + 7);
+                    else if (ap.frequency === 'monthly') nextD.setMonth(nextD.getMonth() + 1);
+                    else if (ap.frequency === 'yearly') nextD.setFullYear(nextD.getFullYear() + 1);
+                    
+                    maxIterations++;
+                }
+                ap.nextDate = this.formatDateForInput(nextD);
+            });
+
+            if (generatedCount > 0) {
+                this.saveData();
+                setTimeout(() => {
+                    this.showToast(`System Executed ${generatedCount} Auto-Pay(s)!`);
+                    if (this.settings.autoSync && this.settings.gsheetsUrl) {
+                        this.syncToGoogleSheets(true); 
+                    }
+                }, 1000);
+            }
+        },
+
+        renderAutoPays() {
+            const grid = document.getElementById('autopay-grid');
+            if (!grid) return;
+            let html = '';
+            this.data.autoPays.forEach(ap => {
+                const user = this.data.users.find(u => u.id === ap.userId) || { name: '?', color: '#ccc' };
+                let typeColor = 'text-red-500';
+                if(ap.type === 'income') typeColor = 'text-emerald-500';
+                if(ap.type === 'savings') typeColor = 'text-purple-500';
+
+                html += `
+                    <div class="glass p-6 rounded-[2.5rem] shadow-sm border border-slate-200/50 dark:border-darkBorder/50 relative overflow-hidden group hover:border-gtaPink/30 transition-colors">
+                        <div class="flex justify-between items-start mb-4 border-b border-slate-100 dark:border-darkBorder pb-4">
+                            <div class="${ap.active ? '' : 'opacity-40'}">
+                                <h4 class="font-black text-xl text-slate-800 dark:text-slate-100 truncate max-w-[180px]" title="${ap.title}">${ap.title}</h4>
+                                <div class="flex items-center gap-1 mt-1 text-xs">
+                                    <div class="w-2 h-2 rounded-full" style="background-color:${user.color}"></div>
+                                    <span class="text-slate-600 dark:text-slate-400 capitalize font-bold">${user.name} • ${ap.frequency}</span>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <p class="font-black ${typeColor} text-2xl">${this.fmtCurrency(ap.amount)}</p>
+                                <p class="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-1">${ap.type}</p>
+                            </div>
+                        </div>
+                        <div class="flex justify-between items-center mt-2">
+                            <div class="text-sm">
+                                <span class="text-slate-500 font-medium">Next Cycle:</span>
+                                <span class="font-bold ${ap.active ? 'text-slate-700 dark:text-slate-200' : 'text-slate-400'} ml-1">${this.fmtDate(ap.nextDate)}</span>
+                            </div>
+                            <div class="flex items-center gap-4">
+                                <button onclick="app.deleteAutoPay('${ap.id}')" class="text-slate-400 hover:text-red-500 p-1 opacity-0 group-hover:opacity-100 transition-opacity"><i class="ph-bold ph-trash text-xl"></i></button>
+                                <button onclick="app.toggleAutoPay('${ap.id}')" class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none shrink-0 ${ap.active ? 'toggle-on' : 'toggle-off'}">
+                                    <span class="inline-block w-4 h-4 transform ${ap.active ? 'translate-x-6' : 'translate-x-1'} rounded-full bg-white shadow transition-transform"></span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            grid.innerHTML = html || `<div class="col-span-full p-10 text-center text-slate-500 dark:text-slate-400 glass rounded-[2.5rem] border border-dashed border-slate-300 dark:border-slate-700"><p class="font-bold text-lg">No Auto Pays active.</p><p class="text-sm mt-1">Setup scheduled payments to automate your history.</p></div>`;
+        },
+
+        openAutoPayModal() {
+            if (!this.data.users.length) { this.showToast('Please add a user first!', 'error'); this.navigate('users'); return; }
+            document.getElementById('autopay-form').reset();
+            document.getElementById('ap-id').value = '';
+            document.getElementById('ap-next-date').valueAsDate = new Date();
+            const userSelect = document.getElementById('ap-user');
+            userSelect.innerHTML = this.data.users.map(u => `<option value="${u.id}">${u.name}</option>`).join('');
+            this.openModal('modal-autopay');
+        },
+
+        saveAutoPay(e) {
+            e.preventDefault();
+            const id = document.getElementById('ap-id').value;
+            const ap = {
+                id: id || 'ap_' + Date.now(),
+                title: document.getElementById('ap-title').value,
+                type: document.getElementById('ap-type').value,
+                userId: document.getElementById('ap-user').value,
+                amount: Number(document.getElementById('ap-amount').value),
+                frequency: document.getElementById('ap-frequency').value,
+                nextDate: document.getElementById('ap-next-date').value,
+                active: true
+            };
+            if (id) { const idx = this.data.autoPays.findIndex(t => t.id === id); if(idx !== -1) this.data.autoPays[idx] = ap; }
+            else this.data.autoPays.push(ap);
+            this.saveData();
+            this.closeModals();
+            this.processAutoPays(); 
+            this.renderAll();
+            this.showToast('Auto Pay System Updated.');
+        },
+
+        toggleAutoPay(id) {
+            const ap = this.data.autoPays.find(a => a.id === id);
+            if (ap) {
+                ap.active = !ap.active;
+                this.saveData();
+                this.renderAll();
+                this.showToast(ap.active ? 'Auto Pay Engaged.' : 'Auto Pay Suspended.');
+            }
+        },
+
+        deleteAutoPay(id) {
+            this.confirmAction('Delete Auto Pay?', 'Are you sure you want to remove this recurring script?', () => {
+                this.data.autoPays = this.data.autoPays.filter(a => a.id !== id);
+                this.saveData(); this.renderAll(); this.closeModals();
+                this.showToast('Script Erased.');
+            });
+        },
+
+
+        // ═══════════════════════════════════════════════
+        //  WORKSPACE LOGIC
+        // ═══════════════════════════════════════════════
+
+        openWorkspaceModal() { this.editingWorkspaceId = null; this.renderWorkspaces(); this.openModal('modal-workspace'); },
+
+        renderWorkspaces() {
+            let html = '';
+            this.workspaces.forEach(ws => {
+                const isActive  = ws.id === this.activeWorkspaceId;
+                const isEditing = ws.id === this.editingWorkspaceId;
+                if (isEditing) {
+                    html += `<div class="flex items-center justify-between p-4 rounded-[2rem] border border-gtaPink bg-gtaPink/5 transition-colors"><form onsubmit="app.saveWorkspaceNameInline(event,'${ws.id}')" class="flex gap-2 w-full"><input type="text" id="inline-rename-${ws.id}" value="${ws.name}" required class="flex-1 bg-transparent border-b border-gtaPink/50 focus:border-gtaPink focus:outline-none px-2 py-1 font-bold text-slate-800 dark:text-white"><button type="button" onclick="app.cancelRenameInline()" class="text-slate-400 hover:text-slate-600 p-1"><i class="ph-bold ph-x text-lg"></i></button><button type="submit" class="text-emerald-500 p-1"><i class="ph-bold ph-check text-xl"></i></button></form></div>`;
+                } else {
+                    html += `<div class="flex items-center justify-between p-4 rounded-[2rem] border ${isActive ? 'border-gtaPink bg-gtaPink/5' : 'border-slate-200/50 dark:border-darkBorder/50 hover:bg-slate-50 dark:hover:bg-white/5'} transition-colors cursor-pointer" onclick="app.switchWorkspace('${ws.id}')"><div class="flex items-center gap-4"><div class="w-10 h-10 rounded-2xl ${isActive ? 'bg-gta text-white shadow-gta-subtle' : 'bg-slate-200 dark:bg-[#232332] text-slate-500'} flex items-center justify-center"><i class="ph-fill ph-wallet"></i></div><span class="font-extrabold text-[15px] ${isActive ? 'text-gtaPink' : ''}">${ws.name}</span></div><div class="flex items-center gap-1"><button onclick="event.stopPropagation();app.startRenameInline('${ws.id}')" class="text-slate-400 hover:text-blue-500 p-1 rounded transition-colors"><i class="ph-bold ph-pencil-simple text-xl"></i></button>${!isActive && this.workspaces.length > 1 ? `<button onclick="event.stopPropagation();app.deleteWorkspace('${ws.id}')" class="text-slate-400 hover:text-red-500 p-1 rounded transition-colors"><i class="ph-bold ph-trash text-xl"></i></button>` : isActive ? `<i class="ph-bold ph-check-circle text-gtaPink text-2xl ml-1"></i>` : ''}</div></div>`;
+                }
+            });
+            document.getElementById('workspace-list').innerHTML = html;
+        },
+
+        switchWorkspace(id) { this.activeWorkspaceId = id; this.syncDataPointer(); this.saveData(); this.renderAll(); this.closeModals(); this.showToast('Account Switched.'); },
+        createWorkspace(e) {
+            e.preventDefault();
+            const input = document.getElementById('new-ws-name');
+            const name  = input.value.trim();
+            if (!name) return;
+            const newWs = { id: 'ws_' + Date.now(), name, users: [{ id: 'u1', name: 'Me', color: '#FF007F', salaryDate: null }], transactions: [], autoPays: [] };
+            this.workspaces.push(newWs);
+            this.activeWorkspaceId = newWs.id;
+            input.value = '';
+            this.syncDataPointer(); this.saveData(); this.renderAll(); this.closeModals();
+            this.showToast('New Entity Initialized.');
+        },
+        deleteWorkspace(id) {
+            this.confirmAction('Delete Account?', 'This will permanently delete this account and all its transactions.', () => {
+                this.workspaces = this.workspaces.filter(w => w.id !== id);
+                if (this.activeWorkspaceId === id) { this.activeWorkspaceId = this.workspaces[0].id; this.syncDataPointer(); }
+                this.saveData(); this.renderAll(); this.closeModals(); this.showToast('Account Terminated.');
+            });
+        },
+        startRenameInline(id) {
+            this.editingWorkspaceId = id; this.renderWorkspaces();
+            setTimeout(() => { const input = document.getElementById(`inline-rename-${id}`); if (input) { input.focus(); input.select(); } }, 50);
+        },
+        cancelRenameInline() { this.editingWorkspaceId = null; this.renderWorkspaces(); },
+        saveWorkspaceNameInline(e, id) {
+            e.preventDefault(); e.stopPropagation();
+            const input = document.getElementById(`inline-rename-${id}`);
+            if (!input) return;
+            const newName = input.value.trim();
+            if (newName) { const ws = this.workspaces.find(w => w.id === id); if (ws) { ws.name = newName; this.saveData(); this.syncDataPointer(); this.renderAll(); this.showToast('Alias Updated.'); } }
+            this.editingWorkspaceId = null; this.renderWorkspaces();
+        },
+
+        setupDraggableFab() {
+            const fab = document.getElementById('draggable-fab');
+            let startX, startY, initialLeft, initialTop, hasMoved = false;
+            const onDown = (e) => {
+                const touch = e.touches ? e.touches[0] : e;
+                startX = touch.clientX; startY = touch.clientY;
+                const rect = fab.getBoundingClientRect();
+                initialLeft = rect.left; initialTop = rect.top; hasMoved = false;
+                document.addEventListener('mousemove', onMove, { passive: false });
+                document.addEventListener('mouseup', onUp);
+                document.addEventListener('touchmove', onMove, { passive: false });
+                document.addEventListener('touchend', onUp);
+            };
+            const onMove = (e) => {
+                const touch = e.touches ? e.touches[0] : e;
+                const dx = touch.clientX - startX, dy = touch.clientY - startY;
+                if (Math.abs(dx) > 5 || Math.abs(dy) > 5) {
+                    hasMoved = true; e.preventDefault();
+                    const bnh = window.innerWidth < 768 ? 80 : 0;
+                    const maxX = window.innerWidth - fab.offsetWidth, maxY = window.innerHeight - fab.offsetHeight - bnh;
+                    fab.style.left = `${Math.max(0, Math.min(initialLeft + dx, maxX))}px`;
+                    fab.style.top  = `${Math.max(0, Math.min(initialTop + dy, maxY))}px`;
+                    fab.style.transform = 'none'; fab.style.bottom = 'auto'; fab.style.right = 'auto';
+                }
+            };
+            const onUp = () => {
+                document.removeEventListener('mousemove', onMove); document.removeEventListener('mouseup', onUp);
+                document.removeEventListener('touchmove', onMove); document.removeEventListener('touchend', onUp);
+                if (hasMoved) setTimeout(() => { hasMoved = false; }, 50);
+            };
+            fab.addEventListener('mousedown', onDown);
+            fab.addEventListener('touchstart', onDown, { passive: false });
+            fab.addEventListener('click', (e) => { if (hasMoved) { e.preventDefault(); e.stopPropagation(); return; } this.openTransactionModal(); });
+            window.addEventListener('resize', () => {
+                if (fab.style.left) {
+                    const bnh = window.innerWidth < 768 ? 80 : 0;
+                    fab.style.left = `${Math.max(0, Math.min(parseFloat(fab.style.left), window.innerWidth - fab.offsetWidth))}px`;
+                    fab.style.top  = `${Math.max(0, Math.min(parseFloat(fab.style.top),  window.innerHeight - fab.offsetHeight - bnh))}px`;
+                }
+            });
+        },
+
+        saveData() {
+            localStorage.setItem('wallet_workspaces', JSON.stringify(this.workspaces));
+            localStorage.setItem('wallet_active_ws', this.activeWorkspaceId);
+            localStorage.setItem('wallet_settings', JSON.stringify(this.settings));
+        },
+
+        navigate(viewId) {
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll(`.nav-item[data-target="${viewId}"]`).forEach(el => el.classList.add('active'));
+            document.querySelectorAll('.view-section').forEach(el => el.classList.add('hidden'));
+            document.getElementById(`view-${viewId}`).classList.remove('hidden');
+            document.getElementById('page-title').innerText = viewId.replace('_', ' ');
+            this.currentView = viewId;
+            const mf = document.getElementById('month-filter-container');
+            if (['dashboard','summary','savings'].includes(viewId)) mf.classList.remove('hidden'); else mf.classList.add('hidden');
+            if (viewId === 'dashboard') setTimeout(() => this.renderCharts(), 100);
+            if (viewId === 'settings') this.updateGSheetsUI();
+        },
+
+        toggleTheme() {
+            this.settings.darkMode = !this.settings.darkMode;
+            document.documentElement.classList.toggle('dark');
+            this.updateThemeUI(); this.saveData();
+            if (this.currentView === 'dashboard') this.renderCharts();
+        },
+        updateThemeUI() {
+            const icon = document.getElementById('theme-icon'), text = document.getElementById('theme-text'), mobileIcon = document.getElementById('theme-icon-mobile');
+            if (this.settings.darkMode) { if(icon) icon.className='ph-bold ph-sun text-xl text-gtaOrange'; if(mobileIcon) mobileIcon.className='ph-bold ph-sun text-lg text-gtaOrange'; if(text) text.innerText='Light Mode'; }
+            else { if(icon) icon.className='ph-fill ph-moon text-xl text-gtaPink'; if(mobileIcon) mobileIcon.className='ph-bold ph-moon text-lg text-gtaPink'; if(text) text.innerText='Dark Mode'; }
+        },
+
+        showToast(msg, type = 'success') {
+            const toast = document.getElementById('toast');
+            document.getElementById('toast-msg').innerText = msg;
+            const icon = document.getElementById('toast-icon');
+            icon.className = type === 'success' ? 'ph-fill ph-check-circle text-emerald-400 text-2xl' : 'ph-fill ph-warning-circle text-red-500 text-2xl';
+            toast.className = `fixed top-6 left-1/2 -translate-x-1/2 ${type === 'success' ? 'bg-slate-900/90 dark:bg-white/90' : 'bg-red-900/90 dark:bg-red-100/90'} backdrop-blur-xl text-white dark:text-slate-900 px-6 py-4 rounded-full shadow-2xl transform transition-all duration-500 z-[100] flex items-center gap-3 border border-white/10 dark:border-black/10 font-bold tracking-wide pointer-events-none translate-y-0 opacity-100`;
+            setTimeout(() => { toast.classList.add('-translate-y-full','opacity-0'); toast.classList.remove('translate-y-0','opacity-100'); }, 3000);
+        },
+
+        changeMonth(delta) { this.currentDate.setMonth(this.currentDate.getMonth() + delta); this.renderAll(); },
+
+        getFilteredTransactions() {
+            const year = this.currentDate.getFullYear(), month = this.currentDate.getMonth();
+            const endOfMonth = new Date(year, month + 1, 0, 23, 59, 59);
+            return this.data.transactions.filter(tx => new Date(tx.date) <= endOfMonth);
+        },
+        
+        getTransactionsForSpecificMonth(year, monthIndex) {
+            return this.data.transactions.filter(tx => {
+                const d = new Date(tx.date);
+                return d.getFullYear() === year && d.getMonth() === monthIndex;
+            });
+        },
+        
+        getMonthlyTransactions() {
+            return this.getTransactionsForSpecificMonth(this.currentDate.getFullYear(), this.currentDate.getMonth());
+        },
+        
+        getUserBalance(userId, allTx) {
+            let balance = 0;
+            allTx.forEach(tx => {
+                if (tx.userId === userId) {
+                    if (['income','borrowed','withdraw_savings','lent_returned'].includes(tx.type)) balance += Number(tx.amount);
+                    if (['expense','lent','savings','borrowed_returned'].includes(tx.type)) balance -= Number(tx.amount);
+                }
+            });
+            return balance;
+        },
+
+        // ═══════════════════════════════════════════════
+        //  COMPARISON TOOL LOGIC
+        // ═══════════════════════════════════════════════
+        
+        initCompareDates() {
+            const m1Input = document.getElementById('cmp-m1');
+            const m2Input = document.getElementById('cmp-m2');
+            if (m1Input && !m1Input.value) {
+                let prev = new Date();
+                prev.setMonth(prev.getMonth() - 1);
+                m1Input.value = `${prev.getFullYear()}-${String(prev.getMonth()+1).padStart(2,'0')}`;
+            }
+            if (m2Input && !m2Input.value) {
+                let curr = new Date();
+                m2Input.value = `${curr.getFullYear()}-${String(curr.getMonth()+1).padStart(2,'0')}`;
+            }
+        },
+
+        calculateMonthStats(txList) {
+            let stats = { income: 0, expense: 0, lent: 0, borrowed: 0, savings: 0 };
+            txList.forEach(tx => {
+                const amount = Number(tx.amount);
+                if(tx.type==='income') stats.income += amount;
+                if(tx.type==='expense') stats.expense += amount;
+                if(tx.type==='lent') stats.lent += amount;
+                if(tx.type==='lent_returned') stats.lent -= amount;
+                if(tx.type==='borrowed') stats.borrowed += amount;
+                if(tx.type==='borrowed_returned') stats.borrowed -= amount;
+                if(tx.type==='savings') stats.savings += amount;
+                if(tx.type==='withdraw_savings') stats.savings -= amount;
+            });
+            stats.net = (stats.income + stats.borrowed) - (stats.expense + stats.lent + stats.savings);
+            return stats;
+        },
+
+        formatCompareLabel(dateString) {
+            if(!dateString) return '';
+            const [y, m] = dateString.split('-');
+            const date = new Date(y, m - 1);
+            return date.toLocaleString('en-GB', { month: 'short', year: 'numeric' });
+        },
+
+        executeComparison() {
+            const m1Val = document.getElementById('cmp-m1').value;
+            const m2Val = document.getElementById('cmp-m2').value;
+            const userFilter = document.getElementById('cmp-user').value;
+            
+            if (!m1Val || !m2Val) return this.showToast('Select months to compare.', 'error');
+
+            const [y1, mo1] = m1Val.split('-');
+            const [y2, mo2] = m2Val.split('-');
+
+            let tx1 = this.getTransactionsForSpecificMonth(Number(y1), Number(mo1)-1);
+            let tx2 = this.getTransactionsForSpecificMonth(Number(y2), Number(mo2)-1);
+
+            if (userFilter !== 'all') {
+                tx1 = tx1.filter(tx => tx.userId === userFilter);
+                tx2 = tx2.filter(tx => tx.userId === userFilter);
+            }
+
+            const st1 = this.calculateMonthStats(tx1);
+            const st2 = this.calculateMonthStats(tx2);
+            
+            const month1Label = this.formatCompareLabel(m1Val);
+            const month2Label = this.formatCompareLabel(m2Val);
+            
+            document.getElementById('cmp-header-1').innerText = month1Label;
+            document.getElementById('cmp-header-2').innerText = month2Label;
+
+            let userNameDisplay = "Overall";
+            if(userFilter !== 'all') {
+                 const u = this.data.users.find(u => u.id === userFilter);
+                 if(u) userNameDisplay = u.name + "'s";
+            }
+            document.getElementById('cmp-summary-title').innerHTML = `<i class="ph-fill ph-sparkle text-gtaOrange"></i> ${userNameDisplay} Analysis`;
+
+            let insights = [];
+            if (st2.income > st1.income) insights.push(`<div class="w-8 h-8 rounded-full bg-emerald-500/20 text-emerald-500 flex items-center justify-center shrink-0"><i class="ph-bold ph-trend-up"></i></div> <span>Income grew by <strong class="text-emerald-500">${this.fmtCurrency(st2.income - st1.income)}</strong> in ${month2Label}.</span>`);
+            else if (st2.income < st1.income) insights.push(`<div class="w-8 h-8 rounded-full bg-red-500/20 text-red-500 flex items-center justify-center shrink-0"><i class="ph-bold ph-trend-down"></i></div> <span>Income dropped by <strong class="text-red-500">${this.fmtCurrency(st1.income - st2.income)}</strong> in ${month2Label}.</span>`);
+            else insights.push(`<div class="w-8 h-8 rounded-full bg-slate-500/20 text-slate-500 flex items-center justify-center shrink-0"><i class="ph-bold ph-minus"></i></div> <span>Income remained exactly the same.</span>`);
+
+            if (st2.expense < st1.expense) insights.push(`<div class="w-8 h-8 rounded-full bg-emerald-500/20 text-emerald-500 flex items-center justify-center shrink-0"><i class="ph-bold ph-check-circle"></i></div> <span>Great job! Expenses were reduced by <strong class="text-emerald-500">${this.fmtCurrency(st1.expense - st2.expense)}</strong>.</span>`);
+            else if (st2.expense > st1.expense) insights.push(`<div class="w-8 h-8 rounded-full bg-orange-500/20 text-orange-500 flex items-center justify-center shrink-0"><i class="ph-bold ph-warning-circle"></i></div> <span>Watch out! Expenses increased by <strong class="text-orange-500">${this.fmtCurrency(st2.expense - st1.expense)}</strong>.</span>`);
+            
+            if (st2.savings > st1.savings) insights.push(`<div class="w-8 h-8 rounded-full bg-gtaPurple/20 text-gtaPurple flex items-center justify-center shrink-0"><i class="ph-bold ph-piggy-bank"></i></div> <span>You saved <strong class="text-gtaPurple">${this.fmtCurrency(st2.savings - st1.savings)}</strong> more than the base month!</span>`);
+
+            document.getElementById('cmp-summary-text').innerHTML = insights.map(i => `<div class="flex items-center gap-3">${i}</div>`).join('');
+
+            const makeRow = (label, val1, val2, invertColors = false) => {
+                const diff = val2 - val1;
+                let colorClass = 'text-slate-500';
+                let icon = '';
+                
+                if (diff > 0) {
+                    colorClass = invertColors ? 'text-red-500' : 'text-emerald-500';
+                    icon = '<i class="ph-bold ph-trend-up"></i>';
+                } else if (diff < 0) {
+                    colorClass = invertColors ? 'text-emerald-500' : 'text-red-500';
+                    icon = '<i class="ph-bold ph-trend-down"></i>';
+                }
+
+                const displayDiff = diff === 0 ? 'No Change' : `<div class="flex items-center justify-end gap-1.5">${icon} ${diff > 0 ? '+' : ''}${this.fmtCurrency(diff)}</div>`;
+
+                return `
+                    <tr class="hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
+                        <td class="p-5 font-bold">${label}</td>
+                        <td class="p-5 text-right">${this.fmtCurrency(val1)}</td>
+                        <td class="p-5 text-right font-bold text-[16px]">${this.fmtCurrency(val2)}</td>
+                        <td class="p-5 text-right font-black ${colorClass}">${displayDiff}</td>
+                    </tr>
+                `;
+            };
+
+            let tbodyHtml = '';
+            tbodyHtml += makeRow('Total Income', st1.income, st2.income, false);
+            tbodyHtml += makeRow('Total Expense', st1.expense, st2.expense, true);
+            tbodyHtml += makeRow('Net Lent (Given)', st1.lent, st2.lent, true);
+            tbodyHtml += makeRow('Net Borrowed (Received)', st1.borrowed, st2.borrowed, true);
+            tbodyHtml += makeRow('Net Savings', st1.savings, st2.savings, false);
+            
+            const netDiff = st2.net - st1.net;
+            let netColor = netDiff > 0 ? 'text-emerald-500' : (netDiff < 0 ? 'text-red-500' : 'text-slate-500');
+            const netDisplayDiff = netDiff === 0 ? 'No Change' : `${netDiff > 0 ? '+' : ''}${this.fmtCurrency(netDiff)}`;
+            
+            tbodyHtml += `
+                <tr class="bg-gtaPurple/5 border-t-2 border-gtaPurple/20">
+                    <td class="p-5 font-black text-gtaPurple tracking-wide uppercase text-sm">Total Net Flow</td>
+                    <td class="p-5 text-right font-bold">${this.fmtCurrency(st1.net)}</td>
+                    <td class="p-5 text-right font-black text-lg">${this.fmtCurrency(st2.net)}</td>
+                    <td class="p-5 text-right font-black text-lg ${netColor}">${netDisplayDiff}</td>
+                </tr>
+            `;
+
+            document.getElementById('cmp-tbody').innerHTML = tbodyHtml;
+            document.getElementById('compare-results').classList.remove('hidden');
+        },
+
+
+        renderAll() {
+            const monthNames = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+            document.getElementById('current-month-display').innerText = `${monthNames[this.currentDate.getMonth()]} ${this.currentDate.getFullYear()}`;
+            
+            const userSelects = [
+                document.getElementById('tx-filter-user'), 
+                document.getElementById('tx-user'), 
+                document.getElementById('ap-user'),
+                document.getElementById('cmp-user')
+            ];
+            
+            let filterHtml = '<option value="all">All Users</option>', selectHtml = '';
+            this.data.users.forEach(u => { const opt = `<option value="${u.id}">${u.name}</option>`; filterHtml += opt; selectHtml += opt; });
+            
+            if (userSelects[0]) { const currFilter = userSelects[0].value; userSelects[0].innerHTML = filterHtml; userSelects[0].value = currFilter || 'all'; }
+            if (userSelects[1]) userSelects[1].innerHTML = selectHtml;
+            if (userSelects[2]) userSelects[2].innerHTML = selectHtml;
+            if (userSelects[3]) { const currCmp = userSelects[3].value; userSelects[3].innerHTML = filterHtml.replace('All Users', 'Overall Account (All Users)'); userSelects[3].value = currCmp || 'all'; }
+            
+            this.renderDashboard(); 
+            this.renderAutoPays();
+            this.renderLentTracker(); 
+            this.renderBorrowedTracker(); 
+            this.renderSummary(); 
+            this.renderSavings(); 
+            this.renderTransactions(); 
+            this.renderUsers();
+            if (this.currentView === 'dashboard') setTimeout(() => this.renderCharts(), 50);
+        },
+
+        renderLentTracker() {
+            const baseLentTxs = this.data.transactions.filter(t => t.type === 'lent' && !t.linkedTxId).sort((a,b) => new Date(b.date) - new Date(a.date));
+            const allLentTxs = this.data.transactions.filter(t => t.type === 'lent');
+            const returnTxs = this.data.transactions.filter(t => t.type === 'lent_returned');
+
+            let activeHtml = '';
+            let settledHtml = '';
+            let totalPending = 0;
+
+            baseLentTxs.forEach(lent => {
+                const user = this.data.users.find(u => u.id === lent.userId) || { name: 'Unknown', color: '#94a3b8' };
+                const additions = allLentTxs.filter(t => t.linkedTxId === lent.id).reduce((sum, t) => sum + Number(t.amount), 0);
+                const totalLentAmount = Number(lent.amount) + additions;
+                const returned = returnTxs.filter(t => t.linkedTxId === lent.id).reduce((sum, t) => sum + Number(t.amount), 0);
+                const pending = Math.max(0, totalLentAmount - returned); 
+                const pct = Math.min(100, Math.round((returned / totalLentAmount) * 100));
+
+                if (pending > 0) totalPending += pending;
+
+                const cardHtml = `
+                    <div class="glass p-6 rounded-[2.5rem] shadow-sm border border-slate-200/50 dark:border-darkBorder/50 relative overflow-hidden group hover:border-orange-500/30 transition-colors">
+                        <div class="flex justify-between items-start mb-4">
+                            <div>
+                                <span class="text-[10px] font-bold uppercase tracking-widest text-slate-500">${this.fmtDate(lent.date)}</span>
+                                <h4 class="font-black text-xl text-slate-800 dark:text-slate-100 truncate max-w-[150px] sm:max-w-[200px]" title="${lent.category}">${lent.category || 'Unnamed Loan'}</h4>
+                                <div class="flex items-center gap-1.5 mt-1.5 text-xs">
+                                    <div class="w-2.5 h-2.5 rounded-full" style="background-color:${user.color}"></div>
+                                    <span class="text-slate-600 dark:text-slate-400 font-bold">Lent by ${user.name}</span>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-[10px] text-slate-500 uppercase tracking-widest font-bold mb-0.5">Total Lent</p>
+                                <p class="font-black text-orange-500 text-2xl">${this.fmtCurrency(totalLentAmount)}</p>
+                            </div>
+                        </div>
+                        <div class="mt-5">
+                            <div class="flex justify-between text-xs font-bold mb-2">
+                                <span class="text-emerald-600 dark:text-emerald-400">Returned: ₹${returned}</span>
+                                <span class="text-orange-600 dark:text-orange-400">Pending: ₹${pending}</span>
+                            </div>
+                            <div class="w-full bg-slate-100 dark:bg-[#232332] rounded-full h-3 overflow-hidden shadow-inner">
+                                <div class="bg-emerald-500 h-3 rounded-full transition-all duration-700 shadow-[0_0_10px_rgba(16,185,129,0.5)]" style="width: ${pct}%"></div>
+                            </div>
+                        </div>
+                        ${pending > 0
+                            ? `<div class="flex gap-3 mt-6">
+                                   <button onclick="app.openAddDebtModal('${lent.id}', '${lent.userId}', 'lent')" class="flex-1 bg-slate-100 dark:bg-[#1A1A24] text-slate-700 dark:text-slate-300 py-3.5 rounded-full font-bold hover:bg-slate-200 dark:hover:bg-[#232332] transition-colors flex items-center justify-center gap-2"><i class="ph-bold ph-plus text-lg"></i> Add</button>
+                                   <button onclick="app.openSettleModal('${lent.id}', ${pending}, '${lent.userId}', 'lent')" class="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white shadow-[0_5px_15px_rgba(16,185,129,0.3)] py-3.5 rounded-full font-bold transition-colors flex items-center justify-center gap-2"><i class="ph-bold ph-hand-coins text-lg"></i> Repay</button>
+                               </div>`
+                            : `<div class="mt-6 w-full text-center text-emerald-600 dark:text-emerald-400 text-sm font-black tracking-wide uppercase flex items-center justify-center gap-2 bg-emerald-500/10 py-3.5 rounded-full"><i class="ph-fill ph-check-circle text-xl"></i> Fully Settled</div>`
+                        }
+                    </div>
+                `;
+
+                if (pending > 0) activeHtml += cardHtml;
+                else settledHtml += cardHtml;
+            });
+
+            document.getElementById('lent-total-pending').innerText = this.fmtCurrency(totalPending);
+            document.getElementById('lent-active-grid').innerHTML = activeHtml || `<div class="col-span-full p-10 text-center text-slate-500 dark:text-slate-400 glass rounded-[2.5rem] border border-dashed border-slate-300 dark:border-slate-700"><p class="font-bold text-lg">No active loans found.</p></div>`;
+            document.getElementById('lent-settled-grid').innerHTML = settledHtml || `<div class="col-span-full p-6 text-center text-sm text-slate-400 font-medium">No fully settled loans yet.</div>`;
+        },
+
+        renderBorrowedTracker() {
+            const baseBorrowedTxs = this.data.transactions.filter(t => t.type === 'borrowed' && !t.linkedTxId).sort((a,b) => new Date(b.date) - new Date(a.date));
+            const allBorrowedTxs = this.data.transactions.filter(t => t.type === 'borrowed');
+            const returnTxs = this.data.transactions.filter(t => t.type === 'borrowed_returned');
+
+            let activeHtml = '';
+            let settledHtml = '';
+            let totalPending = 0;
+
+            baseBorrowedTxs.forEach(borrowed => {
+                const user = this.data.users.find(u => u.id === borrowed.userId) || { name: 'Unknown', color: '#94a3b8' };
+                const additions = allBorrowedTxs.filter(t => t.linkedTxId === borrowed.id).reduce((sum, t) => sum + Number(t.amount), 0);
+                const totalBorrowedAmount = Number(borrowed.amount) + additions;
+                const returned = returnTxs.filter(t => t.linkedTxId === borrowed.id).reduce((sum, t) => sum + Number(t.amount), 0);
+                const pending = Math.max(0, totalBorrowedAmount - returned); 
+                const pct = Math.min(100, Math.round((returned / totalBorrowedAmount) * 100));
+
+                if (pending > 0) totalPending += pending;
+
+                const cardHtml = `
+                    <div class="glass p-6 rounded-[2.5rem] shadow-sm border border-slate-200/50 dark:border-darkBorder/50 relative overflow-hidden group hover:border-blue-500/30 transition-colors">
+                        <div class="flex justify-between items-start mb-4">
+                            <div>
+                                <span class="text-[10px] font-bold uppercase tracking-widest text-slate-500">${this.fmtDate(borrowed.date)}</span>
+                                <h4 class="font-black text-xl text-slate-800 dark:text-slate-100 truncate max-w-[150px] sm:max-w-[200px]" title="${borrowed.category}">${borrowed.category || 'Unnamed Debt'}</h4>
+                                <div class="flex items-center gap-1.5 mt-1.5 text-xs">
+                                    <div class="w-2.5 h-2.5 rounded-full" style="background-color:${user.color}"></div>
+                                    <span class="text-slate-600 dark:text-slate-400 font-bold">Borrowed by ${user.name}</span>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-[10px] text-slate-500 uppercase tracking-widest font-bold mb-0.5">Total Borrowed</p>
+                                <p class="font-black text-blue-500 text-2xl">${this.fmtCurrency(totalBorrowedAmount)}</p>
+                            </div>
+                        </div>
+                        <div class="mt-5">
+                            <div class="flex justify-between text-xs font-bold mb-2">
+                                <span class="text-emerald-600 dark:text-emerald-400">Repaid: ₹${returned}</span>
+                                <span class="text-blue-600 dark:text-blue-400">Pending: ₹${pending}</span>
+                            </div>
+                            <div class="w-full bg-slate-100 dark:bg-[#232332] rounded-full h-3 overflow-hidden shadow-inner">
+                                <div class="bg-emerald-500 h-3 rounded-full transition-all duration-700 shadow-[0_0_10px_rgba(16,185,129,0.5)]" style="width: ${pct}%"></div>
+                            </div>
+                        </div>
+                        ${pending > 0
+                            ? `<div class="flex gap-3 mt-6">
+                                   <button onclick="app.openAddDebtModal('${borrowed.id}', '${borrowed.userId}', 'borrowed')" class="flex-1 bg-slate-100 dark:bg-[#1A1A24] text-slate-700 dark:text-slate-300 py-3.5 rounded-full font-bold hover:bg-slate-200 dark:hover:bg-[#232332] transition-colors flex items-center justify-center gap-2"><i class="ph-bold ph-plus text-lg"></i> Add</button>
+                                   <button onclick="app.openSettleModal('${borrowed.id}', ${pending}, '${borrowed.userId}', 'borrowed')" class="flex-1 bg-blue-500 hover:bg-blue-600 text-white shadow-[0_5px_15px_rgba(59,130,246,0.3)] py-3.5 rounded-full font-bold transition-colors flex items-center justify-center gap-2"><i class="ph-bold ph-hand-arrow-down text-lg"></i> Repay</button>
+                               </div>`
+                            : `<div class="mt-6 w-full text-center text-emerald-600 dark:text-emerald-400 text-sm font-black tracking-wide uppercase flex items-center justify-center gap-2 bg-emerald-500/10 py-3.5 rounded-full"><i class="ph-fill ph-check-circle text-xl"></i> Fully Settled</div>`
+                        }
+                    </div>
+                `;
+
+                if (pending > 0) activeHtml += cardHtml;
+                else settledHtml += cardHtml;
+            });
+
+            document.getElementById('borrowed-total-pending').innerText = this.fmtCurrency(totalPending);
+            document.getElementById('borrowed-active-grid').innerHTML = activeHtml || `<div class="col-span-full p-10 text-center text-slate-500 dark:text-slate-400 glass rounded-[2.5rem] border border-dashed border-slate-300 dark:border-slate-700"><p class="font-bold text-lg">No active debts found.</p></div>`;
+            document.getElementById('borrowed-settled-grid').innerHTML = settledHtml || `<div class="col-span-full p-6 text-center text-sm text-slate-400 font-medium">No fully repaid debts yet.</div>`;
+        },
+
+        openSettleModal(txId, pending, userId, type = 'lent') {
+            document.getElementById('settle-form').reset();
+            document.getElementById('settle-parent-id').value = txId;
+            document.getElementById('settle-user-id').value = userId;
+            document.getElementById('settle-type').value = type;
+            document.getElementById('settle-pending-display').innerText = this.fmtCurrency(pending);
+            
+            const isBorrowed = type === 'borrowed';
+            document.getElementById('settle-title').innerText = isBorrowed ? 'Repay Debt' : 'Record Repayment';
+            document.getElementById('settle-amount-label').innerText = isBorrowed ? 'Amount You Are Paying Back (₹)' : 'Amount They Returned Now (₹)';
+            document.getElementById('settle-submit-btn').className = isBorrowed ? 'w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-4 rounded-full shadow-[0_5px_15px_rgba(59,130,246,0.3)] transition-colors' : 'w-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-4 rounded-full shadow-[0_5px_15px_rgba(16,185,129,0.3)] transition-colors';
+
+            const amtInput = document.getElementById('settle-amount');
+            amtInput.max = pending; 
+            amtInput.value = pending; 
+            document.getElementById('settle-date').valueAsDate = new Date();
+            
+            this.openModal('modal-settle');
+        },
+
+        saveSettlement(e) {
+            e.preventDefault();
+            const parentId = document.getElementById('settle-parent-id').value;
+            const userId = document.getElementById('settle-user-id').value;
+            const type = document.getElementById('settle-type').value;
+            const amount = Number(document.getElementById('settle-amount').value);
+            const date = document.getElementById('settle-date').value;
+
+            const parentTx = this.data.transactions.find(t => t.id === parentId);
+            if (!parentTx) return;
+
+            const newTxType = type === 'borrowed' ? 'borrowed_returned' : 'lent_returned';
+            const categoryPrefix = type === 'borrowed' ? 'Repaid: ' : 'Returned: ';
+
+            const tx = {
+                id: 'tx_' + Date.now(),
+                type: newTxType,
+                linkedTxId: parentId,
+                userId: userId,
+                amount: amount,
+                category: categoryPrefix + parentTx.category,
+                date: date,
+                note: 'Settlement'
+            };
+
+            this.data.transactions.push(tx);
+            this.saveData();
+            this.closeModals();
+            this.renderAll();
+
+            if (this.settings.autoSync && this.settings.gsheetsUrl) {
+                this.syncToGoogleSheets(true);
+            }
+            this.showToast('Repayment Confirmed!');
+        },
+
+        openAddDebtModal(txId, userId, type) {
+            document.getElementById('add-debt-form').reset();
+            document.getElementById('add-debt-parent-id').value = txId;
+            document.getElementById('add-debt-user-id').value = userId;
+            document.getElementById('add-debt-type').value = type;
+            
+            const isBorrowed = type === 'borrowed';
+            document.getElementById('add-debt-title').innerText = isBorrowed ? 'Borrow More' : 'Lend More';
+            document.getElementById('add-debt-amount-label').innerText = isBorrowed ? 'Extra Amount Borrowed (₹)' : 'Extra Amount Lent (₹)';
+            document.getElementById('add-debt-submit-btn').innerText = isBorrowed ? 'Add To Debt' : 'Add To Loan';
+            
+            document.getElementById('add-debt-date').valueAsDate = new Date();
+            this.openModal('modal-add-debt');
+        },
+
+        saveAddDebt(e) {
+            e.preventDefault();
+            const parentId = document.getElementById('add-debt-parent-id').value;
+            const userId = document.getElementById('add-debt-user-id').value;
+            const type = document.getElementById('add-debt-type').value;
+            const amount = Number(document.getElementById('add-debt-amount').value);
+            const date = document.getElementById('add-debt-date').value;
+            const note = document.getElementById('add-debt-note').value;
+
+            const parentTx = this.data.transactions.find(t => t.id === parentId);
+            if (!parentTx) return;
+
+            const tx = {
+                id: 'tx_' + Date.now(),
+                type: type,
+                linkedTxId: parentId,
+                userId: userId,
+                amount: amount,
+                category: 'Added to: ' + parentTx.category,
+                date: date,
+                note: note || 'Additional amount'
+            };
+
+            this.data.transactions.push(tx);
+            this.saveData();
+            this.closeModals();
+            this.renderAll();
+
+            if (this.settings.autoSync && this.settings.gsheetsUrl) {
+                this.syncToGoogleSheets(true);
+            }
+            this.showToast('Funds Injected Successfully!');
+        },
+
+        renderSummary() {
+            const monthTx = this.getMonthlyTransactions();
+            let totalIncome=0, totalExpense=0, totalLent=0, totalBorrowed=0, totalSavings=0;
+            const userStats = {};
+            this.data.users.forEach(u => { userStats[u.id] = { name: u.name, color: u.color, income:0, expense:0, lent:0, borrowed:0, savings:0 }; });
+            
+            monthTx.forEach(tx => {
+                const amount = Number(tx.amount);
+                if(tx.type==='income')           { totalIncome   += amount; if(userStats[tx.userId]) userStats[tx.userId].income   += amount; }
+                if(tx.type==='expense')          { totalExpense  += amount; if(userStats[tx.userId]) userStats[tx.userId].expense  += amount; }
+                if(tx.type==='lent')             { totalLent     += amount; if(userStats[tx.userId]) userStats[tx.userId].lent     += amount; }
+                if(tx.type==='lent_returned')    { totalLent     -= amount; if(userStats[tx.userId]) userStats[tx.userId].lent     -= amount; }
+                if(tx.type==='borrowed')         { totalBorrowed += amount; if(userStats[tx.userId]) userStats[tx.userId].borrowed += amount; }
+                if(tx.type==='borrowed_returned'){ totalBorrowed -= amount; if(userStats[tx.userId]) userStats[tx.userId].borrowed -= amount; }
+                if(tx.type==='savings')          { totalSavings  += amount; if(userStats[tx.userId]) userStats[tx.userId].savings  += amount; }
+                if(tx.type==='withdraw_savings') { totalSavings  -= amount; if(userStats[tx.userId]) userStats[tx.userId].savings  -= amount; }
+            });
+
+            document.getElementById('summary-overall-cards').innerHTML = `
+                <div class="glass p-6 rounded-[2rem] border border-emerald-500/30 bg-emerald-500/5 shadow-sm"><div class="flex items-center gap-2 text-emerald-500 mb-2"><i class="ph-bold ph-trend-up text-xl"></i><span class="font-bold text-xs uppercase tracking-widest">Total Income</span></div><p class="text-3xl font-black">${this.fmtCurrency(totalIncome)}</p></div>
+                <div class="glass p-6 rounded-[2rem] border border-red-500/30 bg-red-500/5 shadow-sm"><div class="flex items-center gap-2 text-red-500 mb-2"><i class="ph-bold ph-trend-down text-xl"></i><span class="font-bold text-xs uppercase tracking-widest">Total Expense</span></div><p class="text-3xl font-black">${this.fmtCurrency(totalExpense)}</p></div>
+                <div class="glass p-6 rounded-[2rem] border border-orange-500/30 bg-orange-500/5 shadow-sm"><div class="flex items-center gap-2 text-orange-500 mb-2"><i class="ph-bold ph-export text-xl"></i><span class="font-bold text-xs uppercase tracking-widest">Net Lent</span></div><p class="text-3xl font-black">${this.fmtCurrency(totalLent)}</p></div>
+                <div class="glass p-6 rounded-[2rem] border border-blue-500/30 bg-blue-500/5 shadow-sm"><div class="flex items-center gap-2 text-blue-500 mb-2"><i class="ph-bold ph-import text-xl"></i><span class="font-bold text-xs uppercase tracking-widest">Net Borrowed</span></div><p class="text-3xl font-black">${this.fmtCurrency(totalBorrowed)}</p></div>
+            `;
+            let usersHtml = '';
+            Object.values(userStats).forEach(u => {
+                const netMonthlyFlow = (u.income + u.borrowed) - (u.expense + u.lent + u.savings);
+                const flowColor = netMonthlyFlow >= 0 ? 'text-emerald-500' : 'text-red-500';
+                usersHtml += `<div class="glass p-6 rounded-[2.5rem] bg-white/40 dark:bg-[#1A1A24]/40 shadow-sm border border-slate-200/50 dark:border-darkBorder/50"><div class="flex items-center gap-4 mb-5 pb-5 border-b border-slate-200 dark:border-darkBorder/50"><div class="w-12 h-12 rounded-2xl flex items-center justify-center text-white font-black text-xl shadow-lg" style="background-color:${u.color}">${u.name.charAt(0)}</div><div><h4 class="font-black text-xl leading-tight">${u.name}</h4><p class="text-[11px] text-slate-500 uppercase tracking-widest font-bold mt-0.5">Net Flow: <span class="font-black text-sm ${flowColor}">${this.fmtCurrency(netMonthlyFlow)}</span></p></div></div><div class="space-y-4 text-sm font-semibold"><div class="flex justify-between items-center"><span class="text-slate-500 flex items-center gap-2"><i class="ph-bold ph-trend-up text-emerald-500"></i> Income</span><span class="">${this.fmtCurrency(u.income)}</span></div><div class="flex justify-between items-center"><span class="text-slate-500 flex items-center gap-2"><i class="ph-bold ph-trend-down text-red-500"></i> Expense</span><span class="">${this.fmtCurrency(u.expense)}</span></div><div class="flex justify-between items-center"><span class="text-slate-500 flex items-center gap-2"><i class="ph-bold ph-export text-orange-500"></i> Net Lent</span><span class="">${this.fmtCurrency(u.lent)}</span></div><div class="flex justify-between items-center"><span class="text-slate-500 flex items-center gap-2"><i class="ph-bold ph-import text-blue-500"></i> Net Borrowed</span><span class="">${this.fmtCurrency(u.borrowed)}</span></div></div></div>`;
+            });
+            document.getElementById('summary-users-grid').innerHTML = usersHtml || `<div class="col-span-full text-center text-slate-500 py-8 font-medium">No users found.</div>`;
+        },
+
+        renderSavings() {
+            const allTx = this.data.transactions, monthTx = this.getMonthlyTransactions();
+            let totalSavedAllTime = 0, totalSavedMonth = 0;
+            const userSavings = {};
+            this.data.users.forEach(u => { userSavings[u.id] = { name: u.name, color: u.color, allTime: 0, month: 0 }; });
+            allTx.forEach(tx => {
+                if(tx.type==='savings')          { totalSavedAllTime += Number(tx.amount); if(userSavings[tx.userId]) userSavings[tx.userId].allTime += Number(tx.amount); }
+                if(tx.type==='withdraw_savings') { totalSavedAllTime -= Number(tx.amount); if(userSavings[tx.userId]) userSavings[tx.userId].allTime -= Number(tx.amount); }
+            });
+            monthTx.forEach(tx => {
+                if(tx.type==='savings')          { totalSavedMonth += Number(tx.amount); if(userSavings[tx.userId]) userSavings[tx.userId].month += Number(tx.amount); }
+                if(tx.type==='withdraw_savings') { totalSavedMonth -= Number(tx.amount); if(userSavings[tx.userId]) userSavings[tx.userId].month -= Number(tx.amount); }
+            });
+            const allTimeEl = document.getElementById('save-total-all');
+            const monthEl   = document.getElementById('save-total-month');
+            if(allTimeEl) allTimeEl.innerText = this.fmtCurrency(totalSavedAllTime);
+            if(monthEl)   monthEl.innerText   = this.fmtCurrency(totalSavedMonth);
+            let usersHtml = '';
+            Object.values(userSavings).forEach(u => {
+                usersHtml += `<div class="glass p-6 rounded-[2.5rem] bg-white dark:bg-darkCard shadow-sm border border-slate-200/50 dark:border-darkBorder/50 hover:scale-[1.02] transition-transform"><div class="flex items-center gap-3 mb-5 pb-5 border-b border-slate-100 dark:border-darkBorder/50"><div class="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold shadow-md" style="background-color:${u.color}">${u.name.charAt(0)}</div><h4 class="font-black text-xl">${u.name}</h4></div><div class="flex justify-between items-center mb-2"><span class="text-xs font-bold text-slate-500 uppercase tracking-widest">All Time</span><span class="font-black text-purple-500 text-xl">${this.fmtCurrency(u.allTime)}</span></div><div class="flex justify-between items-center"><span class="text-xs font-bold text-slate-500 uppercase tracking-widest">This Month</span><span class="font-bold">${this.fmtCurrency(u.month)}</span></div></div>`;
+            });
+            const gridEl = document.getElementById('save-users-grid');
+            if(gridEl) gridEl.innerHTML = usersHtml || `<div class="col-span-full text-center text-slate-500 py-4 font-medium">No users found.</div>`;
+        },
+
+        renderDashboard() {
+            const allTx = this.getFilteredTransactions(), monthTx = this.getMonthlyTransactions();
+            let totalBankBal = 0, monthIncome = 0, monthExpense = 0;
+            monthTx.forEach(tx => { if(tx.type==='income') monthIncome += Number(tx.amount); if(tx.type==='expense') monthExpense += Number(tx.amount); });
+            let userCardsHtml = '', alertsHtml = '';
+            const today = new Date();
+            today.setHours(0,0,0,0);
+            
+            this.data.users.forEach(u => {
+                const bal = this.getUserBalance(u.id, allTx);
+                totalBankBal += bal;
+                if (bal < 0) alertsHtml += `<div class="bg-red-500/10 text-red-500 p-4 rounded-3xl flex items-center text-sm border border-red-500/30 font-semibold"><i class="ph-fill ph-warning-circle text-2xl mr-3"></i><span><strong>${u.name}'s</strong> balance is currently negative (${this.fmtCurrency(bal)}).</span></div>`;
+                if (u.salaryDate) {
+                    const testDate = new Date(today.getFullYear(), today.getMonth(), u.salaryDate);
+                    const diffDays = Math.ceil((testDate - today) / (1000 * 60 * 60 * 24));
+                    if (diffDays >= 0 && diffDays <= 3) alertsHtml += `<div class="bg-blue-500/10 text-blue-500 p-4 rounded-3xl flex items-center text-sm border border-blue-500/30 font-semibold"><i class="ph-fill ph-calendar-check text-2xl mr-3"></i><span>Salary expected for <strong>${u.name}</strong> in ${diffDays === 0 ? 'today!' : diffDays + ' day(s)'}.</span></div>`;
+                }
+                userCardsHtml += `<div class="glass min-w-[240px] p-6 rounded-[2rem] relative overflow-hidden bg-white/50 dark:bg-[#1A1A24]/60 shadow-sm border-t-[6px]" style="border-top-color:${u.color}"><div class="flex justify-between items-start mb-4"><span class="font-black text-slate-800 dark:text-slate-100 text-lg">${u.name}</span><div class="w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-sm shadow-md" style="background-color:${u.color}">${u.name.charAt(0)}</div></div><h4 class="text-3xl font-black ${bal < 0 ? 'text-red-500' : ''}">${this.fmtCurrency(bal)}</h4><p class="text-[10px] uppercase font-bold tracking-widest text-slate-500 mt-2">Wallet Share</p></div>`;
+            });
+
+            if (this.data.autoPays) {
+                this.data.autoPays.forEach(ap => {
+                    if (!ap.active) return;
+                    const parts = ap.nextDate.split('-');
+                    let nextD = new Date(parts[0], parts[1] - 1, parts[2]);
+                    nextD.setHours(0,0,0,0);
+                    const diffDays = Math.ceil((nextD - today) / (1000 * 60 * 60 * 24));
+                    if (diffDays >= 0 && diffDays <= 3) {
+                        alertsHtml += `<div class="bg-gtaPurple/10 text-gtaPurple p-4 rounded-3xl flex items-center text-sm border border-gtaPurple/30 font-semibold"><i class="ph-fill ph-arrows-clockwise text-2xl mr-3"></i><span>Auto Pay for <strong>${ap.title}</strong> is scheduled in ${diffDays === 0 ? 'today!' : diffDays + ' day(s)'}.</span></div>`;
+                    }
+                });
+            }
+
+            if (!this.data.users.length) userCardsHtml = `<div class="p-6 text-slate-400 text-sm font-medium">No users added yet.</div>`;
+            document.getElementById('smart-alerts').innerHTML = alertsHtml;
+            document.getElementById('dash-total-balance').innerText  = this.fmtCurrency(totalBankBal);
+            document.getElementById('dash-total-income').innerText   = this.fmtCurrency(monthIncome);
+            document.getElementById('dash-total-expense').innerText  = this.fmtCurrency(monthExpense);
+            document.getElementById('dash-user-balances').innerHTML  = userCardsHtml;
+            const recent = [...this.data.transactions].sort((a,b) => new Date(b.date) - new Date(a.date)).slice(0, 5);
+            let recentHtml = '';
+            if (!recent.length) recentHtml = `<tr><td colspan="4" class="py-8 text-center text-slate-400 font-medium">No transactions yet</td></tr>`;
+            recent.forEach(tx => {
+                const user = this.data.users.find(u => u.id === tx.userId) || { name: '?', color: '#ccc' };
+                const isPositive = ['income','borrowed','withdraw_savings','lent_returned'].includes(tx.type);
+                recentHtml += `<tr class="border-b border-slate-100 dark:border-darkBorder/50 last:border-0 hover:bg-white/40 dark:hover:bg-[#1A1A24]/40 transition-colors"><td class="py-4 pr-2 whitespace-nowrap text-xs font-bold text-slate-500">${this.fmtDate(tx.date)}</td><td class="py-4 px-2"><span class="px-3 py-1.5 rounded-full text-xs font-black text-white shadow-sm" style="background-color:${user.color}">${user.name}</span></td><td class="py-4 px-2"><p class="font-bold text-[15px] truncate max-w-[150px]">${tx.category}</p><p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">${tx.type.replace('_', ' ')}</p></td><td class="py-4 pl-2 text-right font-black text-lg ${isPositive ? 'text-emerald-500' : 'text-red-500'}">${isPositive ? '+' : '-'}${this.fmtCurrency(tx.amount)}</td></tr>`;
+            });
+            document.getElementById('dash-recent-tx').innerHTML = recentHtml;
+        },
+
+        renderCharts() {
+            if (!document.getElementById('barChart') || this.currentView !== 'dashboard') return;
+            const isDark = this.settings.darkMode;
+            const textColor = isDark ? '#64748b' : '#94a3b8';
+            const gridColor = isDark ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.02)';
+            const monthTx = this.getMonthlyTransactions();
+            const userLabels   = this.data.users.map(u => u.name);
+            const userIncomes  = this.data.users.map(u => monthTx.filter(tx => tx.userId === u.id && tx.type === 'income').reduce((s,t) => s + Number(t.amount), 0));
+            const userExpenses = this.data.users.map(u => monthTx.filter(tx => tx.userId === u.id && tx.type === 'expense').reduce((s,t) => s + Number(t.amount), 0));
+            if (this.charts.bar) this.charts.bar.destroy();
+            this.charts.bar = new Chart(document.getElementById('barChart'), {
+                type: 'bar',
+                data: { labels: userLabels, datasets: [{ label:'Income', data:userIncomes, backgroundColor:'#10b981', borderRadius:6 }, { label:'Expense', data:userExpenses, backgroundColor:'#ef4444', borderRadius:6 }] },
+                options: { responsive:true, maintainAspectRatio:false, plugins:{ legend:{ labels:{ color:textColor, font: {family: 'Outfit', weight: 'bold'} } } }, scales:{ y:{ grid:{ color:gridColor }, ticks:{ color:textColor, font: {family: 'Outfit', weight: 'bold'} } }, x:{ grid:{ display:false }, ticks:{ color:textColor, font: {family: 'Outfit', weight: 'bold'} } } } }
+            });
+            const allTx = this.getFilteredTransactions();
+            let validBalances = [], validColors = [], validLabels = [];
+            this.data.users.forEach(u => { const bal = this.getUserBalance(u.id, allTx); if(bal > 0) { validBalances.push(bal); validColors.push(u.color); validLabels.push(u.name); } });
+            if (this.charts.doughnut) this.charts.doughnut.destroy();
+            if (!validBalances.length) { validBalances=[1]; validColors=[gridColor]; validLabels=['No Balances']; }
+            this.charts.doughnut = new Chart(document.getElementById('doughnutChart'), {
+                type: 'doughnut',
+                data: { labels:validLabels, datasets:[{ data:validBalances, backgroundColor:validColors, borderWidth:0, hoverOffset:4 }] },
+                options: { responsive:true, maintainAspectRatio:false, cutout:'75%', plugins:{ legend:{ position:'bottom', labels:{ color:textColor, padding:20, usePointStyle:true, font: {family: 'Outfit', weight: 'bold'} } } } }
+            });
+        },
+
+        renderTransactions() {
+            const search     = document.getElementById('tx-search').value.toLowerCase();
+            const userFilter = document.getElementById('tx-filter-user').value;
+            const typeFilter = document.getElementById('tx-filter-type').value;
+            let filtered = [...this.data.transactions].sort((a,b) => new Date(b.date) - new Date(a.date));
+            if(search)
+            filtered = filtered.filter(tx => (tx.category&&tx.category.toLowerCase().includes(search)) || (tx.note&&tx.note.toLowerCase().includes(search)));
+            if(userFilter!=='all') filtered = filtered.filter(tx => tx.userId === userFilter);
+            if(typeFilter!=='all') filtered = filtered.filter(tx => tx.type === typeFilter);
+            
+            const tbody = document.getElementById('tx-list-full'), emptyState = document.getElementById('tx-empty-state');
+            if (!filtered.length) { tbody.innerHTML=''; emptyState.classList.remove('hidden'); emptyState.classList.add('flex'); return; }
+            emptyState.classList.add('hidden'); emptyState.classList.remove('flex');
+            
+            let html = '';
+            filtered.forEach(tx => {
+                const user = this.data.users.find(u => u.id === tx.userId) || { name:'Deleted User', color:'#94a3b8' };
+                const isPositive = ['income','borrowed','withdraw_savings','lent_returned'].includes(tx.type);
+                const isSavings  = ['savings','withdraw_savings'].includes(tx.type);
+                let amountClass  = isPositive ? 'text-emerald-500' : 'text-red-500';
+                if(isSavings) amountClass = 'text-purple-500';
+                let icon = 'ph-arrows-left-right';
+                if(tx.type==='income')           icon = 'ph-bold ph-trend-up text-emerald-500';
+                if(tx.type==='expense')          icon = 'ph-bold ph-trend-down text-red-500';
+                if(tx.type==='lent')             icon = 'ph-bold ph-export text-orange-500';
+                if(tx.type==='lent_returned')    icon = 'ph-bold ph-hand-coins text-emerald-500';
+                if(tx.type==='borrowed')         icon = 'ph-bold ph-import text-blue-500';
+                if(tx.type==='borrowed_returned')icon = 'ph-bold ph-hand-arrow-up text-red-500';
+                if(tx.type==='savings')          icon = 'ph-bold ph-piggy-bank text-purple-500';
+                if(tx.type==='withdraw_savings') icon = 'ph-bold ph-hand-coins text-purple-500';
+                
+                let displayType = tx.type;
+                if(tx.type === 'withdraw_savings') displayType = 'withdrawn from savings';
+                if(tx.type === 'lent_returned') displayType = 'lent returned';
+                if(tx.type === 'borrowed_returned') displayType = 'borrowed repaid';
+
+                html += `<div class="p-4 md:p-5 hover:bg-white/40 dark:hover:bg-white/5 transition-colors group flex flex-col md:flex-row md:items-center gap-3 md:gap-0">
+                    <!-- Mobile View -->
+                    <div class="flex justify-between items-start md:hidden w-full">
+                        <div class="flex items-center gap-3 min-w-0">
+                            <div class="w-8 h-8 rounded-full flex items-center justify-center text-white text-[12px] font-black shadow-sm shrink-0" style="background-color:${user.color}">${user.name.charAt(0)}</div>
+                            <div class="min-w-0">
+                                <p class="font-black text-[15px] leading-tight truncate">${tx.category}</p>
+                                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5 truncate"><i class="${icon}"></i> ${displayType}</p>
+                            </div>
+                        </div>
+                        <div class="text-right shrink-0 ml-2">
+                            <div class="font-black text-lg ${amountClass}">${isPositive ? '+' : '-'}${this.fmtCurrency(tx.amount)}</div>
+                            <div class="text-[10px] font-bold text-slate-500 uppercase mt-0.5">${this.fmtDate(tx.date)}</div>
+                        </div>
+                    </div>
+                    ${tx.note ? `<p class="text-[12px] font-semibold text-slate-500 md:hidden ml-11 line-clamp-2">${tx.note}</p>` : ''}
+                    <div class="flex justify-end gap-2 md:hidden mt-2 pt-3 border-t border-slate-100 dark:border-darkBorder/50 w-full">
+                        <button onclick="app.openTransactionModal('${tx.id}')" class="text-blue-500 hover:text-blue-400 bg-blue-500/10 px-4 py-1.5 rounded-full text-xs font-bold flex items-center gap-1.5 transition-colors"><i class="ph-bold ph-pencil-simple text-sm"></i> Edit</button>
+                        <button onclick="app.deleteTransaction('${tx.id}')" class="text-red-500 hover:text-red-400 bg-red-500/10 px-4 py-1.5 rounded-full text-xs font-bold flex items-center gap-1.5 transition-colors"><i class="ph-bold ph-trash text-sm"></i> Delete</button>
+                    </div>
+
+                    <!-- Desktop View -->
+                    <div class="hidden md:block w-32 whitespace-nowrap text-xs font-bold text-slate-500 shrink-0">${this.fmtDate(tx.date)}</div>
+                    <div class="hidden md:flex w-40 items-center gap-2 shrink-0">
+                        <div class="w-6 h-6 rounded-full flex items-center justify-center text-white text-[10px] font-black shadow-sm shrink-0" style="background-color:${user.color}">${user.name.charAt(0)}</div>
+                        <span class="font-bold text-[14px] truncate">${user.name}</span>
+                    </div>
+                    <div class="hidden md:flex w-48 capitalize items-center gap-2 font-bold text-[14px] truncate pr-2 shrink-0"><i class="${icon} text-lg shrink-0"></i> <span class="truncate">${displayType}</span></div>
+                    <div class="hidden md:block flex-1 pr-4 min-w-0">
+                        <p class="font-black text-[15px] truncate">${tx.category}</p>
+                        ${tx.note ? `<p class="text-[11px] font-semibold text-slate-500 mt-0.5 truncate">${tx.note}</p>` : ''}
+                    </div>
+                    <div class="hidden md:block w-32 text-right font-black text-lg shrink-0 ${amountClass}">
+                        ${isPositive ? '+' : '-'}${this.fmtCurrency(tx.amount)}
+                    </div>
+                    <div class="hidden md:flex w-24 justify-center gap-3 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+                        <button onclick="app.openTransactionModal('${tx.id}')" class="text-blue-500 hover:text-blue-400 bg-blue-500/10 p-2 rounded-full transition-colors"><i class="ph-bold ph-pencil-simple text-lg"></i></button>
+                        <button onclick="app.deleteTransaction('${tx.id}')" class="text-red-500 hover:text-red-400 bg-red-500/10 p-2 rounded-full transition-colors"><i class="ph-bold ph-trash text-lg"></i></button>
+                    </div>
+                </div>`;
+            });
+            tbody.innerHTML = html;
+        },
+
+        renderUsers() {
+            const grid = document.getElementById('users-grid');
+            let html = '';
+            this.data.users.forEach(u => {
+                const bal = this.getUserBalance(u.id, this.data.transactions);
+                html += `<div class="glass p-6 rounded-[2.5rem] bg-white/50 dark:bg-darkCard shadow-sm border border-slate-200/50 dark:border-darkBorder/50 relative overflow-hidden group"><div class="absolute top-0 left-0 w-full h-[6px]" style="background-color:${u.color}"></div><div class="flex justify-between items-start mt-3"><div class="flex items-center gap-4"><div class="w-14 h-14 rounded-[1.25rem] flex items-center justify-center text-white text-2xl font-black shadow-lg" style="background-color:${u.color}">${u.name.charAt(0)}</div><div><h4 class="font-black text-2xl">${u.name}</h4><p class="text-xs font-bold text-slate-500 dark:text-slate-400 mt-1 uppercase tracking-widest">Pay Day: ${u.salaryDate||'N/A'}</p></div></div><div class="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity"><button onclick="app.openUserModal('${u.id}')" class="text-slate-400 hover:text-blue-500 bg-slate-100 dark:bg-black/30 p-2 rounded-full"><i class="ph-bold ph-pencil-simple text-lg"></i></button><button onclick="app.deleteUser('${u.id}')" class="text-slate-400 hover:text-red-500 bg-slate-100 dark:bg-black/30 p-2 rounded-full"><i class="ph-bold ph-trash text-lg"></i></button></div></div><div class="mt-6 pt-6 border-t border-slate-200/50 dark:border-darkBorder/50"><p class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1">Total Power</p><p class="text-3xl font-black ${bal < 0 ? 'text-red-500' : ''}">${this.fmtCurrency(bal)}</p></div></div>`;
+            });
+            grid.innerHTML = html;
+        },
+
+        calculateSplit() {
+            const target = Number(document.getElementById('split-target').value);
+            if (!target || target <= 0) { this.showToast('Invalid Amount.', 'error'); return; }
+            const allTx = this.data.transactions;
+            let totalPool = 0;
+            const userStats = [];
+            this.data.users.forEach(u => { const bal = this.getUserBalance(u.id, allTx); if(bal > 0) { totalPool += bal; userStats.push({ name:u.name, color:u.color, balance:bal }); } });
+            if (target > totalPool) { this.showToast(`Target exceeds positive pool (${this.fmtCurrency(totalPool)})`, 'error'); return; }
+            if (!userStats.length) { this.showToast('No active wealth found.', 'error'); return; }
+            let html = `<div class="p-6 border-b border-slate-200/50 dark:border-darkBorder/50 bg-slate-50/50 dark:bg-black/20 flex flex-col sm:flex-row justify-between gap-4 sm:items-center"><div><h3 class="font-black text-xl">Split Matrix</h3><p class="text-xs text-slate-500 font-bold uppercase tracking-widest mt-1">Calculated ratio.</p></div><div class="bg-indigo-500/10 text-indigo-500 px-5 py-3 rounded-3xl text-right border border-indigo-500/30"><p class="text-[10px] uppercase font-bold tracking-widest opacity-80 mb-0.5">Target</p><p class="text-2xl font-black">${this.fmtCurrency(target)}</p></div></div><div class="overflow-x-auto p-2"><table class="w-full text-left border-collapse whitespace-nowrap"><thead><tr class="text-slate-500 dark:text-slate-400 text-xs font-bold uppercase tracking-widest border-b border-slate-200/50 dark:border-darkBorder/50"><th class="p-5">Entity</th><th class="p-5 text-right">Power Bal</th><th class="p-5 text-right">Ratio</th><th class="p-5 text-right text-indigo-500">Extraction</th><th class="p-5 text-right">Remaining</th></tr></thead><tbody class="text-[15px] divide-y divide-slate-100/50 dark:divide-darkBorder/50 font-medium">`;
+            let totalSent = 0;
+            userStats.forEach(u => {
+                const shareRatio = u.balance / totalPool, pct = (shareRatio * 100).toFixed(1), contribution = target * shareRatio, remaining = u.balance - contribution;
+                totalSent += contribution;
+                html += `<tr class="hover:bg-slate-50 dark:hover:bg-white/5 transition-colors"><td class="p-5 font-bold flex items-center gap-3"><div class="w-3 h-3 rounded-full shadow-sm" style="background-color:${u.color}"></div>${u.name}</td><td class="p-5 text-right">${this.fmtCurrency(u.balance)}</td><td class="p-5 text-right text-slate-500 font-bold">${pct}%</td><td class="p-5 text-right font-black text-indigo-500 text-lg">${this.fmtCurrency(contribution)}</td><td class="p-5 text-right font-bold">${this.fmtCurrency(remaining)}</td></tr>`;
+            });
+            html += `</tbody><tfoot class="bg-slate-50/50 dark:bg-black/20 border-t-2 border-slate-200/50 dark:border-darkBorder/50"><tr><td class="p-5 font-black uppercase text-sm tracking-widest">Total</td><td class="p-5 text-right font-bold">${this.fmtCurrency(totalPool)}</td><td class="p-5 text-right text-slate-500 font-bold">100%</td><td class="p-5 text-right text-indigo-500 font-black text-xl">${this.fmtCurrency(totalSent)}</td><td class="p-5 text-right font-bold">${this.fmtCurrency(totalPool - totalSent)}</td></tr></tfoot></table></div>`;
+            const container = document.getElementById('split-results-container');
+            container.innerHTML = html; container.classList.remove('hidden'); container.classList.add('glass', 'rounded-[2.5rem]', 'shadow-sm', 'border', 'border-slate-200/50', 'dark:border-darkBorder/50', 'overflow-hidden');
+        },
+
+        openModal(id) {
+            const overlay = document.getElementById('modal-overlay'), modal = document.getElementById(id);
+            if (overlay) {
+                overlay.classList.remove('hidden');
+                void overlay.offsetWidth;
+                overlay.classList.remove('opacity-0');
+            }
+            if (modal) {
+                modal.classList.remove('hidden');
+                void modal.offsetWidth;
+                modal.classList.remove('opacity-0','scale-95');
+            }
+        },
+        closeModals() {
+            this.editingWorkspaceId = null;
+            const overlay = document.getElementById('modal-overlay');
+            const modals  = ['modal-tour','modal-workspace','modal-transaction','modal-user','modal-confirm', 'modal-settle', 'modal-add-debt', 'modal-autopay'].map(id => document.getElementById(id));
+            if (overlay) overlay.classList.add('opacity-0');
+            modals.forEach(m => { if (m) m.classList.add('opacity-0','scale-95'); });
+            setTimeout(() => { 
+                if (overlay) overlay.classList.add('hidden'); 
+                modals.forEach(m => { if (m) m.classList.add('hidden'); }); 
+            }, 300);
+            this.pendingAction = null;
+        },
+        confirmAction(title, msg, callback) {
+            document.getElementById('confirm-title').innerText = title;
+            document.getElementById('confirm-msg').innerText   = msg;
+            this.pendingAction = callback;
+            this.openModal('modal-confirm');
+        },
+        executeConfirm() { if(this.pendingAction) { this.pendingAction(); this.pendingAction = null; } },
+
+        handleTxTypeChange() {
+            const type = document.getElementById('tx-type').value;
+            const catLabel = document.getElementById('tx-cat-label'), catInput = document.getElementById('tx-category');
+            const submitBtn = document.getElementById('tx-submit-btn');
+            const labelMap = { lent:'Lent To', lent_returned:'Returned By', borrowed:'Borrowed From', borrowed_returned:'Repaid To', income:'Income Source', savings:'Savings Vault / Goal', withdraw_savings:'Withdrawn From' };
+            const phMap    = { lent:'e.g. John', lent_returned:'e.g. John', borrowed:'e.g. Bank, Alice', borrowed_returned: 'e.g. Bank, Alice', income:'e.g. Salary, Freelance', savings:'e.g. FD, Crypto', withdraw_savings:'e.g. Emergency Fund' };
+            catLabel.innerText  = labelMap[type] || 'Category';
+            catInput.placeholder = phMap[type]   || 'e.g. Food, Rent';
+            submitBtn.innerHTML = ['expense','lent','borrowed_returned','savings'].includes(type) ? '<i class="ph-bold ph-qr-code text-xl"></i> Execute (UPI)' : 'Execute Transaction';
+        },
+        openUPI() { window.location.href = 'upi://pay'; },
+
+        openTransactionModal(txId = null) {
+            if (!this.data.users.length) { this.showToast('Please register an entity first!', 'error'); this.navigate('users'); return; }
+            document.getElementById('tx-form').reset();
+            document.getElementById('tx-date').valueAsDate = new Date();
+            this.handleTxTypeChange();
+            if (txId) {
+                const tx = this.data.transactions.find(t => t.id === txId);
+                if (tx) {
+                    document.getElementById('tx-modal-title').innerText = 'Modify Entry';
+                    document.getElementById('tx-id').value       = tx.id;
+                    document.getElementById('tx-linked-id').value = tx.linkedTxId || '';
+                    document.getElementById('tx-type').value     = tx.type;
+                    this.handleTxTypeChange();
+                    document.getElementById('tx-user').value     = tx.userId;
+                    document.getElementById('tx-amount').value   = tx.amount;
+                    document.getElementById('tx-category').value = tx.category;
+                    document.getElementById('tx-date').value     = tx.date;
+                    document.getElementById('tx-note').value     = tx.note || '';
+                }
+            } else {
+                document.getElementById('tx-modal-title').innerText = 'New Entry';
+                document.getElementById('tx-id').value = '';
+                document.getElementById('tx-linked-id').value = '';
+            }
+            this.openModal('modal-transaction');
+        },
+
+        saveTransaction(e) {
+            e.preventDefault();
+            const id = document.getElementById('tx-id').value;
+            const linkedId = document.getElementById('tx-linked-id').value;
+            const txType = document.getElementById('tx-type').value;
+            const tx = {
+                id: id || 'tx_' + Date.now(),
+                type: txType,
+                userId:   document.getElementById('tx-user').value,
+                amount:   Number(document.getElementById('tx-amount').value),
+                category: document.getElementById('tx-category').value,
+                date:     document.getElementById('tx-date').value,
+                note:     document.getElementById('tx-note').value
+            };
+            
+            if (linkedId) tx.linkedTxId = linkedId;
+
+            if (id) { const idx = this.data.transactions.findIndex(t => t.id === id); if(idx !== -1) this.data.transactions[idx] = tx; }
+            else this.data.transactions.push(tx);
+            this.saveData();
+            this.closeModals();
+            this.renderAll();
+
+            if (this.settings.autoSync && this.settings.gsheetsUrl) {
+                this.syncToGoogleSheets(true); 
+            }
+
+            if (['expense','lent','borrowed_returned','savings'].includes(txType)) {
+                this.showToast('Logged! Bridging to UPI...');
+                setTimeout(() => this.openUPI(), 600);
+            } else {
+                this.showToast('Entry Logged.');
+            }
+        },
+
+        deleteTransaction(id) {
+            this.confirmAction('Erase Entry?', 'Are you sure?', () => {
+                this.data.transactions = this.data.transactions.filter(t => t.id !== id);
+                this.saveData(); this.renderAll(); this.closeModals();
+                this.showToast('Erased.');
+            });
+        },
+
+        openUserModal(userId = null) {
+            document.getElementById('user-form').reset();
+            if (userId) {
+                const u = this.data.users.find(u => u.id === userId);
+                if (u) {
+                    document.getElementById('user-modal-title').innerText = 'Edit Entity';
+                    document.getElementById('user-id').value     = u.id;
+                    document.getElementById('user-name').value   = u.name;
+                    document.getElementById('user-color').value  = u.color;
+                    document.getElementById('user-salary').value = u.salaryDate || '';
+                }
+            } else {
+                document.getElementById('user-modal-title').innerText = 'New Entity';
+                document.getElementById('user-id').value = '';
+                const colors = ['#FF007F','#FF9E00','#7B2CBF','#10b981','#f43f5e','#3b82f6'];
+                document.getElementById('user-color').value = colors[Math.floor(Math.random() * colors.length)];
+            }
+            this.openModal('modal-user');
+        },
+        saveUser(e) {
+            e.preventDefault();
+            const id = document.getElementById('user-id').value;
+            const u  = { id: id || 'u_' + Date.now(), name: document.getElementById('user-name').value, color: document.getElementById('user-color').value, salaryDate: document.getElementById('user-salary').value || null };
+            if (id) { const idx = this.data.users.findIndex(x => x.id === id); if(idx !== -1) this.data.users[idx] = u; }
+            else this.data.users.push(u);
+            this.saveData(); this.closeModals(); this.renderAll();
+            this.showToast('Identity Registered.');
+        },
+        deleteUser(id) {
+            if (this.data.transactions.some(t => t.userId === id)) { this.showToast('Cannot erase. Associated logs exist.', 'error'); return; }
+            this.confirmAction('Purge Entity?', 'Are you sure?', () => {
+                this.data.users = this.data.users.filter(u => u.id !== id);
+                this.saveData(); this.renderAll(); this.closeModals();
+                this.showToast('Purged.');
+            });
+        },
+
+        exportJSON() {
+            const backup = { workspaces: this.workspaces, settings: this.settings };
+            const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+            const url  = URL.createObjectURL(blob);
+            const a    = document.createElement('a');
+            a.href = url; a.download = `wallet_os_backup_${new Date().toISOString().split('T')[0]}.json`;
+            document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+            this.showToast('Database Extracted.');
+        },
+        importJSON(event) {
+            const file = event.target.files[0]; if(!file) return;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const importedData = JSON.parse(e.target.result);
+                    if (importedData.workspaces) {
+                        this.workspaces = importedData.workspaces;
+                        this.activeWorkspaceId = this.workspaces[0].id;
+                        this.settings = Object.assign({ darkMode:true, gsheetsUrl:'', autoSync:false }, importedData.settings || {});
+                        this.syncDataPointer(); this.saveData(); this.renderAll();
+                        document.documentElement.classList.toggle('dark', this.settings.darkMode);
+                        this.updateThemeUI(); this.updateGSheetsUI();
+                        this.showToast('Database Overridden.');
+                    } else if (importedData.users && importedData.transactions) {
+                        const defaultWs = { id:'ws_'+Date.now(), name:'Imported Account', users:importedData.users, transactions:importedData.transactions, autoPays: [] };
+                        this.workspaces.push(defaultWs); this.activeWorkspaceId = defaultWs.id;
+                        this.syncDataPointer(); this.saveData(); this.renderAll();
+                        this.showToast('Legacy Data Integrated.');
+                    } else { throw new Error("Invalid format"); }
+                } catch(err) { this.showToast('Corrupted JSON schema.', 'error'); }
+            };
+            reader.readAsText(file); event.target.value = '';
+        },
+        resetData() {
+            this.confirmAction('Nuke Database?', 'Completely format local storage?', () => {
+                localStorage.clear();
+                this.workspaces = [{ id:'ws_'+Date.now(), name:'Main Account', users:[], transactions:[], autoPays:[] }];
+                this.activeWorkspaceId = this.workspaces[0].id;
+                this.settings = { darkMode: true, gsheetsUrl: '', autoSync: false };
+                this.syncDataPointer(); this.renderAll(); this.closeModals(); this.updateGSheetsUI();
+                this.showToast('Data formatted.', 'error');
+            });
+        },
+        exportPDF() {
+            this.showToast('Preparing Render...');
+
+            const monthNames = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+            const monthName = `${monthNames[this.currentDate.getMonth()]} ${this.currentDate.getFullYear()}`;
+            const monthTx = this.getMonthlyTransactions().sort((a,b) => new Date(b.date) - new Date(a.date));
+            
+            let txRows = monthTx.length ? monthTx.map(tx => {
+                const user = this.data.users.find(u => u.id === tx.userId) || { name:'?' };
+                const isPos = ['income','borrowed','withdraw_savings','lent_returned'].includes(tx.type);
+                const dType = tx.type.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase());
+                return `
+                    <tr style="border-bottom: 1px solid #e2e8f0;">
+                        <td style="padding: 12px 10px; font-size: 13px; color: #1e293b;">${this.fmtDate(tx.date)}</td>
+                        <td style="padding: 12px 10px; font-size: 13px; font-weight:bold; color: #1e293b;">${user.name}</td>
+                        <td style="padding: 12px 10px; font-size: 13px; color: #1e293b;">${dType}</td>
+                        <td style="padding: 12px 10px; font-size: 13px; color: #1e293b;">
+                            <strong>${tx.category}</strong>
+                            ${tx.note ? `<br><span style="color:#64748b; font-size:11px;">${tx.note}</span>` : ''}
+                        </td>
+                        <td style="padding: 12px 10px; text-align: right; font-weight: bold; color: ${isPos ? '#16a34a' : '#dc2626'}; font-size: 14px;">
+                            ${isPos ? '+' : '-'}${this.fmtCurrency(tx.amount)}
+                        </td>
+                    </tr>
+                `;
+            }).join('') : `<tr><td colspan="5" style="padding: 30px; text-align: center; color: #64748b; font-weight: bold;">No logs for ${monthName}.</td></tr>`;
+
+            const printHtml = `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>Report - ${monthName}</title>
+                    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;900&display=swap" rel="stylesheet">
+                    <style>
+                        body { font-family: 'Outfit', sans-serif; margin: 0; padding: 30px; color: #000; background: #fff; }
+                        .header { border-bottom: 3px solid #FF007F; padding-bottom: 15px; margin-bottom: 30px; }
+                        h1 { color: #05050A; font-size: 32px; margin: 0 0 5px 0; font-weight: 900; letter-spacing: -0.5px; }
+                        p { color: #64748b; font-size: 16px; margin: 0; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
+                        table { width: 100%; border-collapse: collapse; text-align: left; }
+                        th { background-color: #f8fafc; padding: 15px 10px; border-bottom: 2px solid #cbd5e1; font-size: 12px; color: #475569; text-transform: uppercase; letter-spacing: 1px; font-weight: 900; }
+                        td { vertical-align: top; }
+                        @media print {
+                            @page { margin: 0.5in; }
+                            body { padding: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+                        }
+                    </style>
+                </head>
+                <body>
+                    <div class="header">
+                        <h1>${this.data.name}</h1>
+                        <p>Financial Log &bull; ${monthName}</p>
+                    </div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th style="width: 15%">Date</th>
+                                <th style="width: 15%">Entity</th>
+                                <th style="width: 20%">Classification</th>
+                                <th style="width: 30%">Parameters</th>
+                                <th style="width: 20%; text-align: right;">Value</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${txRows}
+                        </tbody>
+                    </table>
+                    <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #e2e8f0; text-align: center; font-size: 11px; color: #94a3b8; font-weight: bold; text-transform: uppercase; letter-spacing: 1px;">
+                        Origin OS Core 6.0 &bull; Generated ${new Date().toLocaleString()}
+                    </div>
+                </body>
+                </html>
+            `;
+
+            let printIframe = document.getElementById('wallet-print-iframe');
+            if (!printIframe) {
+                printIframe = document.createElement('iframe');
+                printIframe.id = 'wallet-print-iframe';
+                printIframe.style.position = 'absolute';
+                printIframe.style.width = '0px';
+                printIframe.style.height = '0px';
+                printIframe.style.border = 'none';
+                document.body.appendChild(printIframe);
+            }
+            
+            const doc = printIframe.contentWindow.document;
+            doc.open();
+            doc.write(printHtml);
+            doc.close();
+
+            setTimeout(() => {
+                printIframe.contentWindow.focus();
+                printIframe.contentWindow.print();
+            }, 300);
+        },
+        exportExcel() {
+            if (!window.XLSX) { this.showToast('Excel library uninitialized.', 'error'); return; }
+            try {
+                const wb = XLSX.utils.book_new();
+                const txData = this.data.transactions.map(tx => {
+                    const user = this.data.users.find(u => u.id === tx.userId);
+                    let dt = tx.type; if(dt==='withdraw_savings') dt='Withdrawn From Savings'; else if(dt==='lent_returned') dt='Lent Returned'; else if(dt==='borrowed_returned') dt='Borrowed Repaid'; else dt=dt.charAt(0).toUpperCase()+dt.slice(1);
+                    return { Date:this.fmtDate(tx.date), User:user?user.name:'Unknown', Type:dt, Category:tx.category, Amount:tx.amount, Note:tx.note||'' };
+                });
+                XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(txData.length ? txData : [{ Message:'No transactions' }]), 'Transactions');
+                
+                const allTx = this.data.transactions;
+                const userSummary = this.data.users.map(u => {
+                    let inc=0,exp=0,lnt=0,brw=0,sav=0;
+                    allTx.forEach(tx => { 
+                        if(tx.userId===u.id) { 
+                            const a=Number(tx.amount); 
+                            if(tx.type==='income') inc+=a; 
+                            if(tx.type==='expense') exp+=a; 
+                            if(tx.type==='lent') lnt+=a; 
+                            if(tx.type==='lent_returned') lnt-=a; 
+                            if(tx.type==='borrowed') brw+=a; 
+                            if(tx.type==='borrowed_returned') brw-=a;
+                            if(tx.type==='savings') sav+=a; 
+                            if(tx.type==='withdraw_savings') sav-=a; 
+                        } 
+                    });
+                    return { User:u.name, 'Net Balance':(inc+brw)-(exp+lnt+sav), 'Total Income':inc, 'Total Expense':exp, 'Net Lent':lnt, 'Net Borrowed':brw, 'Net Savings':sav };
+                });
+                XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(userSummary.length ? userSummary : [{ Message:'No users' }]), 'User Summary');
+                
+                const monthlyData = {};
+                allTx.forEach(tx => {
+                    const date = new Date(tx.date), my = date.toLocaleString('en-GB',{month:'short',year:'numeric'});
+                    if(!monthlyData[my]) monthlyData[my] = { Month:my, Income:0, Expense:0, Net_Lent:0, Net_Borrowed:0, Net_Savings:0 };
+                    const a = Number(tx.amount);
+                    if(tx.type==='income') monthlyData[my].Income+=a; if(tx.type==='expense') monthlyData[my].Expense+=a;
+                    if(tx.type==='lent') monthlyData[my].Net_Lent+=a; if(tx.type==='lent_returned') monthlyData[my].Net_Lent-=a;
+                    if(tx.type==='borrowed') monthlyData[my].Net_Borrowed+=a; if(tx.type==='borrowed_returned') monthlyData[my].Net_Borrowed-=a;
+                    if(tx.type==='savings') monthlyData[my].Net_Savings+=a; if(tx.type==='withdraw_savings') monthlyData[my].Net_Savings-=a;
+                });
+                XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(Object.values(monthlyData).length ? Object.values(monthlyData) : [{ Message:'No data' }]), 'Monthly Breakdown');
+                
+                XLSX.writeFile(wb, `Wallet_Export_${this.data.name.replace(/[^a-z0-9]/gi,'_').toLowerCase()}.xlsx`);
+                this.showToast('Workbook Exported.');
+            } catch(error) { console.error(error); this.showToast('Extraction Failed.', 'error'); }
+        }
+    };
+
+    window.addEventListener('DOMContentLoaded', () => { app.init(); });
+    </script>
+</body>
+</html>

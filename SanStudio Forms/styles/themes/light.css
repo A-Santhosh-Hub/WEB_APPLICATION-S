@@ -1,0 +1,25 @@
+/**
+ * SanStudio Forms — Light Theme (explicit)
+ * ==========================================
+ * Default light theme tokens declared explicitly.
+ * Applied via [data-theme="light"] on <html>
+ * (also the default :root state in tokens.css).
+ */
+
+[data-theme="light"] {
+  color-scheme: light;
+
+  /* All values inherit from :root in tokens.css */
+  /* This block exists for explicit override if needed */
+
+  --bg-base:        var(--color-neutral-50);
+  --bg-surface:     var(--color-neutral-0);
+  --bg-surface-2:   var(--color-neutral-100);
+  --bg-surface-3:   var(--color-neutral-150);
+  --text-primary:   var(--color-neutral-900);
+  --text-secondary: var(--color-neutral-600);
+  --text-tertiary:  var(--color-neutral-400);
+  --border-subtle:  var(--color-neutral-100);
+  --border-default: var(--color-neutral-200);
+  --border-strong:  var(--color-neutral-300);
+}

@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="SanStudio Forms Builder — Create beautiful forms with drag-and-drop.">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="assets/icons/favicon.svg" type="image/svg+xml">
+  <title>Form Builder — SanStudio Forms</title>
+
+  <link rel="stylesheet" href="styles/tokens.css">
+  <link rel="stylesheet" href="styles/reset.css">
+  <link rel="stylesheet" href="styles/base.css">
+  <link rel="stylesheet" href="styles/animations.css">
+  <link rel="stylesheet" href="styles/components.css">
+  <link rel="stylesheet" href="styles/layout.css">
+  <link rel="stylesheet" href="styles/themes/light.css">
+  <link rel="stylesheet" href="styles/themes/dark.css">
+  <link rel="stylesheet" href="styles/themes/glassmorphism.css">
+  <link rel="stylesheet" href="styles/themes/neumorphism.css">
+  <link rel="stylesheet" href="styles/themes/cyberpunk.css">
+  <link rel="stylesheet" href="styles/themes/aurora.css">
+  <link rel="stylesheet" href="styles/themes/luxury.css">
+  <link rel="stylesheet" href="styles/pages/builder.css">
+</head>
+<body data-page="builder">
+  <div class="gradient-mesh" aria-hidden="true"></div>
+  <div class="cursor-glow" aria-hidden="true"></div>
+
+  <!-- Builder Layout (no sidebar) -->
+  <div class="builder-shell" id="builder-shell">
+
+    <!-- Builder Topbar -->
+    <header class="builder-topbar" role="banner">
+      <!-- Left: Logo + Back + Form Title -->
+      <div class="builder-topbar-left">
+        <a href="index.html" class="builder-back-btn" aria-label="Back to Dashboard" data-tooltip="Back to Dashboard">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <path d="M19 12H5M12 5l-7 7 7 7"/>
+          </svg>
+        </a>
+        <div class="builder-title-wrap">
+          <input
+            type="text"
+            class="builder-form-title-input"
+            id="form-title-input"
+            value="Untitled Form"
+            placeholder="Form title..."
+            aria-label="Form title"
+            maxlength="200"
+            autocomplete="off"
+          >
+          <div class="builder-form-desc-input-wrap">
+            <input
+              type="text"
+              class="builder-form-desc-input"
+              id="form-desc-input"
+              placeholder="Add a description..."
+              aria-label="Form description"
+              maxlength="500"
+              autocomplete="off"
+            >
+          </div>
+        </div>
+      </div>
+
+      <!-- Center: Save status + Undo/Redo -->
+      <div class="builder-topbar-center">
+        <button class="btn btn-icon btn-ghost builder-toolbar-btn" id="undo-btn" aria-label="Undo (Ctrl+Z)" data-tooltip="Undo" disabled>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <path d="M3 7v6h6M3 13A9 9 0 1121 13"/>
+          </svg>
+        </button>
+        <button class="btn btn-icon btn-ghost builder-toolbar-btn" id="redo-btn" aria-label="Redo (Ctrl+Shift+Z)" data-tooltip="Redo" disabled>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <path d="M21 7v6h-6M21 13A9 9 0 113 13"/>
+          </svg>
+        </button>
+
+        <div class="builder-save-status" id="save-status" aria-live="polite">
+          <svg class="save-icon-saving" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none"><path d="M21 12a9 9 0 01-9 9M3 12a9 9 0 019-9"/></svg>
+          <svg class="save-icon-saved" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>
+          <span class="save-text">Saved</span>
+        </div>
+      </div>
+
+      <!-- Right: Preview + Share + Publish -->
+      <div class="builder-topbar-right">
+        <!-- Preview device switcher -->
+        <div class="preview-device-group" role="group" aria-label="Preview device">
+          <button class="preview-device-btn active" data-device="desktop" aria-label="Desktop preview" data-tooltip="Desktop">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/>
+            </svg>
+          </button>
+          <button class="preview-device-btn" data-device="tablet" aria-label="Tablet preview" data-tooltip="Tablet">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <rect x="4" y="2" width="16" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/>
+            </svg>
+          </button>
+          <button class="preview-device-btn" data-device="mobile" aria-label="Mobile preview" data-tooltip="Mobile">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/>
+            </svg>
+          </button>
+        </div>
+
+        <!-- Theme picker -->
+        <button class="btn btn-icon btn-ghost builder-toolbar-btn" id="theme-picker-btn" aria-label="Change theme" data-tooltip="Form Theme">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <circle cx="12" cy="12" r="10"/><path d="M12 2v20M2 12h20"/>
+          </svg>
+        </button>
+
+        <!-- Settings -->
+        <button class="btn btn-icon btn-ghost builder-toolbar-btn" id="form-settings-btn" aria-label="Form settings" data-tooltip="Form Settings">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <circle cx="12" cy="12" r="3"/>
+            <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/>
+          </svg>
+        </button>
+
+        <div class="builder-topbar-divider" aria-hidden="true"></div>
+
+        <!-- Preview -->
+        <button class="btn btn-secondary btn-sm" id="preview-btn">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+          </svg>
+          Preview
+        </button>
+
+        <!-- Share -->
+        <button class="btn btn-secondary btn-sm" id="builder-share-btn">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
+            <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+          </svg>
+          Share
+        </button>
+
+        <!-- Publish -->
+        <button class="btn btn-gradient btn-sm" id="publish-btn">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <path d="M5 12h14M12 5l7 7-7 7"/>
+          </svg>
+          <span id="publish-label">Publish</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Builder Body -->
+    <div class="builder-body">
+
+      <!-- Left Panel: Question Type Picker -->
+      <aside class="builder-left-panel" id="builder-left-panel" aria-label="Question types">
+        <div class="builder-left-panel-header">
+          <h2 style="font-size: var(--text-xs); font-weight: var(--weight-semibold); letter-spacing: var(--tracking-wider); text-transform: uppercase; color: var(--text-tertiary);">Add Question</h2>
+          <input type="text" class="input input-sm" id="question-type-search" placeholder="Search types..." aria-label="Search question types" style="margin-top: var(--space-2)">
+        </div>
+
+        <div class="question-type-list" id="question-type-list" role="list">
+          <!-- Populated by JS -->
+        </div>
+      </aside>
+
+      <!-- Center: Form Canvas -->
+      <main class="builder-canvas-wrap" role="main">
+        <div class="builder-canvas" id="builder-canvas" data-device="desktop">
+
+          <!-- Form Header Card -->
+          <div class="form-header-card" id="form-header-card">
+            <div class="form-header-color-bar" id="form-color-bar"></div>
+            <div class="form-header-body">
+              <div
+                class="form-header-title-display"
+                id="form-header-title"
+                contenteditable="true"
+                data-placeholder="Form Title"
+                aria-label="Form title (click to edit)"
+                role="heading"
+                aria-level="1"
+              >Untitled Form</div>
+              <div
+                class="form-header-desc-display"
+                id="form-header-desc"
+                contenteditable="true"
+                data-placeholder="Form description (optional)"
+                aria-label="Form description"
+              ></div>
+            </div>
+          </div>
+
+          <!-- Questions List -->
+          <div class="questions-list" id="questions-list" role="list" aria-label="Form questions">
+            <!-- Questions rendered here by JS -->
+          </div>
+
+          <!-- Add Question Placeholder (shown when no questions) -->
+          <div class="add-question-placeholder" id="add-question-placeholder">
+            <div class="add-question-placeholder-inner">
+              <div class="add-question-placeholder-icon animate-float">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" style="color: var(--brand-primary)">
+                  <path d="M12 5v14M5 12h14"/>
+                </svg>
+              </div>
+              <p class="add-question-placeholder-text">
+                Click a question type on the left, or drag it here to get started
+              </p>
+              <button class="btn btn-primary btn-sm" id="quick-add-btn">Add First Question</button>
+            </div>
+          </div>
+
+          <!-- Add More Questions Button (shown after first question) -->
+          <div class="add-more-wrap" id="add-more-wrap" style="display:none;">
+            <button class="add-more-btn" id="add-more-btn" aria-label="Add another question">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                <path d="M12 5v14M5 12h14"/>
+              </svg>
+              Add Question
+            </button>
+          </div>
+
+        </div>
+      </main>
+
+      <!-- Right Panel: Question Settings -->
+      <aside class="builder-right-panel" id="builder-right-panel" aria-label="Question settings">
+        <!-- Settings populated by JS when question selected -->
+        <div class="right-panel-empty" id="right-panel-empty">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" style="color: var(--text-tertiary); margin-bottom: var(--space-3)">
+            <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
+          </svg>
+          <p style="font-size: var(--text-sm); color: var(--text-tertiary); text-align: center">
+            Select a question to edit its settings
+          </p>
+        </div>
+
+        <div class="right-panel-settings" id="right-panel-settings" style="display:none;">
+          <!-- Settings tabs -->
+          <div class="tabs tabs-pill" id="settings-tabs" style="margin-bottom: var(--space-5);">
+            <button class="tab-item active" data-tab="general">General</button>
+            <button class="tab-item" data-tab="validation">Validation</button>
+            <button class="tab-item" data-tab="logic">Logic</button>
+          </div>
+
+          <!-- Tab: General -->
+          <div id="tab-general" class="settings-tab-content">
+            <!-- Populated by JS -->
+          </div>
+
+          <!-- Tab: Validation -->
+          <div id="tab-validation" class="settings-tab-content" style="display:none;">
+            <!-- Populated by JS -->
+          </div>
+
+          <!-- Tab: Logic -->
+          <div id="tab-logic" class="settings-tab-content" style="display:none;">
+            <!-- Populated by JS -->
+          </div>
+        </div>
+      </aside>
+    </div>
+  </div>
+
+  <!-- Preview Modal -->
+  <div class="modal-overlay" id="preview-modal" hidden role="dialog" aria-modal="true" aria-label="Form preview">
+    <div class="preview-modal-panel" id="preview-panel">
+      <div class="preview-modal-topbar">
+        <div class="tabs tabs-pill" id="preview-device-tabs">
+          <button class="tab-item active" data-device="desktop">Desktop</button>
+          <button class="tab-item" data-device="tablet">Tablet</button>
+          <button class="tab-item" data-device="mobile">Mobile</button>
+        </div>
+        <button class="btn btn-ghost btn-sm" id="close-preview-btn">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg>
+          Close
+        </button>
+      </div>
+      <div class="preview-modal-body">
+        <div class="preview-device-frame" id="preview-device-frame" data-device="desktop">
+          <iframe id="preview-iframe" title="Form preview" src="" style="width:100%;height:100%;border:none;border-radius: var(--radius-xl)"></iframe>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Form Settings Modal -->
+  <div class="modal-overlay" id="form-settings-modal" hidden role="dialog" aria-modal="true" aria-labelledby="form-settings-title">
+    <div class="modal-panel modal-lg" style="max-height: 85vh;">
+      <div class="modal-header">
+        <h2 class="modal-title" id="form-settings-title">Form Settings</h2>
+        <button class="modal-close" data-modal-close="form-settings-modal" aria-label="Close">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <div class="modal-body" style="overflow-y: auto;">
+        <div class="tabs" id="form-settings-tabs" style="margin-bottom: var(--space-6)">
+          <button class="tab-item active" data-tab="general-settings">General</button>
+          <button class="tab-item" data-tab="responses-settings">Responses</button>
+          <button class="tab-item" data-tab="notifications-settings">Notifications</button>
+          <button class="tab-item" data-tab="design-settings">Design</button>
+          <button class="tab-item" data-tab="sharing-settings">Sharing</button>
+        </div>
+
+        <!-- General Settings -->
+        <div id="general-settings" class="settings-section">
+          <div class="form-group">
+            <label for="setting-title">Form Title</label>
+            <input type="text" class="input" id="setting-title" placeholder="Enter form title">
+          </div>
+          <div class="form-group">
+            <label for="setting-desc">Description</label>
+            <textarea class="textarea" id="setting-desc" placeholder="Enter form description" rows="3"></textarea>
+          </div>
+          <div class="form-group">
+            <label for="setting-lang">Language</label>
+            <select class="select" id="setting-lang">
+              <option value="en">English</option>
+              <option value="es">Spanish</option>
+              <option value="fr">French</option>
+              <option value="de">German</option>
+              <option value="ja">Japanese</option>
+              <option value="zh">Chinese</option>
+              <option value="hi">Hindi</option>
+              <option value="ar">Arabic</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Progress Bar</label>
+            <label class="toggle-wrapper">
+              <input type="checkbox" class="toggle-input" id="setting-progress">
+              <div class="toggle-track"><div class="toggle-thumb"></div></div>
+              <span class="toggle-label">Show progress bar</span>
+            </label>
+          </div>
+          <div class="form-group">
+            <label>Estimated Time</label>
+            <label class="toggle-wrapper">
+              <input type="checkbox" class="toggle-input" id="setting-est-time">
+              <div class="toggle-track"><div class="toggle-thumb"></div></div>
+              <span class="toggle-label">Show estimated completion time</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Responses Settings -->
+        <div id="responses-settings" class="settings-section" style="display:none">
+          <div class="form-group">
+            <label for="setting-response-limit">Response Limit</label>
+            <input type="number" class="input" id="setting-response-limit" placeholder="No limit" min="1">
+            <span class="field-hint">Leave empty for unlimited responses.</span>
+          </div>
+          <div class="form-group">
+            <label for="setting-expiry">Form Expiry Date</label>
+            <input type="datetime-local" class="input" id="setting-expiry">
+          </div>
+          <div class="form-group">
+            <label>Duplicate Detection</label>
+            <label class="toggle-wrapper">
+              <input type="checkbox" class="toggle-input" id="setting-dedup">
+              <div class="toggle-track"><div class="toggle-thumb"></div></div>
+              <span class="toggle-label">Prevent duplicate submissions</span>
+            </label>
+          </div>
+          <div class="form-group">
+            <label>Save Draft</label>
+            <label class="toggle-wrapper">
+              <input type="checkbox" class="toggle-input" id="setting-draft-save" checked>
+              <div class="toggle-track"><div class="toggle-thumb"></div></div>
+              <span class="toggle-label">Allow respondents to save their draft and continue later</span>
+            </label>
+          </div>
+          <div class="form-group">
+            <label for="setting-confirmation-msg">Confirmation Message</label>
+            <textarea class="textarea" id="setting-confirmation-msg" placeholder="Thank you for your response!" rows="3"></textarea>
+          </div>
+          <div class="form-group">
+            <label for="setting-redirect-url">Redirect URL (after submit)</label>
+            <input type="url" class="input" id="setting-redirect-url" placeholder="https://yoursite.com/thank-you">
+          </div>
+        </div>
+
+        <!-- Notifications -->
+        <div id="notifications-settings" class="settings-section" style="display:none">
+          <div class="form-group">
+            <label>Email Notifications</label>
+            <label class="toggle-wrapper">
+              <input type="checkbox" class="toggle-input" id="setting-email-notify">
+              <div class="toggle-track"><div class="toggle-thumb"></div></div>
+              <span class="toggle-label">Receive email on each submission</span>
+            </label>
+          </div>
+          <div class="form-group">
+            <label for="setting-notify-email">Notification Email</label>
+            <input type="email" class="input" id="setting-notify-email" placeholder="you@example.com">
+          </div>
+          <div class="form-group">
+            <label>Respondent Confirmation Email</label>
+            <label class="toggle-wrapper">
+              <input type="checkbox" class="toggle-input" id="setting-respondent-email">
+              <div class="toggle-track"><div class="toggle-thumb"></div></div>
+              <span class="toggle-label">Send confirmation to respondent (requires an Email question)</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Design -->
+        <div id="design-settings" class="settings-section" style="display:none">
+          <div class="form-group">
+            <label>Form Theme</label>
+            <div class="theme-grid" id="settings-theme-grid">
+              <!-- Populated by JS -->
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Accent Color</label>
+            <input type="color" class="input" id="setting-accent-color" value="#8b5cf6" style="height: 44px; cursor: pointer">
+          </div>
+          <div class="form-group">
+            <label for="setting-logo-url">Logo URL</label>
+            <input type="url" class="input" id="setting-logo-url" placeholder="https://...">
+          </div>
+          <div class="form-group">
+            <label>Custom CSS</label>
+            <textarea class="textarea" id="setting-custom-css" placeholder="/* Add your custom CSS here */" rows="8" style="font-family: var(--font-mono); font-size: var(--text-xs)"></textarea>
+          </div>
+        </div>
+
+        <!-- Sharing -->
+        <div id="sharing-settings" class="settings-section" style="display:none">
+          <div class="form-group">
+            <label>Password Protection</label>
+            <label class="toggle-wrapper">
+              <input type="checkbox" class="toggle-input" id="setting-password-protect">
+              <div class="toggle-track"><div class="toggle-thumb"></div></div>
+              <span class="toggle-label">Require a password to access the form</span>
+            </label>
+          </div>
+          <div class="form-group" id="password-field-wrap" style="display:none">
+            <label for="setting-password">Form Password</label>
+            <input type="password" class="input" id="setting-password" placeholder="Enter password">
+          </div>
+          <div class="form-group">
+            <label>Embed Code</label>
+            <textarea class="textarea" id="setting-embed-code" readonly style="font-family: var(--font-mono); font-size: var(--text-xs)" rows="4"></textarea>
+            <button class="btn btn-secondary btn-sm" id="copy-embed-btn" style="margin-top: var(--space-2)">Copy Embed Code</button>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-modal-close="form-settings-modal">Cancel</button>
+        <button class="btn btn-primary" id="save-form-settings-btn">Save Settings</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Theme Picker Modal -->
+  <div class="modal-overlay" id="theme-picker-modal" hidden role="dialog" aria-labelledby="theme-picker-title">
+    <div class="modal-panel modal-md">
+      <div class="modal-header">
+        <h2 class="modal-title" id="theme-picker-title">Form Theme</h2>
+        <button class="modal-close" data-modal-close="theme-picker-modal" aria-label="Close">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="theme-grid" id="theme-picker-grid">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script type="module" src="scripts/core/app.js"></script>
+  <script type="module" src="scripts/pages/builder.js"></script>
+</body>
+</html>

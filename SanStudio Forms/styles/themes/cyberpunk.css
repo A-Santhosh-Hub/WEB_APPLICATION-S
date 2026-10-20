@@ -1,0 +1,110 @@
+/**
+ * SanStudio Forms — Cyberpunk Theme
+ * ===================================
+ * Neon glows, dark backgrounds, electric accents.
+ * Applied via [data-theme="cyberpunk"] on <html>.
+ */
+
+[data-theme="cyberpunk"] {
+  color-scheme: dark;
+
+  --bg-base:        #050510;
+  --bg-surface:     #0c0c1e;
+  --bg-surface-2:   #111128;
+  --bg-surface-3:   #16163a;
+  --bg-inverse:     #ffffff;
+
+  --brand-primary:       #00f5ff;
+  --brand-primary-hover: #00d9e6;
+  --brand-secondary:     #f700ff;
+  --brand-accent:        #f5ff00;
+  --brand-gradient: linear-gradient(135deg, #00f5ff 0%, #f700ff 100%);
+
+  --text-primary:   #e0f0ff;
+  --text-secondary: #8899cc;
+  --text-tertiary:  #445577;
+  --text-brand:     #00f5ff;
+  --text-link:      #00f5ff;
+  --text-link-hover:#f700ff;
+
+  --border-subtle:  rgba(0, 245, 255, 0.08);
+  --border-default: rgba(0, 245, 255, 0.15);
+  --border-strong:  rgba(0, 245, 255, 0.3);
+  --border-brand:   #00f5ff;
+  --border-focus:   #f700ff;
+
+  --shadow-brand:    0 0 20px rgba(0, 245, 255, 0.4), 0 0 60px rgba(0, 245, 255, 0.15);
+  --shadow-brand-lg: 0 0 40px rgba(0, 245, 255, 0.5), 0 0 100px rgba(247, 0, 255, 0.2);
+  --shadow-card:     0 0 1px rgba(0, 245, 255, 0.3), 0 8px 32px rgba(0, 0, 0, 0.8);
+  --shadow-card-hover: 0 0 20px rgba(0, 245, 255, 0.3), 0 16px 64px rgba(0, 0, 0, 0.8);
+  --shadow-modal:    0 0 60px rgba(0, 245, 255, 0.2), 0 24px 80px rgba(0, 0, 0, 0.9);
+
+  --sidebar-bg:     #0c0c1e;
+  --sidebar-border: rgba(0, 245, 255, 0.1);
+  --topbar-bg:      #0c0c1e;
+  --topbar-border:  rgba(0, 245, 255, 0.1);
+  --card-bg:        #0c0c1e;
+  --card-border:    rgba(0, 245, 255, 0.12);
+  --input-bg:       #080818;
+  --input-border:   rgba(0, 245, 255, 0.2);
+
+  --badge-radius:   var(--radius-sm);
+}
+
+[data-theme="cyberpunk"] body {
+  background:
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 39px,
+      rgba(0, 245, 255, 0.03) 39px,
+      rgba(0, 245, 255, 0.03) 40px
+    ),
+    repeating-linear-gradient(
+      90deg,
+      transparent,
+      transparent 39px,
+      rgba(0, 245, 255, 0.03) 39px,
+      rgba(0, 245, 255, 0.03) 40px
+    ),
+    #050510;
+}
+
+/* Neon glow on interactive elements */
+[data-theme="cyberpunk"] .btn-primary,
+[data-theme="cyberpunk"] .input:focus,
+[data-theme="cyberpunk"] .card:hover {
+  box-shadow: 0 0 20px rgba(0, 245, 255, 0.3);
+}
+
+[data-theme="cyberpunk"] .text-gradient {
+  background: linear-gradient(135deg, #00f5ff, #f700ff);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+[data-theme="cyberpunk"] .gradient-mesh::before {
+  background: radial-gradient(circle, #00f5ff, transparent 70%);
+  opacity: 0.2;
+}
+[data-theme="cyberpunk"] .gradient-mesh::after {
+  background: radial-gradient(circle, #f700ff, transparent 70%);
+  opacity: 0.15;
+}
+
+/* Scanline effect */
+[data-theme="cyberpunk"] body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    rgba(0, 0, 0, 0.03),
+    rgba(0, 0, 0, 0.03) 1px,
+    transparent 1px,
+    transparent 2px
+  );
+  pointer-events: none;
+  z-index: var(--z-top);
+}

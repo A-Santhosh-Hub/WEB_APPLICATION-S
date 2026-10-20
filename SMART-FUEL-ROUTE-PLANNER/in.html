@@ -1,0 +1,1081 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Smart Fuel Route Planner | Free Edition</title>
+    
+    <!-- Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Icons: Phosphor Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+
+    <!-- FREE MAP ENGINE: Leaflet.js & Routing Machine CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.css" />
+
+    <style>
+        /* ==========================================================================
+           ORIGIN OS 6 / ANDROID 16 UI SYSTEM (CSS VARIABLES)
+           ========================================================================== */
+        :root {
+            --bg-base: #0f1115;
+            --surface-glass: rgba(20, 22, 28, 0.85); /* Slightly darker for better contrast */
+            --surface-glass-solid: #16181d;
+            --surface-glass-light: rgba(255, 255, 255, 0.05);
+            
+            --text-primary: #ffffff;
+            --text-secondary: rgba(255, 255, 255, 0.6);
+            --text-tertiary: rgba(255, 255, 255, 0.4);
+            
+            --accent-brand: #00E676; 
+            --accent-brand-glow: rgba(0, 230, 118, 0.3);
+            
+            --status-safe: #00E676;
+            --status-warning: #FFC400;
+            --status-critical: #FF3D00;
+            
+            --border-glass: rgba(255, 255, 255, 0.08);
+            
+            --font-main: 'Inter', system-ui, -apple-system, sans-serif;
+            
+            --radius-sm: 12px;
+            --radius-md: 20px;
+            --radius-lg: 32px;
+            --radius-pill: 100px;
+            
+            --shadow-glass: 0 8px 32px rgba(0, 0, 0, 0.6);
+            --shadow-glow: 0 0 20px var(--accent-brand-glow);
+            
+            --ease-spring: cubic-bezier(0.175, 0.885, 0.32, 1.15);
+            --ease-out: cubic-bezier(0.2, 0, 0, 1);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        
+        body, html {
+            height: 100%; width: 100%;
+            font-family: var(--font-main);
+            background-color: var(--bg-base);
+            color: var(--text-primary);
+            overflow: hidden;
+            touch-action: manipulation; /* Prevent double-tap zoom on mobile */
+        }
+
+        ::-webkit-scrollbar { width: 0px; background: transparent; }
+
+        .glass-panel {
+            background: var(--surface-glass);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid var(--border-glass);
+            box-shadow: var(--shadow-glass);
+        }
+
+        .flex-center { display: flex; align-items: center; justify-content: center; }
+        .flex-row { display: flex; align-items: center; }
+        .flex-col { display: flex; flex-direction: column; }
+        .space-between { justify-content: space-between; }
+        
+        h1, h2, h3 { font-weight: 600; letter-spacing: -0.02em; }
+        .text-sm { font-size: 0.85rem; }
+        .text-xs { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; }
+        
+        button {
+            border: none; outline: none; background: transparent; cursor: pointer;
+            font-family: var(--font-main); color: var(--text-primary);
+            transition: transform 0.2s var(--ease-out), opacity 0.2s, background 0.2s;
+        }
+        button:active { transform: scale(0.95); }
+        button:disabled { opacity: 0.5; cursor: not-allowed; }
+        
+        input {
+            width: 100%; background: var(--surface-glass-light); border: 1px solid var(--border-glass);
+            color: var(--text-primary); border-radius: var(--radius-sm); padding: 12px 16px;
+            font-size: 0.95rem; font-family: var(--font-main); outline: none; transition: border-color 0.3s;
+        }
+        input:focus { border-color: var(--accent-brand); background: rgba(255,255,255,0.1); }
+        input::placeholder { color: var(--text-tertiary); }
+        
+        .btn-primary {
+            background: var(--accent-brand); color: #000; font-weight: 600;
+            padding: 12px 20px; border-radius: var(--radius-pill); box-shadow: var(--shadow-glow);
+            width: 100%; font-size: 0.95rem;
+        }
+
+        /* ==========================================================================
+           LAYOUT & MAP
+           ========================================================================== */
+        #app { position: relative; width: 100%; height: 100%; }
+
+        #map-container {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 1; background: #0f1115;
+        }
+
+        /* Adjust Leaflet Controls to not hide behind bottom sheet */
+        .leaflet-routing-container { display: none !important; }
+        /* Moved zoom controls higher to prevent overlap with FAB */
+        .leaflet-control-zoom { border: none !important; margin-right: 12px !important; margin-bottom: 190px !important; }
+        .leaflet-bar a { background: var(--surface-glass-solid) !important; color: white !important; border: 1px solid var(--border-glass) !important; }
+
+        #ui-layer {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 10; pointer-events: none; /* Let map clicks through */
+            display: flex; flex-direction: column; justify-content: space-between;
+        }
+
+        .ui-element { pointer-events: auto; }
+
+        /* ==========================================================================
+           TOP BAR & CHIPS (Compact Floating Widget)
+           ========================================================================== */
+        .top-area-wrapper {
+            padding: 12px; display: flex; flex-direction: column; gap: 10px;
+            pointer-events: none; /* Let map clicks pass through */
+        }
+        .top-area-wrapper > .ui-element { pointer-events: auto; }
+
+        .top-bar {
+            margin: 0; padding: 12px; border-radius: var(--radius-lg);
+            display: flex; flex-direction: column; gap: 8px;
+            animation: slideDown 0.6s var(--ease-spring) forwards;
+        }
+
+        .search-group { position: relative; display: flex; align-items: center; }
+        .search-group i { position: absolute; left: 14px; color: var(--text-secondary); font-size: 1.1rem; }
+        .search-group input { padding-left: 42px; padding-top: 10px; padding-bottom: 10px; border-radius: 10px; }
+        .search-group input:focus + i { color: var(--accent-brand); }
+        
+        .route-line {
+            position: absolute; left: 19px; top: 32px; width: 2px; height: 12px; background: var(--border-glass); z-index: 2;
+        }
+
+        .fab-container {
+            position: absolute; right: 12px; bottom: 120px; /* Below Zoom Controls */
+            display: flex; flex-direction: column; gap: 10px;
+            transition: bottom 0.4s var(--ease-spring);
+        }
+        
+        .fab { width: 44px; height: 44px; border-radius: 50%; font-size: 1.4rem; background: var(--surface-glass-solid); }
+
+        /* NEW: Quick Action Chips (Emergency & Food) */
+        .quick-chips-toggle {
+            align-self: flex-start;
+            background: var(--surface-glass-solid);
+            border: 1px solid var(--border-glass);
+            padding: 8px 14px; border-radius: var(--radius-pill);
+            color: var(--text-primary); font-size: 0.85rem; font-weight: 600;
+            display: flex; align-items: center; gap: 6px;
+            box-shadow: var(--shadow-glass);
+            animation: slideDown 0.6s var(--ease-spring) forwards;
+        }
+
+        .quick-chips {
+            display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px;
+            transition: max-height 0.3s var(--ease-spring), opacity 0.3s;
+            max-height: 60px; opacity: 1;
+        }
+        .quick-chips.hidden {
+            max-height: 0; opacity: 0; padding: 0; margin: 0; border: none; overflow: hidden; pointer-events: none;
+        }
+        .quick-chips::-webkit-scrollbar { display: none; }
+        
+        .chip {
+            background: var(--surface-glass-solid);
+            border: 1px solid var(--border-glass);
+            padding: 8px 14px; border-radius: var(--radius-pill);
+            display: flex; align-items: center; gap: 6px;
+            white-space: nowrap; font-size: 0.85rem; font-weight: 600;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            transition: all 0.2s;
+        }
+        .chip.active { background: rgba(255,255,255,0.1); border-color: var(--text-primary); }
+        .chip i { font-size: 1.1rem; }
+        
+        .chip-hospital { color: #ff5252; }
+        .chip-food { color: #ffb142; }
+        .chip-mechanic { color: #84817a; }
+
+        /* NEW: Speedometer Widget */
+        #speedometer-widget {
+            position: absolute; left: 12px; bottom: 120px;
+            padding: 12px 16px; border-radius: var(--radius-md);
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            min-width: 70px; transition: bottom 0.4s var(--ease-spring);
+            border: 1px solid var(--border-glass);
+        }
+        #speed-value { font-size: 1.8rem; font-weight: 700; line-height: 1; color: var(--text-primary); }
+        .speed-unit { font-size: 0.7rem; color: var(--accent-brand); font-weight: 700; margin-top: 4px; letter-spacing: 0.5px; }
+
+        /* ==========================================================================
+           BOTTOM SHEET (Draggable/Collapsible Widget)
+           ========================================================================== */
+        .bottom-sheet {
+            position: absolute;
+            bottom: 0; left: 0; width: 100%;
+            background: var(--surface-glass-solid); /* Solid background for readability */
+            border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+            border-top: 1px solid var(--border-glass);
+            box-shadow: 0 -10px 40px rgba(0,0,0,0.5);
+            display: flex; flex-direction: column;
+            
+            /* Animation & Collapse Logic */
+            transform: translateY(calc(100% - 90px)); /* By default, hide everything except top 90px */
+            transition: transform 0.4s var(--ease-spring);
+            max-height: 85vh; /* Don't cover entire screen when expanded */
+        }
+
+        .bottom-sheet.expanded {
+            transform: translateY(0); /* Show fully */
+        }
+
+        .drag-handle-area {
+            padding: 12px 0 8px 0;
+            display: flex; justify-content: center; align-items: center;
+            cursor: pointer;
+            touch-action: pan-y; /* Allow vertical swiping */
+        }
+
+        .drag-handle {
+            width: 36px; height: 4px; background: var(--text-tertiary); border-radius: var(--radius-pill);
+            transition: background 0.3s;
+        }
+        .drag-handle-area:active .drag-handle { background: var(--text-primary); }
+
+        /* ALWAYS VISIBLE HEADER (The 90px part) */
+        .sheet-summary {
+            padding: 0 20px 16px 20px;
+            cursor: pointer;
+        }
+
+        .quick-status-badge {
+            padding: 6px 12px; border-radius: 8px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase;
+            display: flex; align-items: center; gap: 6px; border: 1px solid transparent;
+        }
+        .quick-status-badge.safe { background: rgba(0,230,118,0.15); color: var(--status-safe); border-color: var(--status-safe); }
+        .quick-status-badge.warning { background: rgba(255,196,0,0.15); color: var(--status-warning); border-color: var(--status-warning); }
+        .quick-status-badge.critical { background: rgba(255,61,0,0.15); color: var(--status-critical); border-color: var(--status-critical); }
+
+        /* EXPANDABLE DETAILS AREA */
+        .sheet-details {
+            padding: 0 20px 20px 20px;
+            overflow-y: auto;
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none; /* Prevent clicking hidden elements */
+        }
+        
+        .bottom-sheet.expanded .sheet-details {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .metrics-grid {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px;
+        }
+        
+        .metric-card {
+            background: var(--surface-glass-light); border-radius: var(--radius-md); padding: 12px; border: 1px solid var(--border-glass);
+        }
+        .metric-card .value { font-size: 1.4rem; font-weight: 700; margin: 4px 0 0 0; }
+        
+        .vehicle-selector { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 8px; margin-bottom: 12px; }
+        .vehicle-selector::-webkit-scrollbar { display: none; }
+        
+        .vehicle-btn {
+            padding: 8px 14px; border-radius: var(--radius-pill); border: 1px solid var(--border-glass);
+            white-space: nowrap; display: flex; align-items: center; gap: 6px; font-size: 0.9rem;
+        }
+        .vehicle-btn.active { background: var(--accent-brand); color: #000; border-color: var(--accent-brand); font-weight: 600;}
+
+        /* Bunk Warning */
+        #bunk-suggestions {
+            display: none; margin-top: 8px; background: rgba(255, 196, 0, 0.1); padding: 12px; 
+            border-radius: var(--radius-md); border: 1px solid var(--status-warning);
+        }
+
+        /* NEW: Live Proximity Alert Toast */
+        .toast-alert {
+            position: absolute;
+            top: 16px; left: 50%;
+            transform: translate(-50%, -150%);
+            width: 90%; max-width: 400px;
+            background: rgba(255, 61, 0, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid #FF3D00;
+            color: white;
+            padding: 16px;
+            border-radius: var(--radius-md);
+            display: flex; align-items: center; gap: 16px;
+            box-shadow: 0 10px 40px rgba(255, 61, 0, 0.5);
+            z-index: 9999;
+            transition: transform 0.5s var(--ease-spring);
+        }
+        .toast-alert.show {
+            transform: translate(-50%, 0);
+        }
+        .toast-alert i.icon-main { font-size: 2rem; animation: pulseGlow 1.5s infinite; }
+        .toast-alert button { padding: 4px; border-radius: 50%; background: rgba(0,0,0,0.2); width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; }
+        .toast-alert button:hover { background: rgba(0,0,0,0.4); }
+
+        .brand-footer { text-align: center; margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--border-glass); }
+        .brand-footer a { color: var(--text-tertiary); font-size: 0.7rem; text-decoration: none; display: inline-flex; align-items: center; gap: 4px; }
+
+        @keyframes slideDown { from { transform: translateY(-20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+        /* Desktop Adjustment */
+        @media (min-width: 768px) {
+            #ui-layer { flex-direction: row; }
+            .top-area-wrapper { position: absolute; top: 16px; left: 16px; width: 350px; padding: 0; }
+            .quick-chips-toggle { display: none; } /* Always show chips on desktop */
+            .quick-chips.hidden { max-height: 60px; opacity: 1; pointer-events: auto; } /* Force show on desktop */
+            .quick-chips { flex-wrap: wrap; overflow: visible; }
+            .bottom-sheet { 
+                position: absolute; bottom: 16px; left: 16px; width: 350px; 
+                border-radius: var(--radius-lg); transform: translateY(0) !important; max-height: calc(100vh - 200px);
+            }
+            .bottom-sheet.expanded .sheet-details, .sheet-details { opacity: 1; pointer-events: auto; }
+            .drag-handle-area { display: none; }
+            .sheet-summary { display: none; } /* On desktop, just show the whole form */
+            .fab-container { bottom: 32px; }
+            #speedometer-widget { bottom: 32px; left: 382px; } /* Adjust for desktop side panel */
+        }
+    </style>
+</head>
+<body>
+
+    <div id="app">
+        <!-- MAP CANVAS -->
+        <div id="map-container"></div>
+
+        <!-- UI LAYER -->
+        <div id="ui-layer">
+            
+            <!-- TOP APP BAR & CHIPS -->
+            <div class="top-area-wrapper">
+                <div class="glass-panel top-bar ui-element">
+                    <div class="search-group">
+                        <i class="ph ph-navigation-arrow"></i>
+                        <input type="text" id="input-origin" placeholder="Start location (e.g., Erode)" autocomplete="off">
+                    </div>
+                    <div class="route-line"></div>
+                    <div class="search-group">
+                        <i class="ph ph-map-pin" style="color: #FF3D00;"></i>
+                        <input type="text" id="input-destination" placeholder="Destination" autocomplete="off">
+                    </div>
+                    <button class="btn-primary" id="btn-calculate" style="margin-top: 4px;">
+                        Plan Route
+                    </button>
+                </div>
+                
+                <!-- NEW: Toggle for Quick Action Chips (Mobile Only) -->
+                <button class="quick-chips-toggle ui-element" id="btn-toggle-chips">
+                    <i class="ph ph-magnifying-glass-plus"></i> <span>Find Nearby Places</span>
+                </button>
+
+                <!-- NEW: Quick Action Chips -->
+                <div class="quick-chips hidden ui-element" id="quick-chips-container">
+                    <button class="chip" id="chip-hospital" data-type="hospital"><i class="ph ph-hospital chip-hospital"></i> <span>Hospitals</span></button>
+                    <button class="chip" id="chip-food" data-type="food"><i class="ph ph-fork-knife chip-food"></i> <span>Food</span></button>
+                    <button class="chip" id="chip-mechanic" data-type="mechanic"><i class="ph ph-wrench chip-mechanic"></i> <span>Mechanic</span></button>
+                    <button class="chip" id="chip-clear" style="display:none; background: rgba(255,61,0,0.15); color: #FF3D00; border-color: #FF3D00;"><i class="ph ph-x"></i></button>
+                </div>
+            </div>
+
+            <!-- FLOATING ACTION BUTTON -->
+            <div class="fab-container ui-element">
+                <button class="glass-panel flex-center fab" id="btn-gps" title="Locate Me">
+                    <i class="ph ph-crosshair"></i>
+                </button>
+            </div>
+
+            <!-- NEW: Speedometer Widget -->
+            <div id="speedometer-widget" class="glass-panel ui-element">
+                <span id="speed-value">0</span>
+                <span class="speed-unit">KM/H</span>
+            </div>
+
+            <!-- NEW: Live Proximity Alert UI -->
+            <div id="live-alert-toast" class="toast-alert ui-element">
+                <i class="ph ph-warning-octagon icon-main"></i>
+                <div style="flex:1;">
+                    <strong style="font-size: 1.1rem; display: block; margin-bottom: 2px;">CRITICAL FUEL ALERT</strong>
+                    <div id="live-alert-msg" style="font-size: 0.85rem; opacity: 0.9;">Your vehicle will run out of fuel in less than 1 km! Please stop at the nearest highlighted station now.</div>
+                </div>
+                <button onclick="App.ui.hideLiveAlert()">
+                    <i class="ph ph-x" style="color: white;"></i>
+                </button>
+            </div>
+
+            <!-- COLLAPSIBLE BOTTOM SHEET -->
+            <div class="bottom-sheet ui-element expanded" id="bottom-sheet">
+                
+                <!-- Drag Handle Area (Tappable/Swipeable) -->
+                <div class="drag-handle-area" id="drag-handle-area">
+                    <div class="drag-handle"></div>
+                </div>
+                
+                <!-- SUMMARY HEADER (Always Visible on Mobile) -->
+                <div class="sheet-summary" id="sheet-summary">
+                    <div class="flex-row space-between">
+                        <div>
+                            <h3 style="font-size: 1.1rem; margin-bottom: 2px;">Fuel Intelligence</h3>
+                            <p class="text-xs text-secondary" id="summary-desc">Tap to adjust vehicle & fuel</p>
+                        </div>
+                        <div id="quick-status" class="quick-status-badge safe">
+                            <i class="ph ph-shield-check"></i> <span>Ready</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- EXPANDABLE DETAILS -->
+                <div class="sheet-details" id="sheet-details">
+                    <div class="vehicle-selector" id="vehicle-list">
+                        <!-- Populated by JS -->
+                    </div>
+
+                    <div class="metrics-grid">
+                        <div class="metric-card">
+                            <div class="text-xs text-tertiary">Fuel (Litres)</div>
+                            <input type="number" id="input-fuel" value="4" step="0.5" min="0" style="background:transparent; border:none; padding:0; font-size:1.4rem; font-weight:700; width:100%; border-bottom:1px solid var(--border-glass); border-radius:0;">
+                        </div>
+                        <div class="metric-card">
+                            <div class="text-xs text-tertiary">Mileage (KM/L)</div>
+                            <input type="number" id="input-mileage" value="15" step="1" min="1" style="background:transparent; border:none; padding:0; font-size:1.4rem; font-weight:700; width:100%; border-bottom:1px solid var(--border-glass); border-radius:0;">
+                        </div>
+
+                        <!-- NEW: Fuel Price & Type Toggle -->
+                        <div class="metric-card">
+                            <div class="text-xs text-tertiary flex-row space-between">
+                                <span>Price/L (₹)</span>
+                                <span id="btn-fuel-type" style="color:var(--accent-brand); font-size: 0.65rem; cursor:pointer; background:rgba(0,230,118,0.1); padding:4px 8px; border-radius:8px; font-weight:bold;">PETROL <i class="ph ph-arrows-left-right"></i></span>
+                            </div>
+                            <input type="number" id="input-price" value="100.75" step="0.1" min="1" style="background:transparent; border:none; padding:0; font-size:1.4rem; font-weight:700; width:100%; border-bottom:1px solid var(--border-glass); border-radius:0; transition: color 0.3s;">
+                        </div>
+
+                        <!-- NEW: Smart Cost Estimator -->
+                        <div class="metric-card">
+                            <div class="text-xs text-tertiary">Total Tank Cost</div>
+                            <div class="value" id="display-tank-cost" style="font-size: 1.4rem; margin-top:0px;">₹ 403</div>
+                            <div class="text-xs text-secondary" id="display-trip-cost" style="margin-top:4px;">Trip Cost: --</div>
+                        </div>
+
+                        <div class="metric-card" style="grid-column: span 2;">
+                            <div class="text-xs text-tertiary flex-row space-between">
+                                <span>Estimated Range</span>
+                                <span id="display-route-dist" style="color: var(--text-secondary); text-transform:none;">Route: -- km</span>
+                            </div>
+                            <div class="value" id="display-range" style="color: var(--accent-brand);">60 km</div>
+                            
+                            <!-- Progress bar -->
+                            <div style="width: 100%; height: 4px; background: rgba(255,255,255,0.1); border-radius: 2px; margin-top: 10px; overflow:hidden;">
+                                <div id="range-bar" style="width: 100%; height: 100%; background: var(--accent-brand); border-radius: 2px; transition: width 0.4s, background 0.4s;"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Warning Panel -->
+                    <div id="bunk-suggestions">
+                        <div class="text-sm" style="color: var(--status-warning); font-weight: 600; margin-bottom: 4px;">
+                            <i class="ph ph-warning-circle"></i> Refill Required
+                        </div>
+                        <div class="text-xs text-secondary" id="bunk-text">Warning: You will run out of fuel. Refill points highlighted on map!</div>
+                    </div>
+
+                    <!-- Footer -->
+                    <div class="brand-footer">
+                        <a href="https://sanstudio-hub.github.io/SanStudio-Hub/in" target="_blank" rel="noopener noreferrer">
+                            Developed By SanStudio Developer Team <i class="ph ph-arrow-square-out"></i>
+                        </a>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- FREE MAP LIBRARIES (No API Keys needed) -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+    <script src="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.js"></script>
+
+    <!-- ==========================================================================
+         JAVASCRIPT APPLICATION LOGIC
+         ========================================================================== -->
+    <script>
+        // 1. STATE & CONFIG
+        const AppConfig = {
+            vehicles: [
+                { id: 'bike', icon: 'ph-motorcycle', name: 'Bike', mileage: 45 },
+                { id: 'car', icon: 'ph-car-profile', name: 'Car', mileage: 15 },
+                { id: 'truck', icon: 'ph-truck', name: 'Truck', mileage: 6 }
+            ],
+            fuelPrices: {
+                petrol: 100.75, // Average Tamil Nadu / India price
+                diesel: 92.34
+            }
+        };
+
+        const State = {
+            currentVehicleId: 'car',
+            fuelType: 'petrol',
+            route: { distanceKm: 0, coordinates: null, criticalPoint: null },
+            fuel: { available: 4, mileage: 15 },
+            hasAlerted1km: false // Tracks if we already showed the proximity alert
+        };
+
+        // 2. BOTTOM SHEET WIDGET CONTROLLER
+        class BottomSheetController {
+            constructor() {
+                this.sheet = document.getElementById('bottom-sheet');
+                this.handleArea = document.getElementById('drag-handle-area');
+                this.summaryArea = document.getElementById('sheet-summary');
+                
+                // Track touch gestures
+                this.startY = 0;
+                
+                this.bindEvents();
+            }
+
+            bindEvents() {
+                // Click to toggle
+                this.handleArea.addEventListener('click', () => this.toggle());
+                this.summaryArea.addEventListener('click', () => this.toggle());
+
+                // Swipe logic
+                this.handleArea.addEventListener('touchstart', (e) => {
+                    this.startY = e.touches[0].clientY;
+                }, {passive: true});
+
+                this.handleArea.addEventListener('touchend', (e) => {
+                    const endY = e.changedTouches[0].clientY;
+                    const deltaY = endY - this.startY;
+                    
+                    if (deltaY > 30) this.collapse();      // Swiped down
+                    else if (deltaY < -30) this.expand();  // Swiped up
+                    else this.toggle();                    // Just a tap
+                });
+            }
+
+            toggle() {
+                if(window.innerWidth >= 768) return; // Disable on desktop
+                this.sheet.classList.toggle('expanded');
+            }
+
+            collapse() {
+                if(window.innerWidth >= 768) return;
+                this.sheet.classList.remove('expanded');
+            }
+
+            expand() {
+                if(window.innerWidth >= 768) return;
+                this.sheet.classList.add('expanded');
+            }
+        }
+
+        // 3. UI CONTROLLER
+        class UIController {
+            constructor() {
+                this.sheetWidget = new BottomSheetController();
+                
+                this.elements = {
+                    vehicleList: document.getElementById('vehicle-list'),
+                    inputFuel: document.getElementById('input-fuel'),
+                    inputMileage: document.getElementById('input-mileage'),
+                    inputPrice: document.getElementById('input-price'),
+                    btnFuelType: document.getElementById('btn-fuel-type'),
+                    displayTankCost: document.getElementById('display-tank-cost'),
+                    displayTripCost: document.getElementById('display-trip-cost'),
+                    displayRange: document.getElementById('display-range'),
+                    displayRouteDist: document.getElementById('display-route-dist'),
+                    rangeBar: document.getElementById('range-bar'),
+                    inputOrigin: document.getElementById('input-origin'),
+                    inputDestination: document.getElementById('input-destination'),
+                    btnCalculate: document.getElementById('btn-calculate'),
+                    btnGps: document.getElementById('btn-gps'),
+                    quickStatus: document.getElementById('quick-status'),
+                    summaryDesc: document.getElementById('summary-desc'),
+                    bunkSuggestions: document.getElementById('bunk-suggestions'),
+                    bunkText: document.getElementById('bunk-text'),
+                    liveAlertToast: document.getElementById('live-alert-toast'),
+                    
+                    // New Elements
+                    chipHospital: document.getElementById('chip-hospital'),
+                    chipFood: document.getElementById('chip-food'),
+                    chipMechanic: document.getElementById('chip-mechanic'),
+                    chipClear: document.getElementById('chip-clear'),
+                    btnToggleChips: document.getElementById('btn-toggle-chips'),
+                    quickChipsContainer: document.getElementById('quick-chips-container')
+                };
+                this.bindEvents();
+            }
+
+            bindEvents() {
+                // Toggle Chips Visibility
+                if(this.elements.btnToggleChips) {
+                    this.elements.btnToggleChips.addEventListener('click', () => {
+                        this.elements.quickChipsContainer.classList.toggle('hidden');
+                        const isHidden = this.elements.quickChipsContainer.classList.contains('hidden');
+                        this.elements.btnToggleChips.innerHTML = isHidden 
+                            ? '<i class="ph ph-magnifying-glass-plus"></i> <span>Find Nearby Places</span>' 
+                            : '<i class="ph ph-caret-up"></i> <span>Hide Places</span>';
+                    });
+                }
+
+                // Quick Places Listeners
+                this.elements.chipHospital.addEventListener('click', () => MapEngine.searchPlaces('hospital', this.elements.chipHospital));
+                this.elements.chipFood.addEventListener('click', () => MapEngine.searchPlaces('food', this.elements.chipFood));
+                this.elements.chipMechanic.addEventListener('click', () => MapEngine.searchPlaces('mechanic', this.elements.chipMechanic));
+                this.elements.chipClear.addEventListener('click', () => MapEngine.clearPlaces());
+
+                // Interactive Fuel Type Toggle
+                this.elements.btnFuelType.addEventListener('click', () => {
+                    State.fuelType = State.fuelType === 'petrol' ? 'diesel' : 'petrol';
+                    this.elements.btnFuelType.innerHTML = `${State.fuelType.toUpperCase()} <i class="ph ph-arrows-left-right"></i>`;
+                    this.elements.inputPrice.value = AppConfig.fuelPrices[State.fuelType];
+                    
+                    // Visual flash animation
+                    this.elements.inputPrice.style.color = 'var(--accent-brand)';
+                    setTimeout(() => this.elements.inputPrice.style.color = '', 300);
+
+                    FuelEngine.calculate();
+                });
+
+                ['inputFuel', 'inputMileage', 'inputPrice'].forEach(id => {
+                    this.elements[id].addEventListener('input', () => FuelEngine.calculate());
+                });
+                this.elements.btnCalculate.addEventListener('click', () => {
+                    MapEngine.calculateRoute();
+                });
+                this.elements.btnGps.addEventListener('click', () => {
+                    // Clicking GPS centers map back to user's live tracked location
+                    if(MapEngine.userLocation) {
+                        MapEngine.map.setView(MapEngine.userLocation, 14, {animate: true});
+                    }
+                });
+            }
+
+            showLiveAlert() {
+                this.elements.liveAlertToast.classList.add('show');
+                // Play a brief vibration if mobile browser supports it
+                if(navigator.vibrate) navigator.vibrate([200, 100, 200]); 
+            }
+
+            hideLiveAlert() {
+                this.elements.liveAlertToast.classList.remove('show');
+            }
+
+            renderVehicles() {
+                this.elements.vehicleList.innerHTML = '';
+                AppConfig.vehicles.forEach(v => {
+                    const btn = document.createElement('button');
+                    btn.className = `vehicle-btn ${v.id === State.currentVehicleId ? 'active' : ''}`;
+                    btn.innerHTML = `<i class="ph ${v.icon}"></i> ${v.name}`;
+                    btn.onclick = () => {
+                        State.currentVehicleId = v.id;
+                        this.elements.inputMileage.value = v.mileage;
+                        this.renderVehicles();
+                        FuelEngine.calculate();
+                    };
+                    this.elements.vehicleList.appendChild(btn);
+                });
+            }
+
+            updateMetrics(rangeKm, status, tankCost, tripCost) {
+                this.elements.displayRange.innerText = `${rangeKm.toFixed(1)} km`;
+                this.elements.displayTankCost.innerText = `₹ ${Math.round(tankCost)}`;
+                
+                let dist = State.route.distanceKm;
+                const distText = dist > 0 ? `Route: ${dist.toFixed(1)} km` : `Route: -- km`;
+                this.elements.displayRouteDist.innerText = distText;
+                this.elements.displayTripCost.innerText = dist > 0 ? `Trip Cost: ₹ ${Math.round(tripCost)}` : `Trip Cost: --`;
+
+                // Update Progress Bar
+                let percentage = dist > 0 ? (rangeKm / dist) * 100 : 100;
+                if(percentage > 100) percentage = 100;
+                this.elements.rangeBar.style.width = `${percentage}%`;
+
+                // Update Widgets & Status
+                const qStatus = this.elements.quickStatus;
+                this.elements.bunkSuggestions.style.display = 'none';
+
+                // Reset classes
+                qStatus.className = 'quick-status-badge';
+
+                if(status === 'SAFE') {
+                    this.elements.rangeBar.style.background = 'var(--status-safe)';
+                    qStatus.classList.add('safe');
+                    qStatus.innerHTML = `<i class="ph ph-shield-check"></i> <span>Safe</span>`;
+                    this.elements.summaryDesc.innerText = dist > 0 ? `Range: ${rangeKm.toFixed(0)}km | ${distText}` : `Estimated Range: ${rangeKm.toFixed(0)}km`;
+                } else if(status === 'WARNING') {
+                    this.elements.rangeBar.style.background = 'var(--status-warning)';
+                    qStatus.classList.add('warning');
+                    qStatus.innerHTML = `<i class="ph ph-warning"></i> <span>Low Fuel</span>`;
+                    this.elements.summaryDesc.innerText = `Range: ${rangeKm.toFixed(0)}km | Short by ${(dist - rangeKm).toFixed(0)}km`;
+                } else {
+                    this.elements.rangeBar.style.background = 'var(--status-critical)';
+                    qStatus.classList.add('critical');
+                    qStatus.innerHTML = `<i class="ph ph-warning-octagon"></i> <span>Critical</span>`;
+                    this.elements.summaryDesc.innerText = `Range: ${rangeKm.toFixed(0)}km | Need refill!`;
+                    
+                    if(dist > 0) {
+                        this.elements.bunkSuggestions.style.display = 'block';
+                        MapEngine.findEmergencyPoint(rangeKm);
+                    }
+                }
+            }
+        }
+
+        // 4. FUEL ENGINE
+        class FuelEngine {
+            static calculate() {
+                const fuel = parseFloat(App.ui.elements.inputFuel.value) || 0;
+                const mileage = parseFloat(App.ui.elements.inputMileage.value) || 0;
+                const price = parseFloat(App.ui.elements.inputPrice.value) || 0;
+                const routeDist = State.route.distanceKm;
+
+                const rangeKm = fuel * mileage;
+                const tankCost = fuel * price;
+                let tripCost = 0;
+                let status = 'SAFE';
+                
+                if (routeDist > 0) {
+                    tripCost = (routeDist / mileage) * price;
+                    if (rangeKm < routeDist) status = 'CRITICAL';
+                    else if (rangeKm < (routeDist * 1.2)) status = 'WARNING';
+                }
+
+                App.ui.updateMetrics(rangeKm, status, tankCost, tripCost);
+            }
+        }
+
+        // 5. MAP ENGINE (Leaflet + OpenStreetMap + OSRM)
+        class MapEngine {
+            static map = null;
+            static routingControl = null;
+            static markers = [];
+            static placeMarkers = []; // NEW: Array to hold emergency place markers
+            static userLocation = null;
+            static userMarker = null;
+            static watchId = null;
+
+            static init() {
+                this.map = L.map('map-container', { zoomControl: false }).setView([11.3410, 77.7172], 7); // Default Near Erode/TamilNadu
+
+                L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+                    attribution: '&copy; OSM contributors'
+                }).addTo(this.map);
+
+                L.control.zoom({ position: 'bottomright' }).addTo(this.map);
+                this.startContinuousTracking();
+            }
+
+            // NEW: Fetch Overpass Data using multiple fallbacks to avoid rate limits
+            static async fetchOverpassData(query) {
+                const endpoints = [
+                    'https://overpass-api.de/api/interpreter',
+                    'https://lz4.overpass-api.de/api/interpreter',
+                    'https://z.overpass-api.de/api/interpreter',
+                    'https://overpass.kumi.systems/api/interpreter'
+                ];
+                
+                for (const endpoint of endpoints) {
+                    try {
+                        const res = await fetch(`${endpoint}?data=${encodeURIComponent(query)}`);
+                        if (!res.ok) continue; // Skip to next if server responds with error
+                        
+                        const responseText = await res.text();
+                        
+                        // Check if we received an HTML/XML rate limit page instead of JSON
+                        if (!responseText.trim().startsWith('<?xml') && !responseText.trim().startsWith('<html')) {
+                            return JSON.parse(responseText);
+                        }
+                    } catch (error) {
+                        console.warn(`Overpass endpoint ${endpoint} failed. Trying next...`);
+                        // Silently try the next endpoint in the loop
+                    }
+                }
+                throw new Error("Rate limit exceeded across all free API endpoints.");
+            }
+
+            // Continuous Live GPS Tracking
+            static startContinuousTracking() {
+                if (navigator.geolocation) {
+                    this.watchId = navigator.geolocation.watchPosition(pos => {
+                        const lat = pos.coords.latitude;
+                        const lon = pos.coords.longitude;
+                        this.userLocation = L.latLng(lat, lon);
+                        
+                        // Speed calculation (meters/second to km/h)
+                        let speedMps = pos.coords.speed;
+                        let speedKmh = (speedMps !== null && speedMps > 0) ? Math.round(speedMps * 3.6) : 0;
+                        document.getElementById('speed-value').innerText = speedKmh;
+
+                        // Update User Marker position or create it
+                        if (this.userMarker) {
+                            this.userMarker.setLatLng(this.userLocation);
+                        } else {
+                            this.userMarker = L.circleMarker(this.userLocation, {
+                                radius: 8, fillColor: "#0088ff", color: "#fff", weight: 2, opacity: 1, fillOpacity: 1
+                            }).addTo(this.map);
+                            this.map.setView(this.userLocation, 13);
+                            App.ui.elements.inputOrigin.value = "Current Location";
+                        }
+
+                        // SMART PROXIMITY CHECK: Are we within 1km of running out of fuel?
+                        if (State.route.criticalPoint && !State.hasAlerted1km) {
+                            const distanceToEmpty = this.getDistance(this.userLocation, State.route.criticalPoint);
+                            
+                            // 1.0 = 1 Kilometer
+                            if (distanceToEmpty <= 1.0) {
+                                State.hasAlerted1km = true;
+                                App.ui.showLiveAlert();
+                            }
+                        }
+
+                    }, err => console.log("Live tracking error: ", err), { enableHighAccuracy: true });
+                }
+            }
+
+            static async geocode(query) {
+                if (query.toLowerCase() === "current location" && this.userLocation) {
+                    return this.userLocation;
+                }
+                try {
+                    // Added countrycodes=in to heavily bias results to India/Tamil Nadu
+                    const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1&countrycodes=in`);
+                    const data = await res.json();
+                    if(data && data.length > 0) return L.latLng(data[0].lat, data[0].lon);
+                    return null;
+                } catch(e) { return null; }
+            }
+
+            static async calculateRoute() {
+                const originTxt = App.ui.elements.inputOrigin.value;
+                const destTxt = App.ui.elements.inputDestination.value;
+
+                if (!originTxt || !destTxt) {
+                    alert("Please enter both locations."); return;
+                }
+
+                App.ui.elements.btnCalculate.innerText = "Finding...";
+                App.ui.elements.btnCalculate.disabled = true;
+
+                const start = await this.geocode(originTxt);
+                const end = await this.geocode(destTxt);
+
+                if (!start || !end) {
+                    alert("Location not found.");
+                    App.ui.elements.btnCalculate.innerText = "Plan Route";
+                    App.ui.elements.btnCalculate.disabled = false;
+                    return;
+                }
+
+                this.clearMap();
+
+                this.routingControl = L.Routing.control({
+                    waypoints: [start, end],
+                    routeWhileDragging: false, show: false,
+                    lineOptions: { styles: [{ color: '#00E676', opacity: 0.8, weight: 5 }] },
+                    createMarker: function(i, wp) {
+                        return L.circleMarker(wp.latLng, {
+                            radius: 8, fillColor: i === 0 ? '#0088ff' : '#FF3D00', color: '#fff', weight: 2, fillOpacity: 1
+                        });
+                    }
+                }).addTo(this.map);
+
+                this.routingControl.on('routesfound', (e) => {
+                    App.ui.elements.btnCalculate.innerText = "Plan Route";
+                    App.ui.elements.btnCalculate.disabled = false;
+                    
+                    const routes = e.routes;
+                    State.route.distanceKm = routes[0].summary.totalDistance / 1000;
+                    State.route.coordinates = routes[0].coordinates;
+                    
+                    // Reset alert system for new route
+                    State.hasAlerted1km = false;
+                    State.route.criticalPoint = null;
+                    App.ui.hideLiveAlert();
+
+                    this.map.fitBounds(L.latLngBounds(routes[0].coordinates), { padding: [30, 30] });
+
+                    FuelEngine.calculate();
+                    
+                    // SMART UX: Auto-collapse bottom sheet to reveal the map!
+                    App.ui.sheetWidget.collapse();
+                });
+
+                this.routingControl.on('routingerror', () => {
+                    alert("Routing error.");
+                    App.ui.elements.btnCalculate.innerText = "Plan Route";
+                    App.ui.elements.btnCalculate.disabled = false;
+                });
+            }
+
+            static clearMap() {
+                if (this.routingControl) {
+                    this.map.removeControl(this.routingControl);
+                    this.routingControl = null;
+                }
+                this.markers.forEach(m => this.map.removeLayer(m));
+                this.markers = [];
+                this.clearPlaces(); // Clear places when route clears
+            }
+
+            // Search and display emergency places (Hospitals, Food, Mechanics)
+            static async searchPlaces(type, buttonEl) {
+                this.clearPlaces(); // Clear old ones first
+                
+                const originalText = buttonEl.querySelector('span').innerText;
+                buttonEl.querySelector('span').innerText = "Searching...";
+                buttonEl.classList.add('active');
+
+                // Search around current map view center
+                const center = this.map.getCenter();
+                let overpassQuery = "";
+                let iconClass = "";
+                let color = "";
+
+                // AGGRESSIVE INDIAN-OPTIMIZED QUERIES (8km radius, up to 30 results)
+                if (type === 'hospital') {
+                    // Searches hospitals, clinics, doctors, pharmacies, and general healthcare facilities
+                    overpassQuery = `[out:json];(node(around:8000,${center.lat},${center.lng})["amenity"~"hospital|clinic|doctors|pharmacy"];node(around:8000,${center.lat},${center.lng})["healthcare"];);out 30;`;
+                    iconClass = "ph-hospital";
+                    color = "#ff5252";
+                } else if (type === 'food') {
+                    // Searches restaurants, fast food, cafes, and food courts
+                    overpassQuery = `[out:json];node(around:8000,${center.lat},${center.lng})["amenity"~"restaurant|fast_food|cafe|food_court"];out 30;`;
+                    iconClass = "ph-fork-knife";
+                    color = "#ffb142";
+                } else if (type === 'mechanic') {
+                    // Searches car repair, motorcycle repair, tyre shops, and individual mechanics
+                    overpassQuery = `[out:json];(node(around:8000,${center.lat},${center.lng})["shop"~"car_repair|motorcycle_repair|tyres"];node(around:8000,${center.lat},${center.lng})["craft"="mechanic"];);out 30;`;
+                    iconClass = "ph-wrench";
+                    color = "#84817a";
+                }
+
+                try {
+                    const data = await this.fetchOverpassData(overpassQuery);
+                    
+                    if (data && data.elements && data.elements.length > 0) {
+                        data.elements.forEach(place => {
+                            // Fallback names if local shops don't have an English name tag
+                            let fallbackName = "Local Location";
+                            if(type === 'hospital') fallbackName = "Medical Facility / Pharmacy";
+                            if(type === 'food') fallbackName = "Local Eatery / Food Stall";
+                            if(type === 'mechanic') fallbackName = "Local Mechanic / Auto Shop";
+
+                            const name = place.tags.name || place.tags['name:en'] || place.tags.brand || fallbackName;
+                            
+                            // Create beautiful custom HTML pin
+                            const iconHtml = `<div style="background:${color}; color:#fff; width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; border:2px solid #16181d; box-shadow:0 4px 10px rgba(0,0,0,0.5);"><i class="ph ${iconClass}" style="font-size:1.1rem;"></i></div>`;
+                            const customIcon = L.divIcon({ html: iconHtml, className: '', iconSize: [28, 28], iconAnchor: [14, 14] });
+
+                            const marker = L.marker([place.lat, place.lon], { icon: customIcon })
+                                .addTo(this.map)
+                                .bindPopup(`<div style='color:#000; font-family:"Inter",sans-serif;'><b>${name}</b></div>`);
+                            
+                            this.placeMarkers.push(marker);
+                        });
+                        
+                        // Show clear button
+                        App.ui.elements.chipClear.style.display = 'flex';
+                    } else {
+                        alert(`No ${type}s found in the expanded 8km radius. Try moving the map to a more populated area.`);
+                    }
+                } catch (error) {
+                    console.warn("Place search failed", error);
+                    alert("Search failed due to network or free API rate limits. Please try again in a moment.");
+                }
+
+                buttonEl.querySelector('span').innerText = originalText;
+                buttonEl.classList.remove('active');
+            }
+
+            // Clear Place Markers
+            static clearPlaces() {
+                this.placeMarkers.forEach(m => this.map.removeLayer(m));
+                this.placeMarkers = [];
+                App.ui.elements.chipClear.style.display = 'none';
+            }
+
+            static getDistance(p1, p2) {
+                const R = 6371; const dLat = (p2.lat - p1.lat) * Math.PI / 180; const dLon = (p2.lng - p1.lng) * Math.PI / 180;
+                const a = 0.5 - Math.cos(dLat)/2 + Math.cos(p1.lat * Math.PI / 180) * Math.cos(p2.lat * Math.PI / 180) * (1 - Math.cos(dLon))/2;
+                return R * 2 * Math.asin(Math.sqrt(a));
+            }
+
+            static async findEmergencyPoint(rangeKm) {
+                if(!State.route.coordinates) return;
+                let accumulatedDistance = 0; let criticalPoint = null; const coords = State.route.coordinates;
+
+                for (let i = 0; i < coords.length - 1; i++) {
+                    const p1 = coords[i]; const p2 = coords[i + 1]; const dist = this.getDistance(p1, p2);
+                    if (accumulatedDistance + dist >= rangeKm) {
+                        const fraction = (rangeKm - accumulatedDistance) / dist;
+                        criticalPoint = L.latLng(p1.lat + (p2.lat - p1.lat) * fraction, p1.lng + (p2.lng - p1.lng) * fraction);
+                        break;
+                    }
+                    accumulatedDistance += dist;
+                }
+
+                if(criticalPoint) {
+                    // Save for live tracking proximity checks
+                    State.route.criticalPoint = criticalPoint;
+
+                    // 1. Mark the exact point where fuel runs out (Yellow)
+                    const critMarker = L.circleMarker(criticalPoint, {
+                        radius: 10, fillColor: "#FFC400", color: "#000", weight: 3, fillOpacity: 1
+                    }).addTo(this.map).bindPopup("<b style='color:#000;'>Fuel Runs Out Here</b>").openPopup();
+                    
+                    this.markers.push(critMarker);
+                    this.map.setView(criticalPoint, 12, { animate: true });
+
+                    // 2. LIVE FETCH: Find actual petrol bunks within 8km using free Overpass API
+                    App.ui.elements.bunkText.innerText = "Scanning live database for nearby Tamil Nadu / India petrol bunks...";
+                    
+                    try {
+                        // Query for 'amenity=fuel' within 8000 meters of the critical point, max 10 results
+                        const overpassQuery = `[out:json];node(around:8000,${criticalPoint.lat},${criticalPoint.lng})["amenity"="fuel"];out 10;`;
+                        const data = await this.fetchOverpassData(overpassQuery);
+
+                        if (data && data.elements && data.elements.length > 0) {
+                            App.ui.elements.bunkText.innerHTML = `Found <b>${data.elements.length} petrol bunks</b> near your limit! (Green dots)`;
+                            
+                            data.elements.forEach(bunk => {
+                                const name = bunk.tags.name || bunk.tags.brand || "Petrol Bunk";
+                                const bunkMarker = L.circleMarker([bunk.lat, bunk.lon], {
+                                    radius: 7, fillColor: "#00E676", color: "#000", weight: 2, fillOpacity: 1
+                                }).addTo(this.map).bindPopup(`<div style='color:#000; font-family:"Inter",sans-serif;'><b>⛽ ${name}</b><br>Emergency Refill</div>`);
+                                
+                                this.markers.push(bunkMarker);
+                            });
+                        } else {
+                            App.ui.elements.bunkText.innerText = "Critical point marked. No petrol bunks found in immediate 8km radius in the free database.";
+                        }
+                    } catch (error) {
+                        console.warn("Could not fetch bunks due to API limits", error.message);
+                        App.ui.elements.bunkText.innerText = "Critical point marked. (Live bunk scan failed or rate limit reached. Try again later).";
+                    }
+                }
+            }
+        }
+
+        // 6. BOOTSTRAP
+        class App {
+            static ui;
+            static boot() {
+                this.ui = new UIController();
+                this.ui.renderVehicles();
+                MapEngine.init();
+                FuelEngine.calculate();
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => { App.boot(); });
+    </script>
+</body>
+</html>

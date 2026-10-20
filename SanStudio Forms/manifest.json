@@ -1,0 +1,38 @@
+{
+  "name": "SanStudio Forms",
+  "short_name": "SanForms",
+  "description": "Build Beautiful Forms. Collect Smarter Data.",
+  "start_url": "/index.html",
+  "display": "standalone",
+  "background_color": "#0a0a0f",
+  "theme_color": "#6c63ff",
+  "orientation": "any",
+  "lang": "en-US",
+  "categories": ["productivity", "utilities", "business"],
+  "icons": [
+    {
+      "src": "assets/icons/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "New Form",
+      "short_name": "Create",
+      "description": "Create a new form",
+      "url": "/builder.html?new=true",
+      "icons": [{ "src": "assets/icons/favicon.svg", "sizes": "any" }]
+    },
+    {
+      "name": "My Responses",
+      "short_name": "Responses",
+      "description": "View form responses",
+      "url": "/responses.html",
+      "icons": [{ "src": "assets/icons/favicon.svg", "sizes": "any" }]
+    }
+  ],
+  "related_applications": [],
+  "prefer_related_applications": false
+}

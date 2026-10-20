@@ -1,0 +1,66 @@
+/**
+ * SanStudio Forms — Neumorphism Theme
+ * =====================================
+ * Soft UI: extruded plastic, soft shadows.
+ * Applied via [data-theme="neumorphism"] on <html>.
+ */
+
+[data-theme="neumorphism"] {
+  color-scheme: light;
+
+  --bg-base:        #e0e5ec;
+  --bg-surface:     #e0e5ec;
+  --bg-surface-2:   #d1d9e6;
+  --bg-surface-3:   #c8d0dd;
+  --bg-inverse:     #2d3a4a;
+
+  --brand-primary:       #6c63ff;
+  --brand-primary-hover: #5a52e6;
+  --brand-secondary:     #00bfa5;
+  --brand-gradient: linear-gradient(135deg, #6c63ff, #00bfa5);
+
+  --text-primary:   #31456a;
+  --text-secondary: #5a7190;
+  --text-tertiary:  #8ba0b8;
+  --text-brand:     #6c63ff;
+
+  --border-subtle:  rgba(255, 255, 255, 0.7);
+  --border-default: rgba(163, 177, 198, 0.4);
+  --border-strong:  rgba(163, 177, 198, 0.7);
+  --border-brand:   #6c63ff;
+  --border-focus:   #6c63ff;
+
+  /* Neumorphic shadows */
+  --shadow-card:      6px 6px 12px #b8bec7, -6px -6px 12px #ffffff;
+  --shadow-card-hover:8px 8px 16px #b8bec7, -8px -8px 16px #ffffff;
+  --shadow-inner:     inset 4px 4px 8px #b8bec7, inset -4px -4px 8px #ffffff;
+  --shadow-modal:     10px 10px 30px rgba(163, 177, 198, 0.8), -10px -10px 30px rgba(255,255,255,0.9);
+  --shadow-dropdown:  6px 6px 20px #b8bec7, -6px -6px 20px #ffffff;
+  --shadow-brand:     0 0 0 3px rgba(108, 99, 255, 0.25);
+
+  --card-bg:        #e0e5ec;
+  --card-border:    transparent;
+  --card-radius:    var(--radius-3xl);
+  --card-shadow:    var(--shadow-card);
+  --input-bg:       #e0e5ec;
+  --input-border:   transparent;
+  --sidebar-bg:     #e0e5ec;
+  --sidebar-border: transparent;
+  --topbar-bg:      #e0e5ec;
+  --topbar-border:  transparent;
+
+  /* Gradient mesh hidden */
+  .gradient-mesh { display: none; }
+}
+
+[data-theme="neumorphism"] .btn-primary {
+  box-shadow: 4px 4px 10px #b8bec7, -4px -4px 10px #ffffff;
+}
+
+[data-theme="neumorphism"] .btn-primary:active {
+  box-shadow: var(--shadow-inner);
+}
+
+[data-theme="neumorphism"] .input:focus {
+  box-shadow: var(--shadow-inner), 0 0 0 2px rgba(108, 99, 255, 0.3);
+}

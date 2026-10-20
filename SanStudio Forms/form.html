@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Fill out this form powered by SanStudio Forms.">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="assets/icons/favicon.svg" type="image/svg+xml">
+  <title>Form — SanStudio Forms</title>
+
+  <link rel="stylesheet" href="styles/tokens.css">
+  <link rel="stylesheet" href="styles/reset.css">
+  <link rel="stylesheet" href="styles/base.css">
+  <link rel="stylesheet" href="styles/animations.css">
+  <link rel="stylesheet" href="styles/components.css">
+  <link rel="stylesheet" href="styles/themes/light.css">
+  <link rel="stylesheet" href="styles/themes/dark.css">
+  <link rel="stylesheet" href="styles/themes/glassmorphism.css">
+  <link rel="stylesheet" href="styles/themes/neumorphism.css">
+  <link rel="stylesheet" href="styles/themes/cyberpunk.css">
+  <link rel="stylesheet" href="styles/themes/aurora.css">
+  <link rel="stylesheet" href="styles/themes/luxury.css">
+  <link rel="stylesheet" href="styles/pages/form.css">
+</head>
+<body data-page="form">
+  <div class="gradient-mesh" aria-hidden="true"></div>
+  <div class="cursor-glow" aria-hidden="true"></div>
+
+  <!-- Form Shell -->
+  <div class="form-shell" id="form-shell">
+
+    <!-- Progress Bar -->
+    <div class="form-progress-bar" id="form-progress-bar" style="display:none" role="progressbar" aria-label="Form progress">
+      <div class="form-progress-fill" id="form-progress-fill" style="width:0%"></div>
+    </div>
+
+    <!-- Loading State -->
+    <div class="form-loading" id="form-loading">
+      <div class="form-loading-icon animate-spin" aria-hidden="true">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 12a9 9 0 01-9 9M3 12a9 9 0 019-9"/>
+        </svg>
+      </div>
+      <p class="form-loading-text">Loading form...</p>
+    </div>
+
+    <!-- Error State -->
+    <div class="form-error-state" id="form-error-state" style="display:none">
+      <div class="form-error-icon">⚠️</div>
+      <h2 class="form-error-title">Form not found</h2>
+      <p class="form-error-desc" id="form-error-desc">This form may have been removed or the link is incorrect.</p>
+    </div>
+
+    <!-- Main Form Container -->
+    <div class="form-container" id="form-container" style="display:none">
+
+      <!-- Form Header -->
+      <div class="form-header-section" id="form-header-section">
+        <div class="form-header-color-strip" id="form-color-strip"></div>
+        <div class="form-header-content">
+          <div class="form-logo-wrap" id="form-logo-wrap" style="display:none">
+            <img id="form-logo" src="" alt="Form logo" style="max-height:60px;max-width:200px;object-fit:contain">
+          </div>
+          <h1 class="form-title" id="form-title">Form Title</h1>
+          <p class="form-description" id="form-description"></p>
+
+          <!-- Estimated time -->
+          <div class="form-est-time" id="form-est-time" style="display:none">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+            </svg>
+            <span id="form-est-time-text">~2 min to complete</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Questions Area (paged or single-scroll) -->
+      <div class="form-questions-area" id="form-questions-area">
+        <!-- Questions rendered by JS -->
+      </div>
+
+      <!-- Navigation (for multi-page forms) -->
+      <div class="form-navigation" id="form-navigation">
+        <button class="btn btn-secondary" id="form-prev-btn" style="display:none">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <path d="M19 12H5M12 5l-7 7 7 7"/>
+          </svg>
+          Previous
+        </button>
+
+        <div class="form-page-indicator" id="form-page-indicator" style="display:none">
+          <span id="page-current">1</span> of <span id="page-total">1</span>
+        </div>
+
+        <button class="btn btn-primary" id="form-next-btn" style="display:none">
+          Next
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <path d="M5 12h14M12 5l7 7-7 7"/>
+          </svg>
+        </button>
+
+        <button class="btn btn-gradient btn-full" id="form-submit-btn">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <path d="M5 12h14M12 5l7 7-7 7"/>
+          </svg>
+          Submit
+        </button>
+      </div>
+
+      <!-- Save draft link -->
+      <div class="form-save-draft" id="form-save-draft" style="display:none;">
+        <button class="btn btn-ghost btn-sm" id="save-draft-btn">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/>
+          </svg>
+          Save draft
+        </button>
+        <button class="btn btn-ghost btn-sm" id="load-draft-btn" style="display:none">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <path d="M3 15v4c0 1.1.9 2 2 2h14a2 2 0 002-2v-4M17 9l-5 5-5-5M12 12.8V2.5"/>
+          </svg>
+          Load saved draft
+        </button>
+      </div>
+    </div>
+
+    <!-- Thank You / Success State -->
+    <div class="form-success" id="form-success" style="display:none">
+      <div class="form-success-icon animate-bounce">✅</div>
+      <h2 class="form-success-title">Thank you!</h2>
+      <p class="form-success-desc" id="form-success-desc">Your response has been recorded.</p>
+      <div class="form-success-actions">
+        <button class="btn btn-secondary" id="form-submit-another-btn">Submit another response</button>
+        <a href="index.html" class="btn btn-ghost">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+          Go to Homepage
+        </a>
+      </div>
+    </div>
+
+    <!-- Closed State -->
+    <div class="form-closed" id="form-closed" style="display:none">
+      <div class="form-closed-icon">🔒</div>
+      <h2 class="form-closed-title">This form is closed</h2>
+      <p class="form-closed-desc" id="form-closed-desc">This form is no longer accepting responses.</p>
+    </div>
+
+    <!-- Branding Footer -->
+    <footer class="form-branding-footer" id="form-branding">
+      <a href="https://sanstudio-hub.github.io/in/" target="_blank" rel="noopener noreferrer">
+        Powered by <strong>SanStudio Forms</strong>
+      </a>
+    </footer>
+  </div>
+
+  <!-- Password Modal (for password-protected forms) -->
+  <div class="modal-overlay" id="password-modal" hidden role="dialog" aria-modal="true" aria-labelledby="password-modal-title">
+    <div class="modal-panel modal-sm">
+      <div class="modal-header">
+        <h2 class="modal-title" id="password-modal-title">🔐 Password Required</h2>
+      </div>
+      <div class="modal-body">
+        <p style="font-size: var(--text-sm); color: var(--text-secondary); margin-bottom: var(--space-4)">
+          This form is password-protected. Please enter the password to continue.
+        </p>
+        <div class="form-group" style="margin:0">
+          <label for="form-password-input">Password</label>
+          <input type="password" class="input" id="form-password-input" placeholder="Enter password" autocomplete="off">
+          <p class="field-error" id="password-error" style="display:none">Incorrect password. Please try again.</p>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-primary btn-full" id="submit-password-btn">Continue</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="scripts/pages/form.js"></script>
+</body>
+</html>

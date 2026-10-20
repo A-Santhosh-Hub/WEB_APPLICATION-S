@@ -1,0 +1,1054 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TypingMaster Pro</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@100..800&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            /* Serika Dark Theme (Default) */
+            --bg-color: #2c2e31;
+            --main-color: #e2b714;
+            --caret-color: #e2b714;
+            --sub-color: #646669;
+            --sub-alt-color: #2c2e31;
+            --text-color: #d1d0c5;
+            --error-color: #ca4754;
+            --error-extra-color: #7e2a33;
+            --font-family: 'JetBrains Mono', monospace;
+            --roundness: 12px;
+            --transition: 0.2s ease;
+        }
+
+        body.theme-dracula {
+            --bg-color: #282a36; --main-color: #ff79c6; --caret-color: #ff79c6; 
+            --sub-color: #6272a4; --text-color: #f8f8f2; --error-color: #ff5555; --error-extra-color: #ffb86c;
+        }
+        body.theme-nord {
+            --bg-color: #2e3440; --main-color: #88c0d0; --caret-color: #88c0d0; 
+            --sub-color: #4c566a; --text-color: #d8dee9; --error-color: #bf616a; --error-extra-color: #d08770;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: var(--font-family);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow-x: hidden;
+            transition: background-color var(--transition), color var(--transition);
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 2rem;
+            color: var(--sub-color);
+            font-size: 1.2rem;
+        }
+
+        .logo-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            color: var(--text-color);
+        }
+
+        .logo-icon {
+            color: var(--main-color);
+            font-weight: bold;
+            font-size: 1.5rem;
+            background: rgba(226, 183, 20, 0.1);
+            padding: 4px 8px;
+            border-radius: 8px;
+        }
+
+        .logo-text { font-size: 1.5rem; font-weight: 600; }
+        .nav-icons { display: flex; gap: 1.5rem; }
+        .nav-icons span { cursor: pointer; transition: color var(--transition); }
+        .nav-icons span:hover { color: var(--text-color); }
+
+        .config-bar {
+            background: rgba(0, 0, 0, 0.1);
+            border-radius: var(--roundness);
+            padding: 0.5rem 1rem;
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin-bottom: 3rem;
+            font-size: 0.9rem;
+            color: var(--sub-color);
+            width: fit-content;
+            margin-inline: auto;
+        }
+
+        .config-group { display: flex; gap: 1rem; align-items: center; }
+        .config-item { cursor: pointer; transition: color var(--transition); }
+        .config-item.active { color: var(--main-color); }
+        .config-item:hover:not(.active) { color: var(--text-color); }
+        .separator { width: 4px; height: 4px; border-radius: 50%; background-color: var(--sub-color); }
+
+        main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            position: relative;
+        }
+
+        .timer-display {
+            font-size: 1.5rem;
+            color: var(--main-color);
+            margin-bottom: 1rem;
+            font-weight: 500;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .timer-display.active { opacity: 1; }
+
+        .typing-container {
+            position: relative;
+            font-size: 1.8rem;
+            line-height: 1.5;
+            height: 160px;
+            overflow: hidden;
+            width: 100%;
+        }
+
+        .words-wrapper {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0 1ch;
+            position: absolute;
+            top: 0;
+            left: 0;
+            transition: top 0.2s ease;
+        }
+
+        .word {
+            display: flex;
+            margin-bottom: 0.5rem;
+            border-bottom: 2px solid transparent;
+        }
+
+        .word.error-underline { border-bottom: 2px solid var(--error-color); }
+        .letter { color: var(--sub-color); position: relative; }
+        .letter.correct { color: var(--text-color); }
+        .letter.incorrect { color: var(--error-color); }
+        .letter.extra { color: var(--error-extra-color); }
+
+        #caret {
+            width: 2px;
+            height: 2rem;
+            background-color: var(--caret-color);
+            position: absolute;
+            border-radius: 2px;
+            transition: left 0.1s linear, top 0.1s linear;
+            z-index: 10;
+            opacity: 1;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+
+        #caret.blinking { animation: blink 1s infinite; }
+        #caret.hidden { display: none; }
+
+        .blur-overlay {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            display: flex; justify-content: center; align-items: center;
+            background: rgba(44, 46, 49, 0.5);
+            backdrop-filter: blur(4px);
+            z-index: 20;
+            color: var(--text-color);
+            font-size: 1.2rem;
+            cursor: pointer;
+            border-radius: var(--roundness);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity var(--transition);
+        }
+
+        body.unfocused .blur-overlay { opacity: 1; pointer-events: all; }
+
+        .restart-container { display: flex; justify-content: center; margin-top: 2rem; opacity: 1; }
+        .restart-btn {
+            background: none; border: none; color: var(--sub-color);
+            font-size: 1.5rem; cursor: pointer;
+            transition: color var(--transition), transform var(--transition);
+            padding: 1rem; border-radius: var(--roundness);
+        }
+        .restart-btn:hover { color: var(--text-color); transform: rotate(90deg); }
+
+        .results-screen {
+            display: flex; /* FIXED: Display flex instead of none */
+            flex-direction: column;
+            gap: 2rem;
+            animation: fadeIn 0.5s ease;
+            width: 100%;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .results-header { display: flex; gap: 4rem; }
+        .result-group { display: flex; flex-direction: column; gap: 0.5rem; }
+        .result-title { color: var(--sub-color); font-size: 2rem; }
+        .result-value { color: var(--main-color); font-size: 4rem; font-weight: bold; line-height: 1; }
+        
+        .result-stats-row { display: flex; gap: 2rem; flex-wrap: wrap; }
+        .stat-item { display: flex; flex-direction: column; }
+        .stat-label { color: var(--sub-color); font-size: 0.9rem; }
+        .stat-val { color: var(--text-color); font-size: 1.2rem; font-weight: 500; }
+
+        .chart-container { width: 100%; height: 250px; position: relative; }
+        canvas { width: 100%; height: 100%; }
+
+        footer {
+            display: flex; justify-content: space-between; align-items: center;
+            padding-top: 2rem; color: var(--sub-color); font-size: 0.85rem;
+        }
+
+        .shortcuts { display: flex; gap: 1.5rem; }
+        .key { background: rgba(0,0,0,0.2); padding: 0.2rem 0.5rem; border-radius: 4px; font-family: inherit; }
+        
+        .footer-links { display: flex; gap: 1rem; }
+        .footer-links a { color: inherit; text-decoration: none; transition: color var(--transition); cursor: pointer; }
+        .footer-links a:hover { color: var(--text-color); }
+
+        /* Modals (Command Palette & Info Box) */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            display: flex; justify-content: center; align-items: flex-start;
+            padding-top: 15vh; z-index: 100;
+            opacity: 0; pointer-events: none;
+            transition: opacity 0.2s ease;
+        }
+
+        .modal-overlay.active { opacity: 1; pointer-events: all; }
+
+        .command-palette {
+            background: var(--bg-color); width: 90%; max-width: 600px;
+            border-radius: var(--roundness); box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            display: flex; flex-direction: column; overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .cmd-input {
+            background: transparent; border: none; padding: 1.5rem;
+            font-size: 1.2rem; color: var(--text-color); font-family: var(--font-family);
+            outline: none; border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .cmd-list { max-height: 300px; overflow-y: auto; padding: 0.5rem; }
+        .cmd-item {
+            padding: 1rem; color: var(--sub-color); cursor: pointer;
+            border-radius: 8px; display: flex; justify-content: space-between; align-items: center;
+        }
+        .cmd-item:hover, .cmd-item.selected { background: rgba(255, 255, 255, 0.05); color: var(--text-color); }
+
+        .info-box {
+            background: var(--bg-color); width: 90%; max-width: 600px;
+            border-radius: var(--roundness); padding: 2rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            display: flex; flex-direction: column; gap: 1.5rem;
+            border: 1px solid rgba(255, 255, 255, 0.1); color: var(--text-color);
+        }
+
+        .info-title { font-size: 1.5rem; color: var(--main-color); }
+        .info-content { color: var(--sub-color); font-size: 1rem; line-height: 1.5; }
+        
+        .info-close-btn {
+            background: var(--sub-color); color: var(--bg-color);
+            border: none; padding: 0.5rem 1rem; border-radius: var(--roundness);
+            cursor: pointer; font-family: var(--font-family); font-weight: bold;
+            align-self: flex-end; transition: opacity 0.2s, background 0.2s;
+        }
+        .info-close-btn:hover { background: var(--text-color); }
+
+        .hidden { display: none !important; }
+
+        @media (max-width: 768px) {
+            .results-header { flex-direction: column; gap: 1rem; }
+            .config-bar { flex-direction: column; gap: 1rem; align-items: center;}
+            .typing-container { font-size: 1.4rem; height: 130px;}
+            footer { flex-direction: column; gap: 1rem; text-align: center; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <div class="logo-container" onclick="app.restart()">
+                <div class="logo-icon">m:f</div>
+                <div class="logo-text">TypingMaster Pro</div>
+            </div>
+            <div class="nav-icons">
+                <span title="Stats" onclick="app.openCommandPalette('Stats')">📊</span>
+                <span title="Settings" onclick="app.openCommandPalette('Theme')">🎨</span>
+                <span title="Profile" onclick="app.openCommandPalette('Profile')">👤</span>
+            </div>
+        </header>
+
+        <main id="main-view">
+            <div class="config-bar" id="config-bar">
+                <div class="config-group" id="modifier-selector">
+                    <span class="config-item" data-mod="punctuation">@ punctuation</span>
+                    <span class="config-item" data-mod="numbers"># numbers</span>
+                </div>
+                <div class="separator"></div>
+                <div class="config-group" id="mode-selector">
+                    <span class="config-item active" data-mode="time">⏰ time</span>
+                    <span class="config-item" data-mode="words">A words</span>
+                    <!-- Quotes and Zen placeholders for future logic -->
+                    <span class="config-item" data-mode="quote">"" quote</span>
+                    <span class="config-item" data-mode="zen">🧘 zen</span>
+                </div>
+                <div class="separator"></div>
+                <!-- Dynamic amount selector based on mode -->
+                <div class="config-group" id="amount-selector">
+                    <span class="config-item" data-val="15">15</span>
+                    <span class="config-item active" data-val="30">30</span>
+                    <span class="config-item" data-val="60">60</span>
+                    <span class="config-item" data-val="120">120</span>
+                </div>
+            </div>
+
+            <div class="timer-display" id="timer">30</div>
+
+            <div class="typing-container" id="typing-container">
+                <div class="blur-overlay" id="blur-overlay">
+                    <span>Click or press any key to focus</span>
+                </div>
+                <div class="words-wrapper" id="words-wrapper"></div>
+                <div id="caret" class="blinking"></div>
+            </div>
+
+            <div class="restart-container" id="restart-container">
+                <button class="restart-btn" id="restart-btn" title="Restart Test">↻</button>
+            </div>
+        </main>
+
+        <div class="results-screen hidden" id="results-screen">
+            <div class="results-header">
+                <div class="result-group">
+                    <div class="result-title">wpm</div>
+                    <div class="result-value" id="res-wpm">00</div>
+                </div>
+                <div class="result-group">
+                    <div class="result-title">acc</div>
+                    <div class="result-value" id="res-acc">00%</div>
+                </div>
+            </div>
+            
+            <div class="chart-container">
+                <canvas id="results-chart"></canvas>
+            </div>
+
+            <div class="result-stats-row">
+                <div class="stat-item">
+                    <div class="stat-label">test type</div>
+                    <div class="stat-val" id="res-type">time 30</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">raw wpm</div>
+                    <div class="stat-val" id="res-raw">00</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">characters</div>
+                    <div class="stat-val" id="res-chars">0/0/0/0</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">consistency</div>
+                    <div class="stat-val" id="res-cons">00%</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">time</div>
+                    <div class="stat-val" id="res-time">30s</div>
+                </div>
+            </div>
+
+            <div class="restart-container" style="justify-content: flex-start;">
+                <button class="restart-btn" onclick="app.restart()">↻</button>
+            </div>
+        </div>
+
+        <footer>
+            <div class="shortcuts">
+                <span><span class="key">tab</span> + <span class="key">enter</span> - restart test</span>
+                <span><span class="key">ctrl</span> + <span class="key">shift</span> + <span class="key">p</span> - command palette</span>
+            </div>
+            <div class="footer-links">
+                <a href="https://sanstudio-hub.github.io/in/" target="_blank" rel="noopener noreferrer">contact</a>
+                <a href="https://github.com/A-Santhosh-Hub" target="_blank" rel="noopener noreferrer">support</a>
+                <a href="https://github.com/A-Santhosh-Hub" target="_blank" rel="noopener noreferrer">github</a>
+                <a href="#" onclick="app.openInfoModal('terms'); return false;">terms</a>
+                <a href="#" onclick="app.openInfoModal('privacy'); return false;">privacy</a>
+                <span style="color: var(--text-color);">v1.0.0</span>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Modals -->
+    <div class="modal-overlay" id="command-modal">
+        <div class="command-palette" id="command-palette">
+            <input type="text" class="cmd-input" id="cmd-input" placeholder="Type a command...">
+            <div class="cmd-list" id="cmd-list"></div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="info-modal">
+        <div class="info-box">
+            <h2 class="info-title" id="info-title">Title</h2>
+            <div class="info-content" id="info-content">Content</div>
+            <button class="info-close-btn" onclick="app.closeInfoModal()">Close</button>
+        </div>
+    </div>
+
+    <script>
+        const WORDS_LIST = [
+            "the", "be", "to", "of", "and", "a", "in", "that", "have", "I", "it", "for", "not", "on", "with", "he", "as", "you", "do", "at",
+            "this", "but", "his", "by", "from", "they", "we", "say", "her", "she", "or", "an", "will", "my", "one", "all", "would", "there", "their", "what",
+            "so", "up", "out", "if", "about", "who", "get", "which", "go", "me", "when", "make", "can", "like", "time", "no", "just", "him", "know", "take",
+            "people", "into", "year", "your", "good", "some", "could", "them", "see", "other", "than", "then", "now", "look", "only", "come", "its", "over", "think", "also",
+            "back", "after", "use", "two", "how", "our", "work", "first", "well", "way", "even", "new", "want", "because", "any", "these", "give", "day", "most", "us"
+        ];
+        const PUNCTUATION = [",", ".", "?", "!", "-", "'", '"', "(", ")"];
+
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const SoundManager = {
+            enabled: true,
+            playKeystroke: function() {
+                if (!this.enabled || audioCtx.state === 'suspended') return;
+                try {
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    osc.connect(gain); gain.connect(audioCtx.destination);
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(300, audioCtx.currentTime);
+                    osc.frequency.exponentialRampToValueAtTime(50, audioCtx.currentTime + 0.04);
+                    gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.04);
+                    osc.start(); osc.stop(audioCtx.currentTime + 0.04);
+                } catch(e) {}
+            },
+            playError: function() {
+                if (!this.enabled || audioCtx.state === 'suspended') return;
+                try {
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    osc.connect(gain); gain.connect(audioCtx.destination);
+                    osc.type = 'square';
+                    osc.frequency.setValueAtTime(150, audioCtx.currentTime);
+                    gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.1);
+                    osc.start(); osc.stop(audioCtx.currentTime + 0.1);
+                } catch(e) {}
+            }
+        };
+
+        document.body.addEventListener('keydown', () => { if(audioCtx.state === 'suspended') audioCtx.resume(); }, {once: true});
+        document.body.addEventListener('click', () => { if(audioCtx.state === 'suspended') audioCtx.resume(); }, {once: true});
+
+        const Storage = {
+            save: (key, value) => localStorage.setItem(`typingmaster_${key}`, JSON.stringify(value)),
+            get: (key, defaultValue) => {
+                const item = localStorage.getItem(`typingmaster_${key}`);
+                return item ? JSON.parse(item) : defaultValue;
+            }
+        };
+
+        const app = {
+            els: {
+                wordsWrapper: document.getElementById('words-wrapper'),
+                caret: document.getElementById('caret'),
+                timer: document.getElementById('timer'),
+                mainView: document.getElementById('main-view'),
+                resultsScreen: document.getElementById('results-screen'),
+                configBar: document.getElementById('config-bar'),
+                amountSelector: document.getElementById('amount-selector'),
+                restartBtn: document.getElementById('restart-btn'),
+                cmdModal: document.getElementById('command-modal'),
+                cmdInput: document.getElementById('cmd-input'),
+                cmdList: document.getElementById('cmd-list'),
+                infoModal: document.getElementById('info-modal'),
+                infoTitle: document.getElementById('info-title'),
+                infoContent: document.getElementById('info-content')
+            },
+
+            config: {
+                mode: Storage.get('mode', 'time'),
+                time: Storage.get('time', 30),
+                wordCount: Storage.get('wordCount', 25),
+                punctuation: Storage.get('punctuation', false),
+                numbers: Storage.get('numbers', false),
+                theme: Storage.get('theme', 'serika-dark')
+            },
+
+            state: {
+                words: [],
+                activeWordIndex: 0,
+                activeLetterIndex: 0,
+                timeElapsed: 0,
+                timeLeft: 30,
+                timerInterval: null,
+                started: false,
+                finished: false,
+                history: [],
+                stats: { correctChars: 0, incorrectChars: 0, extraChars: 0, missedChars: 0, correctSpaces: 0, totalKeystrokes: 0 }
+            },
+
+            init() {
+                this.applyTheme(this.config.theme);
+                this.setupEventListeners();
+                this.updateConfigUI();
+                this.reset();
+            },
+
+            setupEventListeners() {
+                document.addEventListener('keydown', this.handleKeyDown.bind(this));
+                
+                window.addEventListener('blur', () => document.body.classList.add('unfocused'));
+                window.addEventListener('focus', () => document.body.classList.remove('unfocused'));
+                document.getElementById('blur-overlay').addEventListener('click', () => document.body.classList.remove('unfocused'));
+                window.addEventListener('resize', this.updateCaretPosition.bind(this));
+
+                this.els.restartBtn.addEventListener('click', () => this.restart());
+                this.els.cmdInput.addEventListener('input', (e) => this.filterCommands(e.target.value));
+
+                // Config Bar Listeners
+                document.querySelectorAll('#mode-selector .config-item').forEach(el => {
+                    el.addEventListener('click', (e) => {
+                        const m = e.target.dataset.mode;
+                        if(m === 'quote' || m === 'zen') return; // Disabled for now
+                        this.config.mode = m;
+                        Storage.save('mode', m);
+                        this.updateConfigUI();
+                        this.reset();
+                    });
+                });
+
+                document.querySelectorAll('#modifier-selector .config-item').forEach(el => {
+                    el.addEventListener('click', (e) => {
+                        const mod = e.target.dataset.mod;
+                        this.config[mod] = !this.config[mod];
+                        Storage.save(mod, this.config[mod]);
+                        this.updateConfigUI();
+                        this.reset();
+                    });
+                });
+            },
+
+            updateConfigUI() {
+                // Modifiers
+                document.querySelectorAll('#modifier-selector .config-item').forEach(el => {
+                    el.classList.toggle('active', this.config[el.dataset.mod]);
+                });
+
+                // Modes
+                document.querySelectorAll('#mode-selector .config-item').forEach(el => {
+                    el.classList.toggle('active', el.dataset.mode === this.config.mode);
+                });
+
+                // Amount Selectors
+                this.els.amountSelector.innerHTML = '';
+                const amounts = this.config.mode === 'time' ? [15, 30, 60, 120] : [10, 25, 50, 100];
+                const currentVal = this.config.mode === 'time' ? this.config.time : this.config.wordCount;
+                
+                amounts.forEach(val => {
+                    const span = document.createElement('span');
+                    span.className = `config-item ${val === currentVal ? 'active' : ''}`;
+                    span.textContent = val;
+                    span.dataset.val = val;
+                    span.addEventListener('click', () => {
+                        if (this.config.mode === 'time') { this.config.time = val; Storage.save('time', val); }
+                        else { this.config.wordCount = val; Storage.save('wordCount', val); }
+                        this.updateConfigUI();
+                        this.reset();
+                    });
+                    this.els.amountSelector.appendChild(span);
+                });
+            },
+
+            generateWords() {
+                const count = this.config.mode === 'words' ? this.config.wordCount : 200; // Extra buffer for time mode
+                const words = [];
+                for (let i = 0; i < count; i++) {
+                    let w = WORDS_LIST[Math.floor(Math.random() * WORDS_LIST.length)];
+                    
+                    if (this.config.numbers && Math.random() > 0.8) {
+                        w = Math.floor(Math.random() * 1000).toString();
+                    } else if (this.config.punctuation && Math.random() > 0.6) {
+                        const p = PUNCTUATION[Math.floor(Math.random() * PUNCTUATION.length)];
+                        w = Math.random() > 0.5 ? w + p : p + w;
+                    }
+                    words.push(w);
+                }
+                this.state.words = words;
+            },
+
+            renderWords() {
+                this.els.wordsWrapper.innerHTML = '';
+                this.els.wordsWrapper.style.top = '0px';
+                
+                this.state.words.forEach(wordText => {
+                    const wordEl = document.createElement('div');
+                    wordEl.className = 'word';
+                    for (let i = 0; i < wordText.length; i++) {
+                        const letterEl = document.createElement('letter');
+                        letterEl.className = 'letter';
+                        letterEl.textContent = wordText[i];
+                        wordEl.appendChild(letterEl);
+                    }
+                    this.els.wordsWrapper.appendChild(wordEl);
+                });
+                if(this.els.wordsWrapper.children.length > 0) {
+                    this.els.wordsWrapper.children[0].classList.add('active');
+                }
+            },
+
+            handleKeyDown(e) {
+                if (this.state.finished || document.body.classList.contains('unfocused')) return;
+                
+                // Command Palette Shortcut & Navigation
+                if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'p') {
+                    e.preventDefault(); this.openCommandPalette(); return;
+                }
+
+                if (this.els.cmdModal.classList.contains('active')) {
+                    const items = Array.from(this.els.cmdList.querySelectorAll('.cmd-item'));
+                    let idx = items.findIndex(el => el.classList.contains('selected'));
+                    
+                    if (e.key === 'ArrowDown') {
+                        e.preventDefault();
+                        if(idx > -1) items[idx].classList.remove('selected');
+                        idx = (idx + 1) % items.length;
+                        items[idx].classList.add('selected');
+                        items[idx].scrollIntoView({block: 'nearest'});
+                    } else if (e.key === 'ArrowUp') {
+                        e.preventDefault();
+                        if(idx > -1) items[idx].classList.remove('selected');
+                        idx = (idx - 1 + items.length) % items.length;
+                        items[idx].classList.add('selected');
+                        items[idx].scrollIntoView({block: 'nearest'});
+                    } else if (e.key === 'Enter' && idx > -1) {
+                        items[idx].click();
+                    } else if (e.key === 'Escape') {
+                        this.closeCommandPalette();
+                    }
+                    return;
+                }
+
+                if (e.key === 'Tab') { e.preventDefault(); this.restart(); return; }
+                if (e.key === 'Escape') { this.restart(); return; }
+                if (e.ctrlKey || e.altKey || e.metaKey || e.key.length > 1 && e.key !== 'Backspace' && e.key !== ' ') return;
+
+                e.preventDefault();
+                if (!this.state.started) this.startTest();
+
+                const currentWordEl = this.els.wordsWrapper.children[this.state.activeWordIndex];
+                const letters = currentWordEl.querySelectorAll('letter');
+                
+                this.els.caret.classList.remove('blinking');
+                clearTimeout(this.caretBlinkTimeout);
+                this.caretBlinkTimeout = setTimeout(() => this.els.caret.classList.add('blinking'), 500);
+
+                // Backspace
+                if (e.key === 'Backspace') {
+                    if (this.state.activeLetterIndex > 0) {
+                        this.state.activeLetterIndex--;
+                        const charEl = letters[this.state.activeLetterIndex];
+                        if (charEl.classList.contains('extra')) charEl.remove();
+                        else charEl.className = 'letter';
+                    } else if (this.state.activeWordIndex > 0) {
+                        const prevWordEl = this.els.wordsWrapper.children[this.state.activeWordIndex - 1];
+                        currentWordEl.classList.remove('active');
+                        this.state.activeWordIndex--;
+                        prevWordEl.classList.add('active');
+                        this.state.activeLetterIndex = prevWordEl.querySelectorAll('letter').length;
+                    }
+                    this.updateCaretPosition();
+                    return;
+                }
+
+                // Space
+                if (e.key === ' ') {
+                    if (this.state.activeLetterIndex === 0) return; 
+
+                    for (let i = this.state.activeLetterIndex; i < letters.length; i++) {
+                        letters[i].classList.add('incorrect', 'missed');
+                    }
+                    if (currentWordEl.querySelectorAll('.incorrect, .extra').length > 0) {
+                        currentWordEl.classList.add('error-underline');
+                    } else {
+                        this.state.stats.correctSpaces++;
+                    }
+
+                    // Check end of Words Mode
+                    if (this.config.mode === 'words' && this.state.activeWordIndex === this.config.wordCount - 1) {
+                        this.endTest();
+                        return;
+                    }
+
+                    currentWordEl.classList.remove('active');
+                    this.state.activeWordIndex++;
+                    this.state.activeLetterIndex = 0;
+                    this.els.wordsWrapper.children[this.state.activeWordIndex].classList.add('active');
+                    
+                    this.state.stats.totalKeystrokes++;
+                    this.checkScroll();
+                    this.updateCaretPosition();
+                    SoundManager.playKeystroke();
+                    
+                    if (this.config.mode === 'words') {
+                        this.els.timer.textContent = `${this.state.activeWordIndex}/${this.config.wordCount}`;
+                    }
+                    return;
+                }
+
+                // Normal Character
+                this.state.stats.totalKeystrokes++;
+                if (this.state.activeLetterIndex < letters.length) {
+                    const expectedChar = letters[this.state.activeLetterIndex].textContent;
+                    if (e.key === expectedChar) {
+                        letters[this.state.activeLetterIndex].classList.add('correct');
+                        this.state.stats.correctChars++;
+                        SoundManager.playKeystroke();
+                    } else {
+                        letters[this.state.activeLetterIndex].classList.add('incorrect');
+                        this.state.stats.incorrectChars++;
+                        SoundManager.playError();
+                    }
+                    this.state.activeLetterIndex++;
+                } else {
+                    if (currentWordEl.querySelectorAll('.extra').length < 10) {
+                        const extraLetter = document.createElement('letter');
+                        extraLetter.className = 'letter extra incorrect';
+                        extraLetter.textContent = e.key;
+                        currentWordEl.appendChild(extraLetter);
+                        this.state.activeLetterIndex++;
+                        this.state.stats.extraChars++;
+                        SoundManager.playError();
+                    }
+                }
+                
+                // End Words mode if on last character of last word
+                if (this.config.mode === 'words' && this.state.activeWordIndex === this.config.wordCount - 1) {
+                     const isComplete = Array.from(letters).every(l => l.classList.contains('correct') || l.classList.contains('incorrect'));
+                     if(isComplete) {
+                         this.updateCaretPosition();
+                         this.endTest();
+                         return;
+                     }
+                }
+
+                this.updateCaretPosition();
+            },
+
+            updateCaretPosition() {
+                if (this.state.finished) return;
+                const currentWordEl = this.els.wordsWrapper.children[this.state.activeWordIndex];
+                if (!currentWordEl) return;
+
+                const letters = currentWordEl.querySelectorAll('letter');
+                let targetEl, isEnd = false;
+
+                if (this.state.activeLetterIndex < letters.length) {
+                    targetEl = letters[this.state.activeLetterIndex];
+                } else {
+                    targetEl = letters[letters.length - 1];
+                    isEnd = true;
+                }
+
+                if(!targetEl) return;
+                const rect = targetEl.getBoundingClientRect();
+                const containerRect = this.els.wordsWrapper.parentElement.getBoundingClientRect();
+                
+                let leftPos = rect.left - containerRect.left + (isEnd ? rect.width : 0);
+                let topPos = rect.top - containerRect.top;
+
+                this.els.caret.style.transform = `translate(${leftPos}px, ${topPos}px)`;
+            },
+
+            checkScroll() {
+                const currentWordEl = this.els.wordsWrapper.children[this.state.activeWordIndex];
+                const wordTop = currentWordEl.offsetTop;
+                const lineHeight = 36; 
+                if (wordTop > lineHeight * 1.5) {
+                    const currentTop = parseInt(this.els.wordsWrapper.style.top || '0');
+                    this.els.wordsWrapper.style.top = `${currentTop - lineHeight}px`;
+                }
+            },
+
+            startTest() {
+                this.state.started = true;
+                this.els.configBar.style.opacity = '0';
+                this.els.configBar.style.pointerEvents = 'none';
+
+                if (this.config.mode === 'time') {
+                    this.state.timeLeft = this.config.time;
+                    this.els.timer.textContent = this.state.timeLeft;
+                } else {
+                    this.state.timeElapsed = 0;
+                    this.els.timer.textContent = `0/${this.config.wordCount}`;
+                }
+                this.els.timer.classList.add('active');
+
+                this.state.timerInterval = setInterval(() => {
+                    if (this.config.mode === 'time') {
+                        this.state.timeLeft--;
+                        this.els.timer.textContent = this.state.timeLeft;
+                        this.recordHistorySnapshot(this.config.time - this.state.timeLeft);
+                        if (this.state.timeLeft <= 0) this.endTest();
+                    } else {
+                        this.state.timeElapsed++;
+                        this.recordHistorySnapshot(this.state.timeElapsed);
+                    }
+                }, 1000);
+            },
+
+            recordHistorySnapshot(elapsed) {
+                if (elapsed === 0) return;
+                const grossKs = this.state.stats.totalKeystrokes;
+                const correctKs = this.state.stats.correctChars + this.state.stats.correctSpaces;
+                const rawWpm = Math.round((grossKs / 5) / (elapsed / 60));
+                const wpm = Math.round((correctKs / 5) / (elapsed / 60));
+
+                this.state.history.push({ time: elapsed, wpm: Math.max(0, wpm), rawWpm: Math.max(0, rawWpm) });
+            },
+
+            endTest() {
+                clearInterval(this.state.timerInterval);
+                this.state.finished = true;
+                this.els.caret.classList.add('hidden');
+                
+                const timeElapsed = this.config.mode === 'time' ? this.config.time : Math.max(1, this.state.timeElapsed);
+                const correctKeystrokes = this.state.stats.correctChars + this.state.stats.correctSpaces;
+                const grossKeystrokes = this.state.stats.totalKeystrokes;
+                
+                // WPM formula handling edge case of super fast finish
+                const timeInMinutes = timeElapsed / 60;
+                let wpm = Math.round((correctKeystrokes / 5) / timeInMinutes);
+                let rawWpm = Math.round((grossKeystrokes / 5) / timeInMinutes);
+                
+                if(!isFinite(wpm) || isNaN(wpm)) wpm = 0;
+                if(!isFinite(rawWpm) || isNaN(rawWpm)) rawWpm = 0;
+
+                const accuracy = grossKeystrokes > 0 ? Math.round((correctKeystrokes / grossKeystrokes) * 100) : 0;
+                
+                this.els.mainView.classList.add('hidden');
+                this.els.resultsScreen.classList.remove('hidden');
+
+                document.getElementById('res-wpm').textContent = wpm;
+                document.getElementById('res-acc').textContent = `${accuracy}%`;
+                
+                const modeStr = this.config.mode === 'time' ? `time ${this.config.time}` : `words ${this.config.wordCount}`;
+                document.getElementById('res-type').textContent = modeStr;
+                document.getElementById('res-raw').textContent = rawWpm;
+                document.getElementById('res-chars').textContent = `${this.state.stats.correctChars}/${this.state.stats.incorrectChars}/${this.state.stats.extraChars}/${this.state.stats.missedChars}`;
+                document.getElementById('res-time').textContent = `${timeElapsed}s`;
+                
+                let cons = 100;
+                if (this.state.history.length > 2) {
+                     const wpms = this.state.history.map(h => h.wpm);
+                     const mean = wpms.reduce((a,b) => a+b, 0) / wpms.length;
+                     const variance = wpms.reduce((a,b) => a + Math.pow(b - mean, 2), 0) / wpms.length;
+                     const stdDev = Math.sqrt(variance);
+                     cons = Math.max(0, 100 - (stdDev / (mean || 1) * 100)).toFixed(0);
+                }
+                document.getElementById('res-cons').textContent = `${cons}%`;
+
+                // Give UI time to reflow before getting canvas dimensions
+                setTimeout(() => this.renderChart(), 50); 
+            },
+
+            restart() {
+                clearInterval(this.state.timerInterval);
+                this.state = {
+                    words: [], activeWordIndex: 0, activeLetterIndex: 0,
+                    timeLeft: this.config.time, timeElapsed: 0,
+                    timerInterval: null, started: false, finished: false, history: [],
+                    stats: { correctChars: 0, incorrectChars: 0, extraChars: 0, missedChars: 0, correctSpaces: 0, totalKeystrokes: 0 }
+                };
+
+                this.els.mainView.classList.remove('hidden');
+                this.els.resultsScreen.classList.add('hidden');
+                this.els.timer.classList.remove('active');
+                
+                if (this.config.mode === 'time') this.els.timer.textContent = this.config.time;
+                else this.els.timer.textContent = `0/${this.config.wordCount}`;
+
+                this.els.caret.classList.remove('hidden');
+                this.els.configBar.style.opacity = '1';
+                this.els.configBar.style.pointerEvents = 'all';
+
+                this.generateWords();
+                this.renderWords();
+                setTimeout(() => this.updateCaretPosition(), 50);
+            },
+
+            renderChart() {
+                const canvas = document.getElementById('results-chart');
+                const ctx = canvas.getContext('2d');
+                const dpr = window.devicePixelRatio || 1;
+                
+                const rect = canvas.parentElement.getBoundingClientRect();
+                canvas.width = rect.width * dpr; canvas.height = rect.height * dpr;
+                ctx.scale(dpr, dpr);
+                canvas.style.width = `${rect.width}px`; canvas.style.height = `${rect.height}px`;
+
+                const width = rect.width; const height = rect.height;
+                ctx.clearRect(0, 0, width, height);
+
+                if (this.state.history.length === 0) return;
+
+                const maxWpm = Math.max(...this.state.history.map(h => h.rawWpm), 50);
+                const padding = { top: 20, right: 20, bottom: 30, left: 40 };
+                const drawWidth = width - padding.left - padding.right;
+                const drawHeight = height - padding.top - padding.bottom;
+
+                const computedStyle = getComputedStyle(document.body);
+                const colorMain = computedStyle.getPropertyValue('--main-color').trim();
+                const colorSub = computedStyle.getPropertyValue('--sub-color').trim();
+                const colorBg = computedStyle.getPropertyValue('--bg-color').trim();
+
+                ctx.strokeStyle = colorSub; ctx.globalAlpha = 0.2; ctx.lineWidth = 1;
+                ctx.beginPath();
+                for (let i = 0; i <= 4; i++) {
+                    const y = padding.top + (drawHeight / 4) * i;
+                    ctx.moveTo(padding.left, y); ctx.lineTo(width - padding.right, y);
+                }
+                ctx.stroke(); ctx.globalAlpha = 1.0;
+
+                ctx.fillStyle = colorSub;
+                ctx.font = `12px ${computedStyle.getPropertyValue('--font-family').trim()}`;
+                ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+                for (let i = 0; i <= 4; i++) {
+                    const y = padding.top + (drawHeight / 4) * i;
+                    const val = Math.round(maxWpm - (maxWpm / 4) * i);
+                    ctx.fillText(val, padding.left - 10, y);
+                }
+
+                const getCoords = (index, value) => {
+                    const x = padding.left + (index / Math.max(1, this.state.history.length - 1)) * drawWidth;
+                    const y = padding.top + drawHeight - ((value / maxWpm) * drawHeight);
+                    return {x, y};
+                };
+
+                ctx.beginPath(); ctx.strokeStyle = colorSub; ctx.lineWidth = 2; ctx.lineJoin = 'round';
+                this.state.history.forEach((pt, i) => {
+                    const {x, y} = getCoords(i, pt.rawWpm);
+                    if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+                });
+                ctx.stroke();
+
+                ctx.beginPath(); ctx.strokeStyle = colorMain; ctx.lineWidth = 3; ctx.lineJoin = 'round';
+                this.state.history.forEach((pt, i) => {
+                    const {x, y} = getCoords(i, pt.wpm);
+                    if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+                });
+                ctx.stroke();
+                
+                ctx.lineTo(padding.left + drawWidth, padding.top + drawHeight);
+                ctx.lineTo(padding.left, padding.top + drawHeight);
+                ctx.closePath();
+                const gradient = ctx.createLinearGradient(0, padding.top, 0, padding.top + drawHeight);
+                gradient.addColorStop(0, colorMain + '40');
+                gradient.addColorStop(1, colorBg + '00');
+                ctx.fillStyle = gradient; ctx.fill();
+            },
+
+            commands: [
+                { id: 'restart', title: 'Restart Test', icon: '↻', action: () => app.restart() },
+                { id: 'theme-dark', title: 'Theme: Serika Dark', icon: '🎨', action: () => app.applyTheme('serika-dark') },
+                { id: 'theme-dracula', title: 'Theme: Dracula', icon: '🎨', action: () => app.applyTheme('theme-dracula') },
+                { id: 'theme-nord', title: 'Theme: Nord', icon: '🎨', action: () => app.applyTheme('theme-nord') },
+                { id: 'sound-toggle', title: 'Toggle Keystroke Sounds', icon: '🔊', action: () => { SoundManager.enabled = !SoundManager.enabled; } }
+            ],
+
+            openCommandPalette(initialSearch = '') {
+                this.els.cmdModal.classList.add('active');
+                this.els.cmdInput.value = initialSearch;
+                this.els.cmdInput.focus();
+                this.filterCommands(initialSearch);
+            },
+
+            closeCommandPalette() {
+                this.els.cmdModal.classList.remove('active');
+                this.els.cmdInput.value = '';
+                document.body.focus(); document.body.classList.remove('unfocused');
+            },
+
+            filterCommands(query) {
+                const q = query.toLowerCase();
+                const filtered = this.commands.filter(c => c.title.toLowerCase().includes(q));
+                
+                this.els.cmdList.innerHTML = '';
+                filtered.forEach((cmd, idx) => {
+                    const el = document.createElement('div');
+                    el.className = 'cmd-item' + (idx === 0 ? ' selected' : '');
+                    el.innerHTML = `<span>${cmd.title}</span> <span>${cmd.icon}</span>`;
+                    el.addEventListener('click', () => { cmd.action(); this.closeCommandPalette(); });
+                    this.els.cmdList.appendChild(el);
+                });
+            },
+
+            applyTheme(themeName) {
+                document.body.className = document.body.className.replace(/\btheme-[^\s]+\b/g, '');
+                if (themeName !== 'serika-dark') document.body.classList.add(themeName);
+                this.config.theme = themeName;
+                Storage.save('theme', themeName);
+                if (this.state.finished) setTimeout(() => this.renderChart(), 50);
+            },
+
+            openInfoModal(type) {
+                if (type === 'terms') {
+                    this.els.infoTitle.textContent = 'Terms of Service';
+                    this.els.infoContent.innerHTML = '<p>TypingMaster Pro is a fast, visually-appealing typing test application.</p><br><p><strong>Temporary Data Notice:</strong> By using this application, you agree that it is a demonstration build. All typing features and layout data provided here are subject to standard open-source constraints. No real user data is collected or monetized.</p>';
+                } else if (type === 'privacy') {
+                    this.els.infoTitle.textContent = 'Privacy Policy';
+                    this.els.infoContent.innerHTML = '<p>Your privacy is important to us.</p><br><p><strong>Data Processing Notice:</strong> TypingMaster Pro does not transmit your typing speeds, behavior, or settings to any external servers. All information regarding your sessions and configuration is securely stored entirely locally in your browser\'s LocalStorage.</p>';
+                }
+                this.els.infoModal.classList.add('active');
+            },
+
+            closeInfoModal() {
+                this.els.infoModal.classList.remove('active');
+            }
+        };
+
+        window.addEventListener('DOMContentLoaded', () => { app.init(); });
+    </script>
+</body>
+</html>

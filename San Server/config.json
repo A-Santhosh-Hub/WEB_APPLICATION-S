@@ -1,0 +1,21 @@
+{
+  "server": {
+    "host": "0.0.0.0",
+    "port": 8080
+  },
+  "shares": [
+    {
+      "name": "Test Share",
+      "path": "D:\\GAME SERVER\\TEST 01\\SanLAN\\test_share",
+      "read_only": true
+    }
+  ],
+  "transfer": {
+    "chunk_size_kb": 1024,
+    "max_concurrent_transfers": 5
+  },
+  "security": {
+    "require_pin": false,
+    "pin": ""
+  }
+}

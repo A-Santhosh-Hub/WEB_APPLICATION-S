@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="SanLAN — Private LAN File Sharing System. Transfer large folders between computers on the same network.">
+
+    <title>SanLAN — LAN File Sharing</title>
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="/css/app.css">
+
+    <!-- Inline SVG favicon (no external file needed) -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%236366f1'/><text x='50' y='68' font-family='sans-serif' font-size='50' font-weight='bold' fill='white' text-anchor='middle'>S</text></svg>">
+</head>
+<body>
+    <!-- ============================================================
+         Header
+         ============================================================ -->
+    <header class="header" id="app-header">
+        <div class="header__brand">
+            <div class="header__logo">S</div>
+            <span class="header__title">SanLAN</span>
+        </div>
+        <div class="header__info">
+            <div class="header__status">
+                <span class="header__status-dot"></span>
+                <span id="header-status-text">Connected</span>
+            </div>
+            <span class="header__ip" id="header-ip">—</span>
+        </div>
+    </header>
+
+    <!-- ============================================================
+         Main Content
+         ============================================================ -->
+    <main class="main" id="app-main">
+        <!-- Breadcrumbs (hidden on home) -->
+        <nav class="breadcrumbs hidden" id="breadcrumbs"></nav>
+
+        <!-- Dynamic content rendered by JS -->
+        <div id="content">
+            <div class="loading">
+                <div class="loading__spinner"></div>
+            </div>
+        </div>
+    </main>
+
+    <!-- ============================================================
+         Toast Container
+         ============================================================ -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <!-- ============================================================
+         Scripts
+         ============================================================ -->
+    <script src="/js/app.js"></script>
+    <script src="/js/transfer.js"></script>
+    <script src="/js/downloader.js"></script>
+    <script src="/js/explorer.js"></script>
+</body>
+</html>

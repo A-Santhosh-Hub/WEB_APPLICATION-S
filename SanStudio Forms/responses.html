@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="SanStudio Forms — Responses Dashboard. View and manage all form responses.">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="assets/icons/favicon.svg" type="image/svg+xml">
+  <title>Responses — SanStudio Forms</title>
+
+  <link rel="stylesheet" href="styles/tokens.css">
+  <link rel="stylesheet" href="styles/reset.css">
+  <link rel="stylesheet" href="styles/base.css">
+  <link rel="stylesheet" href="styles/animations.css">
+  <link rel="stylesheet" href="styles/components.css">
+  <link rel="stylesheet" href="styles/layout.css">
+  <link rel="stylesheet" href="styles/themes/light.css">
+  <link rel="stylesheet" href="styles/themes/dark.css">
+  <link rel="stylesheet" href="styles/themes/glassmorphism.css">
+  <link rel="stylesheet" href="styles/themes/neumorphism.css">
+  <link rel="stylesheet" href="styles/themes/cyberpunk.css">
+  <link rel="stylesheet" href="styles/themes/aurora.css">
+  <link rel="stylesheet" href="styles/themes/luxury.css">
+  <link rel="stylesheet" href="styles/pages/responses.css">
+</head>
+<body data-page="responses">
+  <div class="gradient-mesh" aria-hidden="true"></div>
+  <div class="cursor-glow" aria-hidden="true"></div>
+
+  <div class="app-shell" id="app-shell">
+
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar" role="navigation" aria-label="Main navigation">
+      <div class="sidebar-header">
+        <a href="index.html" class="sidebar-logo" aria-label="SanStudio Forms — Home">
+          <div class="sidebar-logo-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+              <path d="M9 2H5a2 2 0 00-2 2v16a2 2 0 002 2h14a2 2 0 002-2V9l-7-7z" fill="rgba(255,255,255,0.3)"/>
+              <path d="M9 2v7h7" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M7 13h10M7 17h6" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <div class="sidebar-logo-text">
+            <span class="sidebar-logo-name">SanStudio Forms</span>
+            <span class="sidebar-logo-tagline">Build Beautiful Forms</span>
+          </div>
+        </a>
+        <button class="sidebar-collapse-btn" id="sidebar-toggle" aria-label="Toggle sidebar">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <path d="M11 19l-7-7 7-7M18 19l-7-7 7-7"/>
+          </svg>
+        </button>
+      </div>
+      <div class="sidebar-content">
+        <nav>
+          <div class="sidebar-section">
+            <a href="index.html" class="sidebar-nav-item">
+              <span class="nav-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></span>
+              <span class="nav-label">Dashboard</span>
+            </a>
+            <a href="responses.html" class="sidebar-nav-item active" aria-current="page">
+              <span class="nav-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg></span>
+              <span class="nav-label">Responses</span>
+            </a>
+            <a href="analytics.html" class="sidebar-nav-item">
+              <span class="nav-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 20V10M12 20V4M6 20v-6"/></svg></span>
+              <span class="nav-label">Analytics</span>
+            </a>
+            <a href="settings.html" class="sidebar-nav-item">
+              <span class="nav-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/></svg></span>
+              <span class="nav-label">Settings</span>
+            </a>
+          </div>
+        </nav>
+      </div>
+      <div class="sidebar-footer">
+        <a href="https://sanstudio-hub.github.io/in/" target="_blank" rel="noopener noreferrer" class="sidebar-nav-item">
+          <span class="nav-icon"><div style="width:20px;height:20px;border-radius:6px;background:var(--brand-gradient);display:flex;align-items:center;justify-content:center;"><svg width="12" height="12" viewBox="0 0 24 24" fill="white"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg></div></span>
+          <span class="nav-label" style="font-size: var(--text-xs); color: var(--text-tertiary);">Developed by <strong style="color:var(--text-secondary)">SanStudio</strong></span>
+        </a>
+      </div>
+    </aside>
+
+    <!-- Topbar -->
+    <header class="topbar" role="banner">
+      <div class="topbar-left">
+        <nav class="breadcrumb" aria-label="Breadcrumb">
+          <a href="index.html" class="breadcrumb-link">Dashboard</a>
+          <span class="breadcrumb-sep">/</span>
+          <span class="breadcrumb-item" id="form-breadcrumb">Responses</span>
+        </nav>
+      </div>
+      <div class="topbar-right">
+        <button class="btn btn-secondary btn-sm" id="export-csv-btn">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+          Export CSV
+        </button>
+        <button class="btn btn-icon btn-ghost" id="theme-toggle" aria-label="Toggle theme">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- Main -->
+    <main class="main-content" id="main-content" role="main">
+      <div class="page-container">
+
+        <!-- Header -->
+        <header class="page-header">
+          <div class="page-header-info">
+            <h1 class="page-title" id="responses-page-title">Responses</h1>
+            <p class="page-subtitle" id="responses-subtitle">Loading...</p>
+          </div>
+          <div class="page-header-actions">
+            <div class="dropdown" id="form-select-wrap">
+              <button class="btn btn-secondary btn-sm" id="form-select-btn" aria-haspopup="true">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 2H5a2 2 0 00-2 2v16a2 2 0 002 2h14a2 2 0 002-2V9l-7-7z"/><path d="M9 2v7h7"/></svg>
+                <span id="form-select-label">Select Form</span>
+              </button>
+              <div class="dropdown-menu" id="form-select-dropdown" hidden>
+                <!-- Populated by JS -->
+              </div>
+            </div>
+          </div>
+        </header>
+
+        <!-- Stats -->
+        <div class="stats-bar animate-fade-up" id="response-stats" style="grid-template-columns: repeat(4,1fr); margin-bottom: var(--space-6)">
+          <div class="stat-card">
+            <div class="stat-value" id="stat-r-total">—</div>
+            <div class="stat-label">Total Responses</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" id="stat-r-today">—</div>
+            <div class="stat-label">Today</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" id="stat-r-completion">—</div>
+            <div class="stat-label">Completion Rate</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" id="stat-r-duration">—</div>
+            <div class="stat-label">Avg. Duration</div>
+          </div>
+        </div>
+
+        <!-- Filter bar -->
+        <div class="filter-bar" style="margin-bottom: var(--space-4); display:flex; align-items:center; gap: var(--space-3);">
+          <input type="search" class="input" id="response-search" placeholder="Search responses..." style="max-width:280px;">
+          <input type="date" class="input input-sm" id="filter-from" aria-label="From date" style="max-width:160px;">
+          <span style="font-size: var(--text-sm); color: var(--text-tertiary)">to</span>
+          <input type="date" class="input input-sm" id="filter-to" aria-label="To date" style="max-width:160px;">
+          <button class="btn btn-secondary btn-sm" id="clear-filters-btn">Clear</button>
+        </div>
+
+        <!-- Responses table -->
+        <div class="card" style="padding:0; overflow:hidden">
+          <div class="responses-table-wrap" style="overflow-x: auto;">
+            <table class="responses-table" id="responses-table" role="grid">
+              <thead id="responses-thead">
+                <tr>
+                  <th style="width:40px"><input type="checkbox" id="select-all" aria-label="Select all"></th>
+                  <th>#</th>
+                  <th>Submitted</th>
+                  <th>Duration</th>
+                  <!-- Dynamic question columns -->
+                </tr>
+              </thead>
+              <tbody id="responses-tbody">
+                <!-- Skeleton rows -->
+                <tr class="skeleton-row" aria-hidden="true"><td colspan="10"><div class="animate-shimmer" style="height:40px;border-radius:var(--radius-md)"></div></td></tr>
+                <tr class="skeleton-row" aria-hidden="true"><td colspan="10"><div class="animate-shimmer" style="height:40px;border-radius:var(--radius-md);animation-delay:100ms"></div></td></tr>
+                <tr class="skeleton-row" aria-hidden="true"><td colspan="10"><div class="animate-shimmer" style="height:40px;border-radius:var(--radius-md);animation-delay:200ms"></div></td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Empty state -->
+          <div class="empty-state" id="responses-empty" style="display:none;">
+            <div class="empty-state-icon animate-float">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+                <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>
+              </svg>
+            </div>
+            <h2 class="empty-state-title">No responses yet</h2>
+            <p class="empty-state-desc">Share your form to start collecting responses.</p>
+          </div>
+
+          <!-- Pagination -->
+          <div class="table-footer" id="table-footer" style="display:none; justify-content:space-between; align-items:center; padding: var(--space-4) var(--space-5); border-top: 1px solid var(--border-subtle);">
+            <span class="table-count" id="table-count"></span>
+            <div style="display:flex; gap: var(--space-2)">
+              <button class="btn btn-secondary btn-sm" id="prev-page-btn" disabled>← Prev</button>
+              <span class="table-page" id="table-page" style="font-size: var(--text-sm); color: var(--text-secondary); padding: 0 var(--space-2); align-self:center"></span>
+              <button class="btn btn-secondary btn-sm" id="next-page-btn" disabled>Next →</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Bulk actions -->
+        <div class="bulk-actions" id="bulk-actions" style="display:none; margin-top: var(--space-4); padding: var(--space-3) var(--space-4); background: var(--brand-gradient-soft); border: 1px solid var(--brand-primary); border-radius: var(--radius-xl); display:flex; align-items:center; gap: var(--space-3);">
+          <span id="bulk-count" style="font-size: var(--text-sm); font-weight: var(--weight-medium)"></span>
+          <button class="btn btn-secondary btn-sm" id="bulk-export-btn">Export Selected</button>
+          <button class="btn btn-danger btn-sm" id="bulk-delete-btn">Delete Selected</button>
+          <button class="btn btn-ghost btn-sm" id="bulk-cancel-btn">Cancel</button>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Response Detail Modal -->
+  <div class="modal-overlay" id="response-modal" hidden role="dialog" aria-modal="true" aria-labelledby="response-modal-title">
+    <div class="modal-panel" style="max-width:680px; max-height:90vh; display:flex; flex-direction:column;">
+      <div class="modal-header">
+        <h2 class="modal-title" id="response-modal-title">Response Detail</h2>
+        <button class="modal-close" data-modal-close="response-modal" aria-label="Close">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <div class="modal-body" id="response-detail-content" style="overflow-y:auto; flex:1;">
+        <!-- Populated by JS -->
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-danger btn-sm" id="delete-response-btn">Delete</button>
+        <button class="btn btn-secondary" data-modal-close="response-modal">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="scripts/core/app.js"></script>
+  <script type="module" src="scripts/pages/responses.js"></script>
+</body>
+</html>

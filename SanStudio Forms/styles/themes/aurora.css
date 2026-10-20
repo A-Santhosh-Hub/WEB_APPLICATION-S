@@ -1,0 +1,75 @@
+/**
+ * SanStudio Forms — Aurora Theme
+ * ================================
+ * Northern lights inspired: teal, purple, pink aurora.
+ * Applied via [data-theme="aurora"] on <html>.
+ */
+
+[data-theme="aurora"] {
+  color-scheme: dark;
+
+  --bg-base:        #030a14;
+  --bg-surface:     #071520;
+  --bg-surface-2:   #0c1f2e;
+  --bg-surface-3:   #112438;
+  --bg-inverse:     #ffffff;
+
+  --brand-primary:       #00e5b0;
+  --brand-primary-hover: #00c99a;
+  --brand-secondary:     #c084fc;
+  --brand-accent:        #f0abfc;
+  --brand-gradient: linear-gradient(135deg, #00e5b0 0%, #4ade80 25%, #38bdf8 50%, #818cf8 75%, #c084fc 100%);
+
+  --text-primary:   rgba(220, 255, 245, 0.95);
+  --text-secondary: rgba(150, 220, 200, 0.7);
+  --text-tertiary:  rgba(100, 160, 140, 0.5);
+  --text-brand:     #00e5b0;
+  --text-link:      #00e5b0;
+  --text-link-hover:#c084fc;
+
+  --border-subtle:  rgba(0, 229, 176, 0.06);
+  --border-default: rgba(0, 229, 176, 0.12);
+  --border-strong:  rgba(0, 229, 176, 0.22);
+  --border-brand:   #00e5b0;
+  --border-focus:   #c084fc;
+
+  --shadow-card:     0 4px 24px rgba(0, 229, 176, 0.08), 0 8px 32px rgba(0, 0, 0, 0.6);
+  --shadow-card-hover: 0 8px 40px rgba(0, 229, 176, 0.15), 0 16px 64px rgba(0, 0, 0, 0.7);
+  --shadow-brand:    0 0 24px rgba(0, 229, 176, 0.4);
+  --shadow-modal:    0 24px 80px rgba(0, 0, 0, 0.8);
+
+  --sidebar-bg:     rgba(3, 10, 20, 0.9);
+  --sidebar-border: rgba(0, 229, 176, 0.07);
+  --topbar-bg:      rgba(3, 10, 20, 0.9);
+  --topbar-border:  rgba(0, 229, 176, 0.07);
+  --card-bg:        #071520;
+  --card-border:    rgba(0, 229, 176, 0.08);
+  --input-bg:       rgba(0, 0, 0, 0.3);
+  --input-border:   rgba(0, 229, 176, 0.15);
+}
+
+[data-theme="aurora"] body {
+  background:
+    radial-gradient(ellipse at 10% 0%, rgba(0, 229, 176, 0.15) 0%, transparent 40%),
+    radial-gradient(ellipse at 90% 0%, rgba(192, 132, 252, 0.12) 0%, transparent 40%),
+    radial-gradient(ellipse at 50% 100%, rgba(56, 189, 248, 0.1) 0%, transparent 40%),
+    #030a14;
+}
+
+[data-theme="aurora"] .text-gradient {
+  background: var(--brand-gradient);
+  background-size: 200% 200%;
+  animation: gradientShift 4s ease infinite;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+[data-theme="aurora"] .gradient-mesh::before {
+  background: radial-gradient(circle, #00e5b0, transparent 70%);
+  opacity: 0.25;
+}
+[data-theme="aurora"] .gradient-mesh::after {
+  background: radial-gradient(circle, #c084fc, transparent 70%);
+  opacity: 0.2;
+}
