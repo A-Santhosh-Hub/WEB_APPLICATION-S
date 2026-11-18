@@ -1,0 +1,746 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your Event Name  | SanStudio</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+     <!-- Logo-->
+     <link rel="icon" type="image/png" href="https://sanstudio2026.neocities.org/San.png">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;700&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #ffffff;
+        }
+
+        .serif {
+            font-family: 'Playfair Display', serif;
+        }
+
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+
+        /* Masonry Grid Logic */
+        .gallery-columns {
+            column-count: 1;
+            column-gap: 12px;
+        }
+        @media (min-width: 640px) { .gallery-columns { column-count: 2; } }
+        @media (min-width: 1024px) { .gallery-columns { column-count: 3; } }
+
+        .gallery-item {
+            break-inside: avoid;
+            margin-bottom: 12px;
+        }
+
+        /* Smooth Transitions */
+        .fade-overlay {
+            background: linear-gradient(to bottom, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.5) 100%);
+        }
+
+        .tab-active {
+            border-bottom: 2px solid #000;
+            color: #000;
+        }
+
+        .zoom-active {
+            transform: scale(1.5);
+            cursor: zoom-out;
+        }
+
+        .liked {
+            color: #ef4444 !important;
+            fill: #ef4444;
+            stroke: #ef4444;
+        }
+
+        /* Selection Checkbox Styles */
+        .checkbox-ring {
+            width: 24px;
+            height: 24px;
+            border: 2px solid white;
+            border-radius: 50%;
+            background-color: rgba(0,0,0,0.2);
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .checkbox-ring.selected {
+            background-color: #2563eb;
+            border-color: #2563eb;
+        }
+
+        /* Modal Animation Utilities */
+        .modal-enter {
+            opacity: 0;
+            transform: scale(0.95);
+        }
+        .modal-enter-active {
+            opacity: 1;
+            transform: scale(1);
+            transition: opacity 300ms, transform 300ms;
+        }
+    </style>
+</head>
+<body class="text-zinc-900 selection:bg-black selection:text-white">
+
+    <!-- 1. FULLSCREEN HERO SECTION -->
+    <header class="relative h-screen w-full flex items-center justify-center overflow-hidden">
+        <img id="hero-img" src="" class="absolute inset-0 w-full h-full object-cover" alt="Wedding Hero">
+        <div class="absolute inset-0 fade-overlay"></div>
+        
+        <div class="relative z-10 text-center text-white px-4">
+            <p class="text-[10px] md:text-xs tracking-[0.2em] mb-4 opacity-80 uppercase" id="hero-date"></p>
+            <h1 class="text-3xl md:text-6xl lg:text-7xl serif tracking-wider mb-6 uppercase" id="hero-title"></h1>
+            <div class="text-[10px] md:text-xs tracking-widest opacity-70 flex flex-col md:flex-row items-center justify-center gap-2 md:gap-4 uppercase">
+                <!-- Updated Photographer Link -->
+                <a href="#" target="_blank" id="photographer-name" class="hover:text-white hover:underline underline-offset-4 transition-all"></a>
+                <span class="hidden md:block">|</span>
+                <a href="#" class="underline underline-offset-4" id="portfolio-link"></a>
+            </div>
+        </div>
+
+        <!-- Scroll Down Arrow -->
+        <div class="absolute bottom-10 left-1/2 -translate-x-1/2 text-white animate-bounce cursor-pointer" onclick="scrollToGallery()">
+            <i data-lucide="chevron-down" class="w-6 h-6"></i>
+        </div>
+    </header>
+
+    <!-- 2. STICKY ACTION BAR -->
+    <div id="gallery-section" class="sticky top-0 z-50 bg-white border-b border-zinc-100 px-4 md:px-10 py-3 flex justify-between items-center">
+        <!-- Tabs -->
+        <div class="flex gap-6 md:gap-8 overflow-x-auto no-scrollbar">
+            <button onclick="switchTab('CAM 01')" class="text-[10px] font-bold tracking-widest uppercase pb-2 transition-all tab-btn tab-active" id="tab-01">CAM 01</button>
+            <button onclick="switchTab('CAM 02')" class="text-[10px] font-bold tracking-widest uppercase pb-2 transition-all tab-btn text-zinc-400 hover:text-zinc-900" id="tab-02">CAM 02</button>
+        </div>
+
+        <!-- Utilities -->
+        <div class="flex items-center gap-4 md:gap-6 relative">
+            <div class="flex items-center gap-1 group cursor-pointer" onclick="filterLikes()">
+                <button id="nav-heart"><i data-lucide="heart" class="w-4 h-4"></i></button>
+                <span id="like-count" class="text-[10px] font-bold">0</span>
+            </div>
+            <button class="hover:opacity-60 transition-opacity"><i data-lucide="send" class="w-4 h-4"></i></button>
+            <!-- Contact Button -->
+            <button onclick="openContactModal()" class="hover:opacity-60 transition-opacity"><i data-lucide="message-circle" class="w-4 h-4"></i></button>
+            
+            <!-- Download Button & Dropdown -->
+            <div class="relative">
+                <button id="download-trigger" onclick="toggleDownloadMenu()" class="hidden md:flex items-center gap-2 border border-zinc-900 px-4 py-1.5 rounded-sm text-[10px] font-bold tracking-widest uppercase hover:bg-black hover:text-white transition-all">
+                    Download Files <i data-lucide="chevron-down" class="w-3 h-3"></i>
+                </button>
+                <!-- Dropdown Menu -->
+                <div id="download-menu" class="absolute right-0 top-full mt-2 w-56 bg-white rounded-lg shadow-xl border border-zinc-100 hidden flex-col overflow-hidden z-[60] animate-fade-in">
+                    <button onclick="startSelectionMode()" class="text-left px-4 py-3 text-xs font-medium hover:bg-zinc-50 border-b border-zinc-50 w-full flex items-center gap-2">
+                        <i data-lucide="check-square" class="w-3 h-3"></i> Select photos to download
+                    </button>
+                    <button onclick="downloadAllInTab()" class="text-left px-4 py-3 text-xs font-medium hover:bg-zinc-50 w-full flex items-center gap-2">
+                        <i data-lucide="download-cloud" class="w-3 h-3"></i> Download all <span id="current-tab-name">CAM 01</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3. GALLERY BODY -->
+    <main class="bg-white min-h-screen">
+        <div class="py-12 text-center">
+            <h2 class="text-xs font-bold tracking-[0.4em] uppercase serif" id="gallery-subtitle"></h2>
+            <!-- Selection Mode Instructions -->
+            <div id="selection-instructions" class="hidden mt-4">
+                <p class="text-xs text-zinc-500 bg-zinc-100 inline-block px-4 py-2 rounded-full">
+                    Click on photos to select them for download
+                </p>
+            </div>
+        </div>
+
+        <!-- Photo Grid -->
+        <div class="max-w-[1600px] mx-auto px-4 md:px-10 pb-24">
+            <div id="photo-grid" class="gallery-columns">
+                <!-- Images Injected Here -->
+            </div>
+        </div>
+    </main>
+
+    <!-- 4. FLOATING SELECTION BAR (Visible only in selection mode) -->
+    <div id="selection-bar" class="fixed bottom-0 left-0 right-0 z-[70] bg-white border-t border-zinc-200 p-4 transform translate-y-full transition-transform duration-300 shadow-[0_-5px_20px_rgba(0,0,0,0.1)]">
+        <div class="max-w-4xl mx-auto flex justify-between items-center">
+            <div class="flex items-center gap-4">
+                <button onclick="cancelSelectionMode()" class="p-2 hover:bg-zinc-100 rounded-full">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+                <div class="flex flex-col">
+                    <span class="text-sm font-bold"><span id="selected-count">0</span> Selected</span>
+                    <button onclick="selectAll()" class="text-[10px] text-zinc-500 hover:text-black underline text-left">Select All</button>
+                </div>
+            </div>
+            <button onclick="downloadSelectedBatch()" class="bg-black text-white px-6 py-2 rounded-lg text-xs font-bold uppercase tracking-widest hover:bg-zinc-800 transition-colors">
+                Download Selected
+            </button>
+        </div>
+    </div>
+
+    <!-- 5. FLOATING CHAT BUBBLE -->
+    <div class="fixed bottom-6 right-6 z-[60]" id="chat-bubble">
+        <button onclick="openContactModal()" class="bg-black text-white p-4 rounded-full shadow-2xl hover:scale-110 transition-transform">
+            <i data-lucide="message-square" class="w-6 h-6"></i>
+        </button>
+    </div>
+
+    <!-- 6. LIGHTBOX VIEWER -->
+    <div id="lightbox" class="fixed inset-0 z-[100] bg-white hidden flex-col transition-opacity duration-300">
+        <div class="flex justify-between items-center p-6 border-b border-zinc-50">
+            <div id="lb-counter" class="text-[10px] font-bold tracking-widest uppercase text-zinc-400"></div>
+            <div class="flex items-center gap-6">
+                <button id="lb-heart-btn" onclick="toggleLikeCurrent()">
+                    <i data-lucide="heart" class="w-5 h-5 cursor-pointer"></i>
+                </button>
+                <button onclick="downloadCurrent()">
+                    <i data-lucide="download" class="w-5 h-5 cursor-pointer hover:opacity-50"></i>
+                </button>
+                <i data-lucide="x" class="w-6 h-6 cursor-pointer hover:rotate-90 transition-transform" onclick="closeLightbox()"></i>
+            </div>
+        </div>
+        <div class="flex-1 relative flex items-center justify-center p-4">
+            <button onclick="changePhoto(-1)" class="absolute left-6 p-4 hover:bg-zinc-50 rounded-full"><i data-lucide="chevron-left"></i></button>
+            <img id="lb-img" src="" class="max-w-full max-h-[80vh] object-contain transition-transform" onclick="toggleZoom()">
+            <button onclick="changePhoto(1)" class="absolute right-6 p-4 hover:bg-zinc-50 rounded-full"><i data-lucide="chevron-right"></i></button>
+        </div>
+    </div>
+
+    <!-- 7. SHARE MODAL -->
+    <div id="share-modal" class="fixed inset-0 z-[110] bg-black/60 hidden items-center justify-center backdrop-blur-sm transition-opacity opacity-0" onclick="closeShareModal(event)">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-md p-6 relative transform scale-95 transition-transform duration-300" id="share-modal-content" onclick="event.stopPropagation()">
+            <button onclick="closeShareModal()" class="absolute top-4 right-4 text-zinc-300 hover:text-zinc-600 transition-colors">
+                <i data-lucide="x-circle" class="w-6 h-6"></i>
+            </button>
+            <h3 class="text-xl font-medium text-center mb-6">Share link</h3>
+            <div class="mb-6">
+                <input type="text" id="share-url-input" class="w-full border border-zinc-200 rounded-lg px-4 py-3 text-sm text-zinc-600 focus:outline-none focus:border-zinc-400 bg-zinc-50" readonly>
+            </div>
+            <button id="copy-btn" onclick="copyShareLink()" class="w-full bg-black text-white rounded-lg py-3 font-medium flex items-center justify-center gap-2 hover:bg-zinc-800 transition-colors mb-8">
+                <i data-lucide="link" class="w-4 h-4"></i> <span id="copy-btn-text">Copy the link</span>
+            </button>
+            <div class="text-center">
+                <p class="text-zinc-400 text-sm mb-4">Or share via social media</p>
+                <div class="flex items-center justify-center gap-6">
+                    <a href="#" id="share-fb" target="_blank" class="hover:scale-110 transition-transform"><svg class="w-8 h-8 text-[#1877F2]" fill="currentColor" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg></a>
+                    <a href="#" id="share-wa" target="_blank" class="hover:scale-110 transition-transform"><svg class="w-8 h-8 text-[#25D366]" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.008-.57-.008-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg></a>
+                    <!-- Telegram -->
+                    <a href="#" id="share-tg" target="_blank" class="hover:scale-110 transition-transform">
+                        <svg class="w-8 h-8 text-[#26A5E4]" fill="currentColor" viewBox="0 0 24 24"><path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 11.944 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.638z"/></svg>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 8. CONTACT MODAL -->
+    <div id="contact-modal" class="fixed inset-0 z-[120] bg-black/60 hidden items-center justify-center backdrop-blur-sm transition-opacity opacity-0" onclick="closeContactModal(event)">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-sm p-8 relative transform scale-95 transition-transform duration-300 text-center" id="contact-modal-content" onclick="event.stopPropagation()">
+            <!-- Close -->
+            <button onclick="closeContactModal()" class="absolute top-4 right-4 text-zinc-300 hover:text-zinc-600 transition-colors">
+                <i data-lucide="x-circle" class="w-6 h-6"></i>
+            </button>
+
+            <!-- Profile Image -->
+            <div class="w-24 h-24 bg-zinc-900 rounded-full mx-auto mb-4 overflow-hidden shadow-inner flex items-center justify-center text-white text-2xl font-serif">
+                SS
+            </div>
+
+            <h3 class="text-2xl font-bold mb-1">SanStudio</h3>
+            <p class="text-sm text-zinc-500 font-medium mb-4">Wedding Web designer</p>
+            
+            <p class="text-xl font-medium mb-1 tracking-tight">+91 9087654321</p>
+            <p class="text-sm text-zinc-500 mb-6">sanstudio.brand@gmail.com</p>
+
+            <!-- Social Buttons Stack -->
+            <div class="space-y-3 mb-6">
+                <a href="https://wa.me/919087654321" target="_blank" class="flex items-center justify-center gap-2 w-full border border-zinc-200 rounded-lg py-2.5 hover:bg-zinc-50 hover:border-zinc-400 transition-all font-medium text-sm text-zinc-700">
+                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.008-.57-.008-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
+                    WhatsApp
+                </a>
+                <a href="https://t.me/+919087654321" target="_blank" class="flex items-center justify-center gap-2 w-full border border-zinc-200 rounded-lg py-2.5 hover:bg-zinc-50 hover:border-zinc-400 transition-all font-medium text-sm text-zinc-700">
+                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 11.944 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.638z"/></svg>
+                    Telegram
+                </a>
+                <a href="https://www.instagram.com/santhosh_747_dark/" target="_blank" class="flex items-center justify-center gap-2 w-full border border-zinc-200 rounded-lg py-2.5 hover:bg-zinc-50 hover:border-zinc-400 transition-all font-medium text-sm text-zinc-700">
+                    <i data-lucide="instagram" class="w-4 h-4"></i> Instagram
+                </a>
+                <a href="https://www.youtube.com/@crazyvideos788" target="_blank" class="flex items-center justify-center gap-2 w-full border border-zinc-200 rounded-lg py-2.5 hover:bg-zinc-50 hover:border-zinc-400 transition-all font-medium text-sm text-zinc-700">
+                    <i data-lucide="youtube" class="w-4 h-4"></i> YouTube
+                </a>
+                <button onclick="saveContact()" class="flex items-center justify-center gap-2 w-full bg-black text-white rounded-lg py-3 hover:bg-zinc-800 transition-colors font-bold text-sm">
+                    Save contact
+                </button>
+            </div>
+
+            <a href="https://a-santhosh-hub.github.io/in/" target="_blank" class="text-sm underline underline-offset-4 text-zinc-500 hover:text-black">Go to website</a>
+        </div>
+    </div>
+
+    <script>
+        // --- DATA ---
+        const ALBUM_DATA = {
+            title: "Your Event Name | SanStudio",
+            date: "2026-11-16",
+            photographer: "Photographer Santhosh",
+            photographerUrl: "https://www.instagram.com/santhosh.origin/",
+            portfolio: "By SanStudio",
+            portfolioUrl: "https://a-santhosh-hub.github.io/in/",
+            heroId: "*******88BcQzqmiH6FwuW", 
+            cam01: [
+{ id: "1234ddfsd", name: "Event 01" },
+{ id: "1342ddsf", name: "Event 02" }
+],
+            cam02: [
+              { id: "sH4beu_bhVv3NW1nhU", name: "Event 01" },
+              { id: "1Ls-1LHqPbeA6Ck", name: "Event 02" }
+              ]
+        };
+
+        const getDriveUrl = (id) => `https://lh3.googleusercontent.com/d/${id}`;
+        const getDownloadUrl = (id) => `https://drive.google.com/uc?export=download&id=${id}`;
+
+        let currentTab = 'CAM 01';
+        let currentIndex = 0;
+        let isZoomed = false;
+        let likedPhotos = new Set(JSON.parse(localStorage.getItem('wedding_likes') || '[]'));
+        
+        // Selection Mode State
+        let isSelectionMode = false;
+        let selectedPhotos = new Set();
+
+        // --- INIT ---
+        function init() {
+            document.getElementById('hero-img').src = getDriveUrl(ALBUM_DATA.heroId);
+            document.getElementById('hero-title').textContent = ALBUM_DATA.title;
+            document.getElementById('hero-date').textContent = ALBUM_DATA.date;
+            
+            // Set Photographer info
+            const photogName = document.getElementById('photographer-name');
+            photogName.textContent = ALBUM_DATA.photographer;
+            photogName.href = ALBUM_DATA.photographerUrl;
+            
+            const portfolioLink = document.getElementById('portfolio-link');
+            portfolioLink.textContent = ALBUM_DATA.portfolio;
+            portfolioLink.href = ALBUM_DATA.portfolioUrl;
+            portfolioLink.target = "_blank";
+
+            document.getElementById('gallery-subtitle').textContent = "Your Event Name | SanStudio";
+            document.getElementById('current-tab-name').textContent = currentTab;
+
+            updateLikeCount();
+            renderGallery();
+            lucide.createIcons();
+            
+            // Fixed Click Listener for Dropdown
+            document.addEventListener('click', (e) => {
+                const menu = document.getElementById('download-menu');
+                // Use ID selector which is much more robust than text content check
+                const btn = e.target.closest('#download-trigger');
+                
+                // If clicked button, toggle logic is handled by onclick, so we return
+                if (btn) return;
+
+                // If clicked outside menu, hide it
+                if (menu && !menu.classList.contains('hidden') && !menu.contains(e.target)) {
+                    menu.classList.add('hidden');
+                    menu.classList.remove('flex');
+                }
+            });
+        }
+
+        function renderGallery() {
+            const grid = document.getElementById('photo-grid');
+            const images = currentTab === 'CAM 01' ? ALBUM_DATA.cam01 : ALBUM_DATA.cam02;
+
+            if (images.length === 0) {
+                grid.innerHTML = `<div class="col-span-full py-20 text-center text-zinc-300 text-xs tracking-widest">NO PHOTOS IN THIS TAB YET</div>`;
+                return;
+            }
+
+            if (isSelectionMode) {
+                // RENDER FOR SELECTION MODE
+                grid.innerHTML = images.map((img, idx) => `
+                    <div class="gallery-item cursor-pointer overflow-hidden group relative" onclick="toggleSelection('${img.id}')">
+                        <img src="${getDriveUrl(img.id)}" 
+                             class="w-full h-auto object-cover transition-opacity duration-300 ${selectedPhotos.has(img.id) ? 'opacity-80' : ''}"
+                             onerror="this.src='https://via.placeholder.com/800x1200?text=Access+Denied'">
+                        
+                        <div class="absolute inset-0 bg-black/10 transition-opacity ${selectedPhotos.has(img.id) ? 'opacity-100' : 'opacity-0'}"></div>
+
+                        <div class="absolute top-3 right-3 z-20">
+                            <div class="checkbox-ring ${selectedPhotos.has(img.id) ? 'selected' : ''}">
+                                ${selectedPhotos.has(img.id) ? '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>' : ''}
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            } else {
+                // RENDER FOR NORMAL MODE
+                grid.innerHTML = images.map((img, idx) => `
+                    <div class="gallery-item cursor-pointer overflow-hidden group relative" onclick="openLightbox(${idx})">
+                        <img src="${getDriveUrl(img.id)}" 
+                             class="w-full h-auto object-cover transition-opacity duration-500 group-hover:opacity-90"
+                             onerror="this.src='https://via.placeholder.com/800x1200?text=Access+Denied'">
+                        
+                        <!-- Gradient Overlay on Hover -->
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
+
+                        <!-- Bottom Right Action Buttons -->
+                        <div class="absolute bottom-4 right-4 flex items-center gap-4 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-2 group-hover:translate-y-0 z-10">
+                             <button onclick="event.stopPropagation(); shareImage('${img.id}')" class="text-white hover:text-zinc-200 transition-colors" title="Share Link">
+                                <i data-lucide="share" class="w-5 h-5"></i>
+                             </button>
+                             <button onclick="event.stopPropagation(); downloadImage('${img.id}')" class="text-white hover:text-zinc-200 transition-colors" title="Download">
+                                <i data-lucide="download" class="w-5 h-5"></i>
+                             </button>
+                             <button onclick="event.stopPropagation(); toggleLike('${img.id}')" class="text-white hover:text-red-500 transition-colors" title="Like">
+                                <i data-lucide="heart" class="w-5 h-5 ${likedPhotos.has(img.id) ? 'liked' : ''}"></i>
+                             </button>
+                        </div>
+                    </div>
+                `).join('');
+            }
+            lucide.createIcons();
+        }
+
+        // --- CONTACT MODAL LOGIC ---
+        function openContactModal() {
+            const modal = document.getElementById('contact-modal');
+            const content = document.getElementById('contact-modal-content');
+            
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+                content.classList.remove('scale-95');
+                content.classList.add('scale-100');
+            }, 10);
+        }
+
+        function closeContactModal() {
+            const modal = document.getElementById('contact-modal');
+            const content = document.getElementById('contact-modal-content');
+            
+            modal.classList.add('opacity-0');
+            content.classList.remove('scale-100');
+            content.classList.add('scale-95');
+            
+            setTimeout(() => {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            }, 300);
+        }
+
+        function saveContact() {
+            const vCardData = `BEGIN:VCARD
+VERSION:3.0
+FN:SanStudio
+TITLE:Wedding Web designer
+TEL;TYPE=CELL:+919087654321
+EMAIL:sanstudio.brand@gmail.com
+URL:https://sanstudio.neocities.org/
+END:VCARD`;
+            
+            const blob = new Blob([vCardData], { type: 'text/vcard' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'SanStudio.vcf';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // --- DOWNLOAD MENU & SELECTION LOGIC ---
+        function toggleDownloadMenu() {
+            const menu = document.getElementById('download-menu');
+            if (menu.classList.contains('hidden')) {
+                menu.classList.remove('hidden');
+                menu.classList.add('flex');
+            } else {
+                menu.classList.add('hidden');
+                menu.classList.remove('flex');
+            }
+        }
+
+        function startSelectionMode() {
+            isSelectionMode = true;
+            selectedPhotos.clear();
+            
+            // Hide menu and chat
+            document.getElementById('download-menu').classList.add('hidden');
+            document.getElementById('download-menu').classList.remove('flex');
+            document.getElementById('chat-bubble').classList.add('hidden');
+            
+            // Show selection bar and instructions
+            document.getElementById('selection-bar').classList.remove('translate-y-full');
+            document.getElementById('selection-instructions').classList.remove('hidden');
+            
+            renderGallery();
+        }
+
+        function cancelSelectionMode() {
+            isSelectionMode = false;
+            selectedPhotos.clear();
+            
+            // Hide selection bar and instructions
+            document.getElementById('selection-bar').classList.add('translate-y-full');
+            document.getElementById('selection-instructions').classList.add('hidden');
+            
+            // Show chat
+            document.getElementById('chat-bubble').classList.remove('hidden');
+            
+            renderGallery();
+        }
+
+        function toggleSelection(id) {
+            if (selectedPhotos.has(id)) {
+                selectedPhotos.delete(id);
+            } else {
+                selectedPhotos.add(id);
+            }
+            document.getElementById('selected-count').textContent = selectedPhotos.size;
+            renderGallery(); // Re-render to update checkboxes state
+        }
+        
+        function selectAll() {
+            const images = currentTab === 'CAM 01' ? ALBUM_DATA.cam01 : ALBUM_DATA.cam02;
+            images.forEach(img => selectedPhotos.add(img.id));
+            document.getElementById('selected-count').textContent = selectedPhotos.size;
+            renderGallery();
+        }
+
+        function downloadSelectedBatch() {
+            if (selectedPhotos.size === 0) {
+                alert("Please select at least one photo.");
+                return;
+            }
+            
+            const idsToDownload = Array.from(selectedPhotos);
+            batchDownload(idsToDownload);
+        }
+
+        function downloadAllInTab() {
+            const images = currentTab === 'CAM 01' ? ALBUM_DATA.cam01 : ALBUM_DATA.cam02;
+            const ids = images.map(img => img.id);
+            
+            if (ids.length === 0) {
+                alert("No photos to download.");
+                return;
+            }
+
+            if (confirm(`This will download all ${ids.length} images from ${currentTab}. Continue?`)) {
+                batchDownload(ids);
+            }
+            // Hide menu
+            const menu = document.getElementById('download-menu');
+            menu.classList.add('hidden');
+            menu.classList.remove('flex');
+        }
+
+        function batchDownload(ids) {
+            alert(`Starting download for ${ids.length} images. Please allow pop-ups if blocked.`);
+            let delay = 0;
+            ids.forEach(id => {
+                setTimeout(() => {
+                    const link = document.createElement('a');
+                    link.href = getDownloadUrl(id);
+                    link.setAttribute('download', '');
+                    link.style.display = 'none';
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                }, delay);
+                delay += 1000; // 1 second delay between downloads
+            });
+        }
+
+        // --- SHARE LOGIC ---
+        function shareImage(id) {
+            const url = getDriveUrl(id);
+            const input = document.getElementById('share-url-input');
+            const modal = document.getElementById('share-modal');
+            const content = document.getElementById('share-modal-content');
+            
+            input.value = url;
+            const encodedUrl = encodeURIComponent(url);
+            document.getElementById('share-fb').href = `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`;
+            document.getElementById('share-wa').href = `https://api.whatsapp.com/send?text=${encodedUrl}`;
+            
+            // Check if telegram element exists before setting href
+            const tgLink = document.getElementById('share-tg');
+            if(tgLink) {
+                 tgLink.href = `https://t.me/share/url?url=${encodedUrl}`;
+            }
+
+            document.getElementById('copy-btn-text').textContent = "Copy the link";
+            document.getElementById('copy-btn').classList.remove('bg-zinc-800');
+            document.getElementById('copy-btn').classList.add('bg-black');
+            
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+                content.classList.remove('scale-95');
+                content.classList.add('scale-100');
+            }, 10);
+        }
+
+        function closeShareModal() {
+            const modal = document.getElementById('share-modal');
+            const content = document.getElementById('share-modal-content');
+            modal.classList.add('opacity-0');
+            content.classList.remove('scale-100');
+            content.classList.add('scale-95');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            }, 300);
+        }
+
+        function copyShareLink() {
+            const input = document.getElementById('share-url-input');
+            input.select();
+            input.setSelectionRange(0, 99999); 
+            navigator.clipboard.writeText(input.value).then(() => {
+                const btnText = document.getElementById('copy-btn-text');
+                const btn = document.getElementById('copy-btn');
+                btnText.textContent = "Copied to clipboard!";
+                btn.classList.remove('bg-black');
+                btn.classList.add('bg-zinc-800');
+                setTimeout(() => {
+                    btnText.textContent = "Copy the link";
+                    btn.classList.add('bg-black');
+                    btn.classList.remove('bg-zinc-800');
+                }, 2000);
+            });
+        }
+
+        // --- LIKE, DOWNLOAD SINGLE, NAVIGATION (Existing) ---
+        function toggleLike(id) {
+            if (likedPhotos.has(id)) likedPhotos.delete(id);
+            else likedPhotos.add(id);
+            localStorage.setItem('wedding_likes', JSON.stringify(Array.from(likedPhotos)));
+            updateLikeCount();
+            renderGallery();
+            updateLightboxHeart();
+        }
+
+        function toggleLikeCurrent() {
+            const images = currentTab === 'CAM 01' ? ALBUM_DATA.cam01 : ALBUM_DATA.cam02;
+            const currentId = images[currentIndex].id;
+            toggleLike(currentId);
+        }
+
+        function updateLikeCount() {
+            document.getElementById('like-count').textContent = likedPhotos.size;
+            const navHeart = document.getElementById('nav-heart').querySelector('svg');
+            if (likedPhotos.size > 0) navHeart?.classList.add('liked');
+            else navHeart?.classList.remove('liked');
+        }
+
+        function updateLightboxHeart() {
+            const images = currentTab === 'CAM 01' ? ALBUM_DATA.cam01 : ALBUM_DATA.cam02;
+            if (!images[currentIndex]) return;
+            const heartIcon = document.getElementById('lb-heart-btn').querySelector('svg');
+            if (likedPhotos.has(images[currentIndex].id)) heartIcon?.classList.add('liked');
+            else heartIcon?.classList.remove('liked');
+        }
+
+        function downloadImage(id) {
+            const link = document.createElement('a');
+            link.href = getDownloadUrl(id);
+            link.setAttribute('download', `wedding-photo-${id}.jpg`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        function downloadCurrent() {
+            const images = currentTab === 'CAM 01' ? ALBUM_DATA.cam01 : ALBUM_DATA.cam02;
+            const id = images[currentIndex].id;
+            downloadImage(id);
+        }
+
+        function scrollToGallery() {
+            document.getElementById('gallery-section').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function switchTab(tab) {
+            currentTab = tab;
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('tab-active', 'text-zinc-900');
+                btn.classList.add('text-zinc-400');
+            });
+            const activeBtn = tab === 'CAM 01' ? document.getElementById('tab-01') : document.getElementById('tab-02');
+            activeBtn.classList.add('tab-active', 'text-zinc-900');
+            activeBtn.classList.remove('text-zinc-400');
+            
+            document.getElementById('current-tab-name').textContent = currentTab;
+            
+            renderGallery();
+        }
+
+        function openLightbox(index) {
+            if (isSelectionMode) return; 
+            currentIndex = index;
+            const images = currentTab === 'CAM 01' ? ALBUM_DATA.cam01 : ALBUM_DATA.cam02;
+            const img = images[index];
+            document.getElementById('lb-img').src = getDriveUrl(img.id);
+            document.getElementById('lb-counter').textContent = `${index + 1} / ${images.length}`;
+            document.getElementById('lightbox').classList.remove('hidden');
+            document.getElementById('lightbox').classList.add('flex');
+            document.body.style.overflow = 'hidden';
+            updateLightboxHeart();
+            lucide.createIcons();
+        }
+
+        function closeLightbox() {
+            document.getElementById('lightbox').classList.add('hidden');
+            document.getElementById('lightbox').classList.remove('flex');
+            document.body.style.overflow = '';
+            isZoomed = false;
+            document.getElementById('lb-img').classList.remove('zoom-active');
+        }
+
+        function changePhoto(dir) {
+            const images = currentTab === 'CAM 01' ? ALBUM_DATA.cam01 : ALBUM_DATA.cam02;
+            currentIndex = (currentIndex + dir + images.length) % images.length;
+            openLightbox(currentIndex);
+        }
+
+        function toggleZoom() {
+            isZoomed = !isZoomed;
+            document.getElementById('lb-img').classList.toggle('zoom-active', isZoomed);
+        }
+
+        function filterLikes() {
+            if (likedPhotos.size === 0) {
+                alert("You haven't liked any photos yet!");
+                return;
+            }
+            const grid = document.getElementById('photo-grid');
+            const allImages = [...ALBUM_DATA.cam01, ...ALBUM_DATA.cam02];
+            const favorites = allImages.filter(img => likedPhotos.has(img.id));
+            grid.innerHTML = favorites.map((img, idx) => `
+                <div class="gallery-item cursor-pointer overflow-hidden group relative" onclick="openLightbox(${idx})">
+                    <img src="${getDriveUrl(img.id)}" class="w-full h-auto object-cover">
+                </div>
+            `).join('');
+            document.getElementById('gallery-subtitle').textContent = "MY FAVORITES";
+            lucide.createIcons();
+        }
+
+        window.onload = init;
+    </script>
+</body>
+</html>
